@@ -199,6 +199,11 @@ config UIO_FSL_RMU
 
 	  If you don't know what to do here, say N.
 
+config UIO_FSL_SEC
+	tristate "Freescale SEC support"
+	depends on CRYPTO_DEV_FSL_CAAM=n
+	default n
+
 config UIO_HV_GENERIC
 	tristate "Generic driver for Hyper-V VMBus"
 	depends on HYPERV
