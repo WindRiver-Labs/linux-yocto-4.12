@@ -564,6 +564,10 @@ kexec_create_tlb:
  */
 _GLOBAL(kexec_smp_wait)
 	lhz	r3,PACAHWCPUID(r13)
+#ifdef CONFIG_PPC_BOOK3E
+	/* Create a 1:1 mapping. */
+	bl	kexec_create_tlb
+#endif
 	bl	real_mode
 
 	li	r4,KEXEC_STATE_REAL_MODE
@@ -653,6 +657,8 @@ END_FTR_SECTION_IFSET(CPU_FTR_ARCH_300)
 	/* disable interrupts, we are overwriting kernel data next */
 #ifdef CONFIG_PPC_BOOK3E
 	wrteei	0
+	/* Create a 1:1 mapping. */
+	bl	kexec_create_tlb
 #else
 	mfmsr	r3
 	rlwinm	r3,r3,0,17,15
