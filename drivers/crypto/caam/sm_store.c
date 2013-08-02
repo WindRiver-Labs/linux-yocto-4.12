@@ -1025,7 +1025,7 @@ int caam_sm_startup(struct platform_device *pdev)
 	}
 	ring0_pdev = of_find_device_by_node(np);
 	smpriv->smringdev = &ring0_pdev->dev;
-
+	
 	jrpriv = dev_get_drvdata(smpriv->smringdev);
 	lpagect = 0;
 	lpagedesc = kzalloc(sizeof(struct sm_page_descriptor)
