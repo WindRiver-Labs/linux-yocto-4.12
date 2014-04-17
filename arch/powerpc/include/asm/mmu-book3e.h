@@ -311,6 +311,15 @@ extern int book3e_htw_mode;
 
 #define mmu_cleanup_all NULL
 
+void book3e_tlb_lock(void);
+void book3e_tlb_unlock(void);
+#else
+static inline void book3e_tlb_lock(void)
+{}
+
+static inline void book3e_tlb_unlock(void)
+{}
+
 #endif
 
 #endif /* !__ASSEMBLY__ */
