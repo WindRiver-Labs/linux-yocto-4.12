@@ -1,7 +1,7 @@
 /*
  * Freescale QuadSPI driver.
  *
- * Copyright (C) 2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2013-2015 Freescale Semiconductor, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -389,11 +389,18 @@ static void fsl_qspi_init_lut(struct fsl_qspi *q)
 	/* Read */
 	lut_base = SEQID_READ * 4;
 
-	qspi_writel(q, LUT0(CMD, PAD1, read_op) | LUT1(ADDR, PAD1, addrlen),
-			base + QUADSPI_LUT(lut_base));
-	qspi_writel(q, LUT0(DUMMY, PAD1, read_dm) |
-		    LUT1(FSL_READ, PAD4, rxfifo),
-			base + QUADSPI_LUT(lut_base + 1));
+	if (nor->flash_read == SPI_NOR_QUAD) {
+		if (read_op == SPINOR_OP_READ_1_1_4 || read_op == SPINOR_OP_READ_1_1_4_4B) {
+			/* read mode : 1-1-4 */
+			qspi_writel(q, LUT0(CMD, PAD1, read_op) | LUT1(ADDR, PAD1, addrlen),
+				    base + QUADSPI_LUT(lut_base));
+
+			qspi_writel(q, LUT0(DUMMY, PAD1, read_dm) | LUT1(FSL_READ, PAD4, rxfifo),
+				    base + QUADSPI_LUT(lut_base + 1));
+		} else {
+			dev_err(nor->dev, "Unsupported opcode : 0x%.2x\n", read_op);
+		}
+	}
 
 	/* Write enable */
 	lut_base = SEQID_WREN * 4;
@@ -475,6 +482,7 @@ static int fsl_qspi_get_seqid(struct fsl_qspi *q, u8 cmd)
 		return SEQID_WRDI;
 	case SPINOR_OP_RDSR:
 		return SEQID_RDSR;
+	case SPINOR_OP_BE_4K:
 	case SPINOR_OP_SE:
 		return SEQID_SE;
 	case SPINOR_OP_CHIP_ERASE:
