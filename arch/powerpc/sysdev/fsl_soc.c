@@ -200,10 +200,8 @@ arch_initcall(setup_rstcr);
 
 #endif
 
-#if defined(CONFIG_FB_FSL_DIU) || defined(CONFIG_FB_FSL_DIU_MODULE)
 struct platform_diu_data_ops diu_ops;
 EXPORT_SYMBOL(diu_ops);
-#endif
 
 #ifdef CONFIG_EPAPR_PARAVIRT
 /*
