@@ -109,6 +109,7 @@
 	tbi-handle = <&tbi1>;
 	phy-handle = <&phy1>;
 	phy-connection-type = "sgmii";
+	fsl,dma-endian-le;
 	status = "ok";
 };
 
@@ -116,6 +117,7 @@
 	tbi-handle = <&tbi1>;
 	phy-handle = <&phy3>;
 	phy-connection-type = "sgmii";
+	fsl,dma-endian-le;
 	status = "ok";
 };
 
@@ -123,6 +125,7 @@
 	tbi-handle = <&tbi1>;
 	fixed-link = <2 1 1000 0 0>;
 	phy-connection-type = "rgmii";
+	fsl,dma-endian-le;
 	status = "ok";
 };
 
@@ -200,58 +203,13 @@
 	};
 	phy1: ethernet-phy@1 {
 		reg = <0x1>;
-		interrupts = <GIC_SPI 165 IRQ_TYPE_LEVEL_LOW>;
 	};
 	phy3: ethernet-phy@3 {
 		reg = <0x3>;
-		interrupts = <GIC_SPI 165 IRQ_TYPE_LEVEL_LOW>;
 	};
 	tbi1: tbi-phy@1f {
 		reg = <0x1f>;
 		device_type = "tbi-phy";
-	};
-};
-
-&uqe {
-	ranges = <0x0 0x0 0x2400000 0x40000>;
-	reg = <0x0 0x2400000 0x0 0x480>;
-	brg-frequency = <100000000>;
-	bus-frequency = <200000000>;
-
-	si1: si@700 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "fsl,qe-si";
-		reg = <0x700 0x80>;
-	};
-
-	siram1: siram@1000 {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		compatible = "fsl,qe-siram";
-		reg = <0x1000 0x800>;
-	};
-
-	tdma: ucc@2000 {
-		compatible = "fsl,ucc-tdm";
-		rx-clock-name = "brg1";
-		tx-clock-name = "brg1";
-		fsl,rx-sync-clock = "none";
-		fsl,tx-sync-clock = "none";
-		fsl,tx-timeslot = <0xfffffffe>;
-		fsl,rx-timeslot = <0xfffffffe>;
-		fsl,tdm-framer-type = "e1";
-		fsl,tdm-mode = "internel-loopback";
-		fsl,tdm-id = <0>;
-		fsl,siram-entry-id = <0>;
-	};
-
-	serial: ucc@2200 {
-		device_type = "serial";
-		compatible = "ucc_uart";
-		port-number = <1>;
-		rx-clock-name = "brg2";
-		tx-clock-name = "brg2";
 	};
 };
 
@@ -288,10 +246,3 @@
 	status = "okay";
 };
 
-&can2 {
-	status = "okay";
-};
-
-&can3 {
-	status = "okay";
-};
