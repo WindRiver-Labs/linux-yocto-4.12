@@ -71,6 +71,7 @@ MODULE_ALIAS("mmc:block");
 #define mmc_req_rel_wr(req)	((req->cmd_flags & REQ_FUA) && \
 				  (rq_data_dir(req) == WRITE))
 static DEFINE_MUTEX(block_mutex);
+static DEFINE_SPINLOCK(mmc_blk_lock);
 
 /*
  * The defaults come from config options but can be overriden by module
@@ -1909,9 +1910,29 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 	struct mmc_blk_data *md;
 	int devidx, ret;
 
-	devidx = ida_simple_get(&mmc_blk_ida, 0, max_devices, GFP_KERNEL);
+again:
+	if (!ida_pre_get(&mmc_blk_ida, GFP_KERNEL))
+		return ERR_PTR(-ENOMEM);
+
+	spin_lock(&mmc_blk_lock);
+	devidx = mmc_get_reserved_index(card->host);
+	if (devidx >= 0)
+		devidx = ida_simple_get(&mmc_blk_ida, devidx, devidx,
+					GFP_NOWAIT);
 	if (devidx < 0)
-		return ERR_PTR(devidx);
+		ret = ida_get_new_above(&mmc_blk_ida,
+					mmc_first_nonreserved_index(), &devidx);
+	spin_unlock(&mmc_blk_lock);
+
+	if (ret == -EAGAIN)
+		goto again;
+	else if (ret)
+		return ERR_PTR(ret);
+
+	if (devidx >= max_devices) {
+		ret = -ENOSPC;
+		goto out;
+	}
 
 	md = kzalloc(sizeof(struct mmc_blk_data), GFP_KERNEL);
 	if (!md) {
