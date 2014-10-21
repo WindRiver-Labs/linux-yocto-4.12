@@ -83,6 +83,7 @@ void mx3_cpu_lp_set(enum mx3_cpu_pwr_mode mode);
 void imx_enable_cpu(int cpu, bool enable);
 void imx_set_cpu_jump(int cpu, void *jump_addr);
 u32 imx_get_cpu_arg(int cpu);
+u32 ls1_get_cpu_arg(int cpu);
 void imx_set_cpu_arg(int cpu, u32 arg);
 #ifdef CONFIG_SMP
 void v7_secondary_startup(void);
@@ -109,6 +110,9 @@ int imx_mmdc_get_ddr_type(void);
 
 void imx_cpu_die(unsigned int cpu);
 int imx_cpu_kill(unsigned int cpu);
+
+void ls1021a_cpu_die(unsigned int cpu);
+int ls1021a_cpu_kill(unsigned int cpu);
 
 #ifdef CONFIG_SUSPEND
 void v7_cpu_resume(void);
