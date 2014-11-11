@@ -19,13 +19,30 @@
 #include <asm/page.h>
 #include <asm/smp_scu.h>
 #include <asm/mach/map.h>
+#include <linux/delay.h>
 
 #include "common.h"
 #include "hardware.h"
 
+#define	SCFG_CORE0_SFT_RST	0x130
+#define	SCFG_REVCR		0x200
+#define	SCFG_CORESRENCR		0x204
+#define	SCFG_SPARECR4		0x50C
+
+#define	DCFG_CCSR_BRR		0x0E4
+#define	DCFG_CCSR_SCRATCHRW1	0x200
+
+#define	DCSR_RCPM2_DEBUG1	0x400
+#define	DCSR_RCPM2_DEBUG2	0x414
+
+#define	STRIDE_4B		4
+
 u32 g_diag_reg;
 static void __iomem *scu_base;
-
+static void __iomem *dcfg_base;
+static void __iomem *scfg_base;
+static u32 secondary_pre_boot_entry;
+ 
 static struct map_desc scu_io_desc __initdata = {
 	/* .virtual and .pfn are run-time assigned */
 	.length		= SZ_4K,
