@@ -1892,12 +1892,13 @@ int __init its_init(struct fwnode_handle *handle, struct rdists *rdists,
 	else
 		its_acpi_probe();
 
+	gic_rdists = rdists;
+
 	if (list_empty(&its_nodes)) {
 		pr_warn("ITS: No ITS available, not enabling LPIs\n");
 		return -ENXIO;
 	}
 
-	gic_rdists = rdists;
 	its_alloc_lpi_tables();
 	its_lpi_init(rdists->id_bits);
 
