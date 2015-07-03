@@ -23,7 +23,9 @@
 #include <linux/pm_opp.h>
 #include <linux/resource.h>
 
-static int __init armada_xp_pmsu_cpufreq_init(void)
+extern int (*mvebu_pmsu_dfs_request_ptr)(int cpu);
+
+static int __init mvebu_pmsu_cpufreq_init(void)
 {
 	struct device_node *np;
 	struct resource res;
@@ -101,7 +103,8 @@ static int __init armada_xp_pmsu_cpufreq_init(void)
 				__func__, ret);
 	}
 
+	mvebu_pmsu_dfs_request_ptr = armada_xp_pmsu_dfs_request;
 	platform_device_register_simple("cpufreq-dt", -1, NULL, 0);
 	return 0;
 }
-device_initcall(armada_xp_pmsu_cpufreq_init);
+device_initcall(mvebu_pmsu_cpufreq_init);

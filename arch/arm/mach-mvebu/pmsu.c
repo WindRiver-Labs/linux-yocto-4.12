@@ -104,6 +104,7 @@ static phys_addr_t pmsu_mp_phys_base;
 static void __iomem *pmsu_mp_base;
 
 static void *mvebu_cpu_resume;
+int (*mvebu_pmsu_dfs_request_ptr)(int cpu);
 
 static const struct of_device_id of_pmsu_table[] = {
 	{ .compatible = "marvell,armada-370-pmsu", },
@@ -544,6 +545,16 @@ static void mvebu_pmsu_dfs_request_local(void *data)
 
 	local_irq_save(flags);
 
+	/* Clear any previous DFS DONE event */
+	reg = readl(pmsu_mp_base + PMSU_EVENT_STATUS_MSK(hwcpu));
+	reg &= ~PMSU_EVENT_STATUS_MSK_DFS_DONE;
+	writel(reg, pmsu_mp_base + PMSU_EVENT_STATUS_MSK(hwcpu));
+
+	/* Mask the DFS done interrupt, since we are going to poll */
+	reg = readl(pmsu_mp_base + PMSU_EVENT_STATUS_MSK(hwcpu));
+	reg |= PMSU_EVENT_STATUS_MSK_DFS_DONE_MASK;
+	writel(reg, pmsu_mp_base + PMSU_EVENT_STATUS_MSK(hwcpu));
+
 	/* Prepare to enter idle */
 	reg = readl(pmsu_mp_base + PMSU_STATUS_MSK(cpu));
 	reg |= PMSU_STATUS_MSK_CPU_IDLE_WAIT |
@@ -567,24 +578,19 @@ static void mvebu_pmsu_dfs_request_local(void *data)
 	reg &= ~PMSU_STATUS_MSK_CPU_IDLE_WAIT;
 	writel(reg, pmsu_mp_base + PMSU_STATUS_MSK(cpu));
 
+	/* Restore the DFS mask to its original state */
+	reg = readl(pmsu_mp_base + PMSU_EVENT_STATUS_MSK(hwcpu));
+	reg &= ~PMSU_EVENT_STATUS_MSK_DFS_DONE_MASK;
+	writel(reg, pmsu_mp_base + PMSU_EVENT_STATUS_MSK(hwcpu));
+
 	local_irq_restore(flags);
 }
 
-int mvebu_pmsu_dfs_request(int cpu)
+int armada_xp_pmsu_dfs_request(int cpu)
 {
 	unsigned long timeout;
 	int hwcpu = cpu_logical_map(cpu);
 	u32 reg;
-
-	/* Clear any previous DFS DONE event */
-	reg = readl(pmsu_mp_base + PMSU_EVENT_STATUS_AND_MASK(hwcpu));
-	reg &= ~PMSU_EVENT_STATUS_AND_MASK_DFS_DONE;
-	writel(reg, pmsu_mp_base + PMSU_EVENT_STATUS_AND_MASK(hwcpu));
-
-	/* Mask the DFS done interrupt, since we are going to poll */
-	reg = readl(pmsu_mp_base + PMSU_EVENT_STATUS_AND_MASK(hwcpu));
-	reg |= PMSU_EVENT_STATUS_AND_MASK_DFS_DONE_MASK;
-	writel(reg, pmsu_mp_base + PMSU_EVENT_STATUS_AND_MASK(hwcpu));
 
 	/* Trigger the DFS on the appropriate CPU */
 	smp_call_function_single(cpu, mvebu_pmsu_dfs_request_local,
@@ -602,10 +608,10 @@ int mvebu_pmsu_dfs_request(int cpu)
 	if (time_after(jiffies, timeout))
 		return -ETIME;
 
-	/* Restore the DFS mask to its original state */
-	reg = readl(pmsu_mp_base + PMSU_EVENT_STATUS_AND_MASK(hwcpu));
-	reg &= ~PMSU_EVENT_STATUS_AND_MASK_DFS_DONE_MASK;
-	writel(reg, pmsu_mp_base + PMSU_EVENT_STATUS_AND_MASK(hwcpu));
-
 	return 0;
+}
+
+int mvebu_pmsu_dfs_request(int cpu)
+{
+	return mvebu_pmsu_dfs_request_ptr(cpu);
 }
