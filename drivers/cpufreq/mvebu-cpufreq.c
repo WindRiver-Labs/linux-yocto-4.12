@@ -24,6 +24,8 @@
 #include <linux/resource.h>
 
 extern int (*mvebu_pmsu_dfs_request_ptr)(int cpu);
+extern int armada_xp_pmsu_dfs_request(int cpu);
+extern int armada_38x_pmsu_dfs_request(int cpu);
 
 static int __init mvebu_pmsu_cpufreq_init(void)
 {
@@ -31,7 +33,8 @@ static int __init mvebu_pmsu_cpufreq_init(void)
 	struct resource res;
 	int ret, cpu;
 
-	if (!of_machine_is_compatible("marvell,armadaxp"))
+	if (!of_machine_is_compatible("marvell,armadaxp") &&
+	    !of_machine_is_compatible("marvell,armada380"))
 		return 0;
 
 	/*
@@ -78,6 +81,8 @@ static int __init mvebu_pmsu_cpufreq_init(void)
 			return PTR_ERR(clk);
 		}
 
+		clk_prepare_enable(clk);
+
 		/*
 		 * In case of a failure of dev_pm_opp_add(), we don't
 		 * bother with cleaning up the registered OPP (there's
@@ -104,7 +109,17 @@ static int __init mvebu_pmsu_cpufreq_init(void)
 	}
 
 	mvebu_pmsu_dfs_request_ptr = armada_xp_pmsu_dfs_request;
+
+	if (of_machine_is_compatible("marvell,armada380")) {
+		if (num_online_cpus() == 1)
+			mvebu_v7_pmsu_disable_dfs_cpu(1);
+
+		mvebu_pmsu_dfs_request_ptr = armada_38x_pmsu_dfs_request;
+	} else if (of_machine_is_compatible("marvell,armadaxp")) {
+		mvebu_pmsu_dfs_request_ptr = armada_xp_pmsu_dfs_request;
+	}
 	platform_device_register_simple("cpufreq-dt", -1, NULL, 0);
+
 	return 0;
 }
 device_initcall(mvebu_pmsu_cpufreq_init);

@@ -351,6 +351,13 @@ void mvebu_v7_pmsu_idle_exit(void)
 	/* cancel ask HW to power down the L2 Cache if possible */
 	reg = readl(pmsu_mp_base + PMSU_CTL_CFG(hw_cpu));
 	reg &= ~PMSU_CTL_CFG_L2_PWDDN;
+
+	/*
+	 * When exiting from idle state such as cpuidle or hotplug,
+	 * Enable PMU wait for the CPU to enter WFI when doing DFS
+	 * by setting CPUx Frequency ID to 1
+	 */
+	reg |= 1 << PMSU_CTL_CFG_CPU0_FRQ_ID_SFT;
 	writel(reg, pmsu_mp_base + PMSU_CTL_CFG(hw_cpu));
 
 	/* cancel Enable wakeup events and mask interrupts */
@@ -607,6 +614,38 @@ int armada_xp_pmsu_dfs_request(int cpu)
 
 	if (time_after(jiffies, timeout))
 		return -ETIME;
+
+	return 0;
+}
+
+void mvebu_v7_pmsu_disable_dfs_cpu(int hw_cpu)
+{
+	u32 reg;
+
+	if (pmsu_mp_base == NULL)
+		return;
+	/*
+	 * Disable PMU wait for the CPU to enter WFI when doing DFS
+	 * by setting CPUx Frequency ID to 0
+	 */
+	reg = readl(pmsu_mp_base + PMSU_CTL_CFG(hw_cpu));
+	reg &= ~(PMSU_CTL_CFG_CPU0_FRQ_ID_MSK << PMSU_CTL_CFG_CPU0_FRQ_ID_SFT);
+	writel(reg, pmsu_mp_base + PMSU_CTL_CFG(hw_cpu));
+}
+
+int armada_38x_pmsu_dfs_request(int cpu)
+{
+	/*
+	 * Protect CPU DFS from changing the number of online cpus number during
+	 * frequency transition by temporarily disable cpu hotplug
+	 */
+	cpu_hotplug_disable();
+
+	/* Trigger the DFS on all the CPUs */
+	on_each_cpu(mvebu_pmsu_dfs_request_local,
+		    NULL, false);
+
+	cpu_hotplug_enable();
 
 	return 0;
 }
