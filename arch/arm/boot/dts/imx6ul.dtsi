@@ -1051,12 +1051,6 @@
 				clocks = <&clks IMX6UL_CLK_OCOTP>;
 			};
 
-			ocotp-fuse@021bc000 {
-				compatible = "fsl,imx6ul-ocotp", "fsl,imx6q-ocotp";
-				reg = <0x021bc000 0x4000>;
-				clocks = <&clks IMX6UL_CLK_OCOTP>;
-			};
-
 			csu: csu@021c0000 {
 				compatible = "fsl,imx6ul-csu";
 				reg = <0x021c0000 0x4000>;
