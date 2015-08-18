@@ -43,6 +43,15 @@
 #include "imx6q.dtsi"
 
 / {
+	aliases {
+		pre0 = &pre1;
+		pre1 = &pre2;
+		pre2 = &pre3;
+		pre3 = &pre4;
+		prg0 = &prg1;
+		prg1 = &prg2;
+	};
+
 	soc {
 		ocram2: sram@00940000 {
 			compatible = "mmio-sram";
@@ -54,6 +63,31 @@
 			compatible = "mmio-sram";
 			reg = <0x00960000 0x20000>;
 			clocks = <&clks IMX6QDL_CLK_OCRAM>;
+		};
+
+		pcie: pcie@0x01000000 {
+			compatible = "fsl,imx6qp-pcie", "snps,dw-pcie";
+			reg = <0x01ffc000 0x4000>, <0x01f00000 0x80000>;
+			reg-names = "dbi", "config";
+			#address-cells = <3>;
+			#size-cells = <2>;
+			device_type = "pci";
+			ranges = <0x81000000 0 0          0x01f80000 0 0x00010000 /* downstream I/O */
+				  0x82000000 0 0x01000000 0x01000000 0 0x00f00000>; /* non-prefetchable memory */
+			num-lanes = <1>;
+			interrupts = <0 120 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "msi";
+			#interrupt-cells = <1>;
+			interrupt-map-mask = <0 0 0 0x7>;
+			interrupt-map = <0 0 0 1 &intc 0 123 IRQ_TYPE_LEVEL_HIGH>,
+			                <0 0 0 2 &intc 0 122 IRQ_TYPE_LEVEL_HIGH>,
+			                <0 0 0 3 &intc 0 121 IRQ_TYPE_LEVEL_HIGH>,
+			                <0 0 0 4 &intc 0 120 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&clks IMX6QDL_CLK_PCIE_REF_125M>,
+				 <&clks IMX6QDL_CLK_SATA_REF_100M>,
+				 <&clks IMX6QDL_CLK_LVDS1_GATE>, <&clks IMX6QDL_CLK_PCIE_AXI>;
+			clock-names = "pcie_phy", "ref_100m", "pcie_bus", "pcie";
+			status = "disabled";
 		};
 
 		aips-bus@02100000 {
@@ -147,3 +181,8 @@
 &pcie {
 	compatible = "fsl,imx6qp-pcie", "snps,dw-pcie";
 };
+
+&ldb {
+	compatible = "fsl,imx6qp-ldb", "fsl,imx6q-ldb", "fsl,imx53-ldb";
+};
+
