@@ -61,6 +61,8 @@ contain the following properties.
                       used for MOSI. Defaults to 1 if not present.
 - spi-rx-bus-width - (optional) The bus width (number of data wires) that is
                       used for MISO. Defaults to 1 if not present.
+- spi-1byte-cs     - (optional) Empty property indicating device requires
+		      toggling the CS for every 1 byte of data.
 - spi-rx-delay-us  - (optional) Microsecond delay after a read transfer.
 - spi-tx-delay-us  - (optional) Microsecond delay after a write transfer.
 
