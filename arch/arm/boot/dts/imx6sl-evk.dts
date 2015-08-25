@@ -125,6 +125,11 @@
 	status = "okay";
 };
 
+&cpu0 {
+	arm-supply = <&sw1a_reg>;
+	soc-supply = <&sw1c_reg>;
+};
+
 &ecspi1 {
 	cs-gpios = <&gpio4 11 0>;
 	pinctrl-names = "default";
@@ -146,6 +151,10 @@
 	pinctrl-1 = <&pinctrl_fec_sleep>;
 	phy-mode = "rmii";
 	status = "okay";
+};
+
+&gpc {
+	 fsl,ldo-bypass = <1>;
 };
 
 &i2c1 {
