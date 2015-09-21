@@ -37,6 +37,12 @@ static int __init mvebu_pmsu_cpufreq_init(void)
 	    !of_machine_is_compatible("marvell,armada380"))
 		return 0;
 
+	if (of_machine_is_compatible("marvell,armada380") &&
+	    (num_possible_cpus() > 1)) {
+		pr_warn("CPU freq is currently broken on Armada 38x: disabling");
+		return 0;
+	}
+
 	/*
 	 * In order to have proper cpufreq handling, we need to ensure
 	 * that the Device Tree description of the CPU clock includes
