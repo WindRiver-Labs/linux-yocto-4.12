@@ -20,6 +20,7 @@
 #include <linux/pinctrl/pinctrl.h>
 
 #include "pinctrl-mvebu.h"
+static u32 *mpp_saved_regs;
 
 enum {
 	V_88F6810 = BIT(0),
@@ -422,9 +423,42 @@ static int armada_38x_pinctrl_probe(struct platform_device *pdev)
 	soc->modes = armada_38x_mpp_modes;
 	soc->nmodes = armada_38x_mpp_controls[0].npins;
 
+	nregs = DIV_ROUND_UP(soc->nmodes, MVEBU_MPPS_PER_REG);
+
+	mpp_saved_regs = devm_kcalloc(&pdev->dev, nregs, sizeof(u32),
+				      GFP_KERNEL);
+	if (!mpp_saved_regs)
+		return -ENOMEM;
+
 	pdev->dev.platform_data = soc;
 
 	return mvebu_pinctrl_simple_mmio_probe(pdev);
+}
+
+int armada_38x_pinctrl_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	struct mvebu_pinctrl_soc_info *soc = platform_get_drvdata(pdev);
+	int i, nregs;
+
+	nregs = DIV_ROUND_UP(soc->nmodes, MVEBU_MPPS_PER_REG);
+
+	for (i = 0; i < nregs; i++)
+		mpp_saved_regs[i] = readl(soc->control_data[0].base + i * 4);
+
+	return 0;
+}
+
+int armada_38x_pinctrl_resume(struct platform_device *pdev)
+{
+	struct mvebu_pinctrl_soc_info *soc = platform_get_drvdata(pdev);
+	int i, nregs;
+
+	nregs = DIV_ROUND_UP(soc->nmodes, MVEBU_MPPS_PER_REG);
+
+	for (i = 0; i < nregs; i++)
+		writel(mpp_saved_regs[i], soc->control_data[0].base + i * 4);
+
+	return 0;
 }
 
 static struct platform_driver armada_38x_pinctrl_driver = {
@@ -433,5 +467,7 @@ static struct platform_driver armada_38x_pinctrl_driver = {
 		.of_match_table = of_match_ptr(armada_38x_pinctrl_of_match),
 	},
 	.probe = armada_38x_pinctrl_probe,
+	.suspend = armada_38x_pinctrl_suspend,
+	.resume = armada_38x_pinctrl_resume,
 };
 builtin_platform_driver(armada_38x_pinctrl_driver);
