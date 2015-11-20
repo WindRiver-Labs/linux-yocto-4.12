@@ -87,6 +87,12 @@ int dwc3_host_init(struct dwc3 *dwc)
 
 	xhci->dev.parent	= dwc->dev;
 
+	/* set DMA operations */
+	if (dwc->dev->of_node && of_dma_is_coherent(dwc->dev->of_node)) {
+		xhci->dev.archdata.dma_ops = dwc->dev->archdata.dma_ops;
+		dev_dbg(dwc->dev, "set dma_ops for usb\n");
+	}
+
 	dwc->xhci = xhci;
 
 	ret = platform_device_add_resources(xhci, dwc->xhci_resources,
