@@ -58,6 +58,7 @@ static int dwc3_get_dr_mode(struct dwc3 *dwc)
 	enum usb_dr_mode mode;
 	struct device *dev = dwc->dev;
 	unsigned int hw_mode;
+	struct device_node      *node = dev->of_node;
 
 	if (dwc->dr_mode == USB_DR_MODE_UNKNOWN)
 		dwc->dr_mode = USB_DR_MODE_OTG;
@@ -93,6 +94,13 @@ static int dwc3_get_dr_mode(struct dwc3 *dwc)
 		(dwc3_readl(dwc->regs, DWC3_GSBUSCFG0) & ~0xff) | 0xf);
 	dwc3_writel(dwc->regs, DWC3_GSBUSCFG1,
 		dwc3_readl(dwc->regs, DWC3_GSBUSCFG1) | 0xf00);
+
+	/* Enable Snooping */
+	if (node && of_dma_is_coherent(node)) {
+		dwc3_writel(dwc->regs, DWC3_GSBUSCFG0,
+		dwc3_readl(dwc->regs, DWC3_GSBUSCFG0) | 0x22220000);
+		dev_dbg(dev, "enabled snooping for usb\n");
+	}
 
 		if (IS_ENABLED(CONFIG_USB_DWC3_HOST))
 			mode = USB_DR_MODE_HOST;
