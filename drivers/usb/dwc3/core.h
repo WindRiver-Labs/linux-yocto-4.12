@@ -29,6 +29,7 @@
 #include <linux/debugfs.h>
 #include <linux/wait.h>
 #include <linux/workqueue.h>
+#include <linux/of_address.h>
 
 #include <linux/usb/ch9.h>
 #include <linux/usb/gadget.h>
