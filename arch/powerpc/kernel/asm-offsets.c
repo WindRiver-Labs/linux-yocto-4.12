@@ -72,6 +72,10 @@
 #include <asm/fixmap.h>
 #endif
 
+#ifdef CONFIG_FSL_QORIQ_PM
+#include <asm/fsl_pm.h>
+#endif
+
 #define STACK_PT_REGS_OFFSET(sym, val)	\
 	DEFINE(sym, STACK_FRAME_OVERHEAD + offsetof(struct pt_regs, val))
 
@@ -750,6 +754,15 @@ int main(void)
 
 #ifdef CONFIG_PPC_8xx
 	DEFINE(VIRT_IMMR_BASE, (u64)__fix_to_virt(FIX_IMMR_BASE));
+#endif
+
+#ifdef CONFIG_FSL_QORIQ_PM
+	DEFINE(CCSR_CPC_BASE, offsetof(struct fsl_iomap, ccsr_cpc_base));
+	DEFINE(CCSR_GPIO1_BASE, offsetof(struct fsl_iomap, ccsr_gpio1_base));
+	DEFINE(CCSR_RCPM_BASE, offsetof(struct fsl_iomap, ccsr_rcpm_base));
+	DEFINE(CCSR_DDR_BASE, offsetof(struct fsl_iomap, ccsr_ddr_base));
+	DEFINE(CCSR_SCFG_BASE, offsetof(struct fsl_iomap, ccsr_scfg_base));
+	DEFINE(DCSR_EPU_BASE, offsetof(struct fsl_iomap, dcsr_epu_base));
 #endif
 
 	return 0;
