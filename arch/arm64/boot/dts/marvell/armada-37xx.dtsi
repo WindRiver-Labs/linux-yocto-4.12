@@ -282,10 +282,26 @@
 
 				xor10 {
 					interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
+					dmacap,memcpy;
+					dmacap,xor;
 				};
 				xor11 {
 					interrupts = <GIC_SPI 48 IRQ_TYPE_LEVEL_HIGH>;
+					dmacap,memcpy;
+					dmacap,xor;
+					dmacap,memset;
 				};
+			};
+
+			sdhci1: sdhci@d0000 {
+				compatible = "marvell,armada-3700-sdhci",
+					     "marvell,sdhci-xenon";
+				reg = <0xd0000 0x300>,
+				      <0x1e808 0x4>;
+				interrupts = <GIC_SPI 25 IRQ_TYPE_LEVEL_HIGH>;
+				clock-names = "core";
+				clocks = <&nb_periph_clk 0>;
+				status = "disabled";
 			};
 
 			sdhci0: sdhci@d8000 {
