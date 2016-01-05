@@ -74,6 +74,10 @@ enum {
 	NETIF_F_HW_L2FW_DOFFLOAD_BIT,	/* Allow L2 Forwarding in Hardware */
 
 	NETIF_F_HW_TC_BIT,		/* Offload TC infrastructure */
+	/* Freescale DPA support */
+	NETIF_F_HW_QDISC_BIT,           /* Supports hardware Qdisc */
+	NETIF_F_HW_ACCEL_MQ_BIT,        /* Hardware-accelerated multiqueue */
+
 	NETIF_F_HW_ESP_BIT,		/* Hardware ESP transformation offload */
 	NETIF_F_HW_ESP_TX_CSUM_BIT,	/* ESP with TX checksum offload */
 
@@ -138,6 +142,10 @@ enum {
 #define NETIF_F_HW_VLAN_STAG_TX	__NETIF_F(HW_VLAN_STAG_TX)
 #define NETIF_F_HW_L2FW_DOFFLOAD	__NETIF_F(HW_L2FW_DOFFLOAD)
 #define NETIF_F_HW_TC		__NETIF_F(HW_TC)
+/* Freescale DPA support */
+#define NETIF_F_HW_QDISC       __NETIF_F(HW_QDISC)
+#define NETIF_F_HW_ACCEL_MQ    __NETIF_F(HW_ACCEL_MQ)
+ 
 #define NETIF_F_HW_ESP		__NETIF_F(HW_ESP)
 #define NETIF_F_HW_ESP_TX_CSUM	__NETIF_F(HW_ESP_TX_CSUM)
 
