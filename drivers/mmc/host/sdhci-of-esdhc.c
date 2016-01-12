@@ -415,12 +415,13 @@ static void esdhc_of_adma_workaround(struct sdhci_host *host, u32 intmask)
 	 * Check for A-004388: eSDHC DMA might not stop if error
 	 * occurs on system transaction
 	 * Impact list:
-	 * T4240-4160-R1.0 B4860-4420-R1.0-R2.0 P1010-1014-R1.0
+	 * T4240-4160-4080-R1.0 B4860-4420-R1.0-R2.0 P1010-1014-R1.0
 	 * P3041-R1.0-R2.0-R1.1 P2041-2040-R1.0-R1.1-R2.0
 	 * P5020-5010-R2.0-R1.0 P5040-5021-R2.0-R2.1
 	 */
 	if (!(((esdhc->soc_ver == SVR_T4240) && (esdhc->soc_rev == 0x10)) ||
 		((esdhc->soc_ver == SVR_T4160) && (esdhc->soc_rev == 0x10)) ||
+		((esdhc->soc_ver == SVR_T4080) && (esdhc->soc_rev == 0x10)) ||
 		((esdhc->soc_ver == SVR_B4860) && (esdhc->soc_rev == 0x10)) ||
 		((esdhc->soc_ver == SVR_B4860) && (esdhc->soc_rev == 0x20)) ||
 		((esdhc->soc_ver == SVR_B4420) && (esdhc->soc_rev == 0x10)) ||
