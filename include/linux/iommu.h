@@ -224,6 +224,7 @@ struct iommu_ops {
 	int (*domain_set_windows)(struct iommu_domain *domain, u32 w_count);
 	/* Get the number of windows per domain */
 	u32 (*domain_get_windows)(struct iommu_domain *domain);
+	struct iommu_domain *(*get_dev_iommu_domain)(struct device *dev);
 
 	int (*of_xlate)(struct device *dev, struct of_phandle_args *args);
 
@@ -345,6 +346,8 @@ extern int iommu_domain_window_enable(struct iommu_domain *domain, u32 wnd_nr,
 				      phys_addr_t offset, u64 size,
 				      int prot);
 extern void iommu_domain_window_disable(struct iommu_domain *domain, u32 wnd_nr);
+
+extern struct iommu_domain *iommu_get_dev_domain(struct device *dev);
 
 extern int report_iommu_fault(struct iommu_domain *domain, struct device *dev,
 			      unsigned long iova, int flags);
@@ -644,6 +647,11 @@ static inline int iommu_fwspec_add_ids(struct device *dev, u32 *ids,
 
 static inline
 const struct iommu_ops *iommu_ops_from_fwnode(struct fwnode_handle *fwnode)
+{
+	return NULL;
+}
+
+static inline struct iommu_domain *iommu_get_dev_domain(struct device *dev)
 {
 	return NULL;
 }
