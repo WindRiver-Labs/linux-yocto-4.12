@@ -133,8 +133,6 @@ extern unsigned long
 _copy_to_user(void __user *, const void *, unsigned long);
 #endif
 
-extern void __compiletime_error("usercopy buffer size is too small")
-__bad_copy_user(void);
 
 static inline void copy_user_overflow(int size, unsigned long count)
 {
@@ -154,8 +152,8 @@ copy_from_user(void *to, const void __user *from, unsigned long n)
 		n = _copy_from_user(to, from, n);
 	} else if (!__builtin_constant_p(n))
 		copy_user_overflow(sz, n);
-	else
-		__bad_copy_user();
+	else {
+	}
 
 	return n;
 }
@@ -173,8 +171,8 @@ copy_to_user(void __user *to, const void *from, unsigned long n)
 		n = _copy_to_user(to, from, n);
 	} else if (!__builtin_constant_p(n))
 		copy_user_overflow(sz, n);
-	else
-		__bad_copy_user();
+	else {
+	}
 
 	return n;
 }
