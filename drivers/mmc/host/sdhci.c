@@ -2108,6 +2108,8 @@ static void __sdhci_execute_tuning(struct sdhci_host *host, u32 opcode)
 			sdhci_abort_tuning(host, opcode);
 			return;
 		}
+		if (host->ops->set_tuning_block)
+			host->ops->set_tuning_block(host);
 
 		ctrl = sdhci_readw(host, SDHCI_HOST_CONTROL2);
 		if (!(ctrl & SDHCI_CTRL_EXEC_TUNING)) {
@@ -2117,7 +2119,8 @@ static void __sdhci_execute_tuning(struct sdhci_host *host, u32 opcode)
 		}
 
 		/* Spec does not require a delay between tuning cycles */
-		if (host->tuning_delay > 0)
+		if ((opcode == MMC_SEND_TUNING_BLOCK) ||
+		    (host->quirks2 & SDHCI_QUIRK2_DELAY_BETWEEN_TUNING_CYCLES))
 			mdelay(host->tuning_delay);
 	}
 
