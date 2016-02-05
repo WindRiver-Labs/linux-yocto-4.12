@@ -21,6 +21,10 @@
 
 #include "pinctrl-mvebu.h"
 
+#define MVEBU_MPPS_PER_REG	8
+#define MVEBU_MPP_BITS		4
+#define MVEBU_MPP_MASK		0xf
+
 enum {
 	V_88F6920 = BIT(0),
 	V_88F6925 = BIT(1),

@@ -20,6 +20,10 @@
 #include <linux/pinctrl/pinctrl.h>
 
 #include "pinctrl-mvebu.h"
+#define MVEBU_MPPS_PER_REG	8
+#define MVEBU_MPP_BITS		4
+#define MVEBU_MPP_MASK		0xf
+
 static u32 *mpp_saved_regs;
 
 enum {
