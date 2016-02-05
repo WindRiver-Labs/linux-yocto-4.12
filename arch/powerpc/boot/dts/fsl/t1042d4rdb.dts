@@ -42,6 +42,14 @@
 	#size-cells = <2>;
 	interrupt-parent = <&mpic>;
 
+	aliases {
+		phy_sgmii_0 = &phy_sgmii_0;
+		phy_sgmii_1 = &phy_sgmii_1;
+		phy_sgmii_2 = &phy_sgmii_2;
+		phy_rgmii_0 = &phy_rgmii_0;
+		phy_rgmii_1 = &phy_rgmii_1;
+	};
+
 	ifc: localbus@ffe124000 {
 		cpld@3,0 {
 			compatible = "fsl,t1040d4rdb-cpld",
@@ -100,6 +108,35 @@
 		};
 	};
 
+	fsl,dpaa {
+		compatible = "fsl,t1040-dpaa", "fsl,dpaa";
+		ethernet@0 {
+			compatible = "fsl,t1040-dpa-ethernet",
+					"fsl,dpa-ethernet";
+			fsl,fman-mac = <&enet0>;
+		};
+		ethernet@1 {
+			compatible = "fsl,t1040-dpa-ethernet",
+					"fsl,dpa-ethernet";
+			fsl,fman-mac = <&enet1>;
+		};
+		ethernet@2 {
+			compatible = "fsl,t1040-dpa-ethernet",
+					"fsl,dpa-ethernet";
+			fsl,fman-mac = <&enet2>;
+		};
+		ethernet@3 {
+			compatible = "fsl,t1040-dpa-ethernet",
+					"fsl,dpa-ethernet";
+			fsl,fman-mac = <&enet3>;
+		};
+		ethernet@4 {
+			compatible = "fsl,t1040-dpa-ethernet",
+					"fsl,dpa-ethernet";
+			fsl,fman-mac = <&enet4>;
+		};
+	};
 };
 
 #include "t1042si-post.dtsi"
+/include/ "qoriq-dpaa-res3.dtsi"
