@@ -84,6 +84,8 @@ typedef enum {
 	PHY_INTERFACE_MODE_1000BASEX,
 	PHY_INTERFACE_MODE_2500BASEX,
 	PHY_INTERFACE_MODE_RXAUI,
+	PHY_INTERFACE_MODE_XAUI,
+	PHY_INTERFACE_MODE_KR,
 	PHY_INTERFACE_MODE_MAX,
 } phy_interface_t;
 
@@ -150,6 +152,10 @@ static inline const char *phy_modes(phy_interface_t interface)
 		return "2500base-x";
 	case PHY_INTERFACE_MODE_RXAUI:
 		return "rxaui";
+	case PHY_INTERFACE_MODE_XAUI:
+		return "xaui";
+	case PHY_INTERFACE_MODE_KR:
+		return "kr";
 	default:
 		return "unknown";
 	}
