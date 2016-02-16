@@ -64,8 +64,10 @@
 #define   MV_XOR_V2_GLOB_BW_CTRL_NUM_OSTD_WR_VAL	8
 #define   MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_SHIFT	12
 #define   MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_VAL	4
+#define   MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_VAL_Z1	2
 #define   MV_XOR_V2_GLOB_BW_CTRL_WR_BURST_LEN_SHIFT	16
 #define	  MV_XOR_V2_GLOB_BW_CTRL_WR_BURST_LEN_VAL	4
+#define   MV_XOR_V2_GLOB_GLOB_BW_CTRL_WR_BURST_LEN_VAL_Z1     	2
 #define MV_XOR_V2_GLOB_PAUSE				0x014
 #define   MV_XOR_V2_GLOB_PAUSE_AXI_TIME_DIS_VAL		0x8
 #define MV_XOR_V2_GLOB_SYS_INT_CAUSE			0x200
@@ -177,6 +179,17 @@ struct mv_xor_v2_sw_desc {
 	struct mv_xor_v2_descriptor hw_desc;
 	struct list_head free_list;
 };
+
+/*
+ * Hold XOR engine parameters depending on the matched
+ * compatible string.
+ */
+struct mv_xor_v2_compat_data {
+	u32 rd_burst_len;
+	u32 wr_burst_len;
+};
+
+static const struct of_device_id mv_xor_v2_dt_ids[];
 
 /*
  * Fill the data buffers to a HW descriptor
@@ -605,6 +618,8 @@ static void mv_xor_v2_set_msi_msg(struct msi_desc *desc, struct msi_msg *msg)
 static int mv_xor_v2_descq_init(struct mv_xor_v2_device *xor_dev)
 {
 	u32 reg;
+	const struct of_device_id *match;
+	struct mv_xor_v2_compat_data *data;
 
 	/* write the DESQ size to the DMA engine */
 	writel(MV_XOR_V2_DESC_NUM,
@@ -644,14 +659,17 @@ static int mv_xor_v2_descq_init(struct mv_xor_v2_device *xor_dev)
 	 * -  Limit the number of outstanding write & read data
 	 *    (OBB/IBB) requests to the maximal value.
 	*/
+	match = of_match_node(mv_xor_v2_dt_ids, xor_dev->dmadev.dev->of_node);
+	if (WARN_ON(!match))
+		return -1;
+	data = (struct mv_xor_v2_compat_data *)match->data;
+
 	reg = ((MV_XOR_V2_GLOB_BW_CTRL_NUM_OSTD_RD_VAL <<
 		MV_XOR_V2_GLOB_BW_CTRL_NUM_OSTD_RD_SHIFT) |
 	       (MV_XOR_V2_GLOB_BW_CTRL_NUM_OSTD_WR_VAL  <<
 		MV_XOR_V2_GLOB_BW_CTRL_NUM_OSTD_WR_SHIFT) |
-	       (MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_VAL <<
-		MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_SHIFT) |
-	       (MV_XOR_V2_GLOB_BW_CTRL_WR_BURST_LEN_VAL <<
-		MV_XOR_V2_GLOB_BW_CTRL_WR_BURST_LEN_SHIFT));
+		(data->rd_burst_len << MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_SHIFT) |
+		(data->wr_burst_len << MV_XOR_V2_GLOB_BW_CTRL_WR_BURST_LEN_SHIFT);
 	writel(reg, xor_dev->glob_base + MV_XOR_V2_GLOB_BW_CTRL);
 
 	/* Disable the AXI timer feature */
@@ -835,10 +853,25 @@ static int mv_xor_v2_remove(struct platform_device *pdev)
 }
 
 #ifdef CONFIG_OF
+
+struct mv_xor_v2_compat_data xor_compat_data = {
+	.rd_burst_len = MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_VAL,
+	.wr_burst_len = MV_XOR_V2_GLOB_BW_CTRL_WR_BURST_LEN_VAL
+};
+
+struct mv_xor_v2_compat_data xor_compat_data_z1 = {
+	.rd_burst_len = MV_XOR_V2_GLOB_BW_CTRL_RD_BURST_LEN_VAL_Z1,
+	.wr_burst_len = MV_XOR_V2_GLOB_GLOB_BW_CTRL_WR_BURST_LEN_VAL_Z1
+};
+
 static const struct of_device_id mv_xor_v2_dt_ids[] = {
-	{ .compatible = "marvell,xor-v2", },
+	{ .compatible = "marvell,mv-xor-v2",
+	  .data = &xor_compat_data},
+	{ .compatible = "marvell,mv-xor-v2-z1",
+	  .data = &xor_compat_data_z1 },
 	{},
 };
+
 MODULE_DEVICE_TABLE(of, mv_xor_v2_dt_ids);
 #endif
 
