@@ -6,7 +6,9 @@ dtb-$(CONFIG_ARCH_BERLIN) += berlin4ct-stb.dtb
 dtb-$(CONFIG_ARCH_MVEBU) += armada-3720-db.dtb
 dtb-$(CONFIG_ARCH_MVEBU) += armada-3720-espressobin.dtb
 dtb-$(CONFIG_ARCH_MVEBU) += armada-7040-db.dtb
-dtb-$(CONFIG_ARCH_MVEBU) += armada-7040-rz-db.dtb
+dtb-$(CONFIG_ARCH_MVEBU) += armada-7040-rz-db-router.dtb
+dtb-$(CONFIG_ARCH_MVEBU) += armada-7040-rz-db-nand.dtb
+dtb-$(CONFIG_ARCH_MVEBU) += armada-7040-rz-db-rxaui.dtb
 dtb-$(CONFIG_ARCH_MVEBU) += armada-8040-db.dtb
 dtb-$(CONFIG_ARCH_MVEBU) += armada-8040-mcbin.dtb
 
