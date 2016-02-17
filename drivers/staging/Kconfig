@@ -118,4 +118,6 @@ source "drivers/staging/ccree/Kconfig"
 
 source "drivers/staging/typec/Kconfig"
 
+source "drivers/staging/fsl_dpa_offload/Kconfig"
+
 endif # STAGING
