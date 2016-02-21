@@ -281,7 +281,7 @@ int dw_pcie_host_init(struct pcie_port *pp)
 	struct platform_device *pdev = to_platform_device(dev);
 	struct pci_bus *bus, *child;
 	struct resource *cfg_res;
-	int i, ret;
+	int i, ret, has_msi = 0;
 	LIST_HEAD(res);
 	struct resource_entry *win, *tmp;
 
@@ -386,13 +386,12 @@ int dw_pcie_host_init(struct pcie_port *pp)
 				ret = -ENXIO;
 				goto error;
 			}
+			has_msi = 1;
 
 			for (i = 0; i < MAX_MSI_IRQS; i++)
 				irq_create_mapping(pp->irq_domain, i);
 		} else {
-			ret = pp->ops->msi_host_init(pp, &dw_pcie_msi_chip);
-			if (ret < 0)
-				goto error;
+			has_msi = (pp->ops->msi_host_init(pp, &dw_pcie_msi_chip) == 0);
 		}
 	}
 
@@ -400,7 +399,7 @@ int dw_pcie_host_init(struct pcie_port *pp)
 		pp->ops->host_init(pp);
 
 	pp->root_bus_nr = pp->busn->start;
-	if (IS_ENABLED(CONFIG_PCI_MSI)) {
+	if (IS_ENABLED(CONFIG_PCI_MSI) && has_msi) {
 		bus = pci_scan_root_bus_msi(dev, pp->root_bus_nr,
 					    &dw_pcie_ops, pp, &res,
 					    &dw_pcie_msi_chip);
