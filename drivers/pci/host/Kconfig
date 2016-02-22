@@ -7,6 +7,15 @@ config PCI_MVEBU
 	depends on ARM
 	depends on OF
 
+config IGNORE_ASYNC_ABORT
+	bool "Ignore asynchronous abort from configuration access"
+	depends on ARCH_MVEBU
+	help
+	 Ignore asynchronous abort caused during configuration
+	 access to ports with no endpoint connected.
+	 Warning: This will mask all Serror aborts
+	 regardless of their cause
+
 config PCI_AARDVARK
 	bool "Aardvark PCIe controller"
 	depends on ARCH_MVEBU && ARM64

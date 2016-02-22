@@ -410,7 +410,11 @@ ENTRY(vectors)
 	kernel_ventry	1, sync				// Synchronous EL1h
 	kernel_ventry	1, irq				// IRQ EL1h
 	kernel_ventry	1, fiq_invalid			// FIQ EL1h
+#ifdef CONFIG_IGNORE_ASYNC_ABORT
+	kernel_ventry	1, ignore
+#else
 	kernel_ventry	1, error_invalid		// Error EL1h
+#endif
 
 	kernel_ventry	0, sync				// Synchronous 64-bit EL0
 	kernel_ventry	0, irq				// IRQ 64-bit EL0
@@ -511,6 +515,12 @@ ENDPROC(el1_fiq_invalid)
 el1_error_invalid:
 	inv_entry 1, BAD_ERROR
 ENDPROC(el1_error_invalid)
+
+#ifdef CONFIG_IGNORE_ASYNC_ABORT
+el1_ignore:
+	eret
+ENDPROC(el1_ignore)
+#endif
 
 /*
  * EL1 mode handlers.
