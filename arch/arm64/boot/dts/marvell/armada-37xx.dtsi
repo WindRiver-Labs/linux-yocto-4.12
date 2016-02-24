@@ -336,6 +336,16 @@
 				};
 			};
 
+			advk_ic: interrupt-controller@74840 {
+				compatible = "marvell,advk-ic";
+				reg = <0x74840 0x10
+				       0x8b000 0x8>;
+				interrupt-controller;
+				#interrupt-cells = <1>;
+				interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
+				status = "disabled";
+			};
+
 			sdhci1: sdhci@d0000 {
 				compatible = "marvell,armada-3700-sdhci",
 					     "marvell,sdhci-xenon";
@@ -388,6 +398,7 @@
 			#interrupt-cells = <1>;
 			msi-parent = <&pcie0>;
 			msi-controller;
+			clocks = <&sb_periph_clk 13>;
 			ranges = <0x82000000 0 0xe8000000   0 0xe8000000 0 0x1000000 /* Port 0 MEM */
 				  0x81000000 0 0xe9000000   0 0xe9000000 0 0x10000>; /* Port 0 IO*/
 			interrupt-map-mask = <0 0 0 7>;
