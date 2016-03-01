@@ -111,6 +111,8 @@ config ARCH_MVEBU
 	select MVEBU_ODMI
 	select MVEBU_CLK_COMMON
 	select ARMADA_3700_CLK
+	select PINCTRL
+	select PINCTRL_ARMADA_3700
 	select ARM_GIC_V2M
 	select MVEBU_PIC
 	select OF_GPIO
