@@ -162,6 +162,9 @@
 	mmc-hs400-1_8v;
 	marvell,pad-type = "fixed-1-8v";
 	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc_pins>;
 };
 
 &sdhci1 {
