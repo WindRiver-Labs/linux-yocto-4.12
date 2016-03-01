@@ -276,4 +276,24 @@
 	 * CS2: mikrobus
 	 */
 	pinctrl-0 = <&spi1_pins &clearfog_spi1_cs_pins &mikro_spi_pins>;
+
+	spi-flash@0 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "w25q32", "jedec,spi-nor";
+		reg = <0>; /* Chip select 0 */
+		spi-max-frequency = <3000000>;
+		status = "disabled";
+	};
+
+	slic@1 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "mv_slic";
+		reg = <1>; /* Chip select 1 */
+		spi-max-frequency = <3000000>;
+		spi-1byte-cs;
+		spi-cpol;
+		spi-cpha;
+	};
 };
