@@ -111,6 +111,7 @@ config ARCH_MVEBU
 	select MVEBU_ODMI
 	select MVEBU_CLK_COMMON
 	select ARMADA_3700_CLK
+	select ARM_GIC_V2M
 	select MVEBU_PIC
 	select OF_GPIO
 	select ARMADA_CP110_CLK
