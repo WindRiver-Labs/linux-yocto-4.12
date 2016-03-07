@@ -122,6 +122,15 @@ config ARCH_MVEBU
 	   - Armada 7K SoC Family
 	   - Armada 8K SoC Family
 
+config ARCH_MVEBU_PD
+	bool "Marvell EBU SoC Emulation"
+	select ARCH_MVEBU
+	help
+	  This enables emulation support for Marvell EBU family, including:
+	   - Armada 3700 SoC Family
+	   - Armada 7K SoC Family
+	   - Armada 8K SoC Family
+
 config ARCH_QCOM
 	bool "Qualcomm Platforms"
 	select GPIOLIB
