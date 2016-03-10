@@ -393,8 +393,6 @@ static int mvebu_mbus_setup_window(struct mvebu_mbus_state *mbus,
 		(attr << WIN_CTRL_ATTR_SHIFT)    |
 		(target << WIN_CTRL_TGT_SHIFT)   |
 		WIN_CTRL_ENABLE;
-	if (mbus->hw_io_coherency)
-		ctrl |= WIN_CTRL_SYNCBARRIER;
 
 	writel(base & WIN_BASE_LOW, addr + WIN_BASE_OFF);
 	writel(ctrl, addr + WIN_CTRL_OFF);
@@ -1185,8 +1183,7 @@ static int __init mvebu_mbus_common_init(struct mvebu_mbus_state *mbus,
 					 phys_addr_t mbusbridge_phys_base,
 					 size_t mbusbridge_size,
 					 phys_addr_t mbusopt_phys_base,
-					 size_t mbusopt_size,
-					 bool is_coherent)
+					 size_t mbusopt_size)
 {
 	int win;
 
@@ -1224,10 +1221,6 @@ static int __init mvebu_mbus_common_init(struct mvebu_mbus_state *mbus,
 	mbus->soc->setup_cpu_target(mbus);
 	mvebu_mbus_setup_cpu_target_nooverlap(mbus);
 
-	if (is_coherent)
-		writel(UNIT_SYNC_BARRIER_ALL,
-		       mbus->mbuswins_base + UNIT_SYNC_BARRIER_OFF);
-
 	register_syscore_ops(&mvebu_mbus_syscore_ops);
 
 	return 0;
@@ -1255,7 +1248,7 @@ int __init mvebu_mbus_init(const char *soc, phys_addr_t mbuswins_phys_base,
 			mbuswins_phys_base,
 			mbuswins_size,
 			sdramwins_phys_base,
-			sdramwins_size, 0, 0, 0, 0, false);
+			sdramwins_size, 0, 0, 0, 0);
 }
 
 #ifdef CONFIG_OF
@@ -1471,8 +1464,7 @@ int __init mvebu_mbus_dt_init(bool is_coherent)
 				     mbusbridge_res.start,
 				     resource_size(&mbusbridge_res),
 				     mbusopt_res.start,
-				     resource_size(&mbusopt_res),
-				     is_coherent);
+				     resource_size(&mbusopt_res));
 	if (ret)
 		return ret;
 
