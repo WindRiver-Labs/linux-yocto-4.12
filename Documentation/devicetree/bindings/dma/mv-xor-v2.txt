@@ -9,6 +9,8 @@ Required properties:
     the second set is the global registers
 - msi-parent: Phandle to the MSI-capable interrupt controller used for
   interrupts.
+- clocks: One ore more clock gating clocks to be used to enable DMA engine
+  unit in the SoC.
 
 Optional properties:
 - clocks: Optional reference to the clock used by the XOR engine.
@@ -20,5 +22,6 @@ Example:
 		reg = <0x400000 0x1000>,
 		      <0x410000 0x1000>;
 		msi-parent = <&gic_v2m0>;
+		clocks = <&gateclk 14>;
 		dma-coherent;
 	};
