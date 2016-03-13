@@ -159,6 +159,9 @@ static inline void dma_mark_clean(void *addr, size_t size) { }
 extern void *arm_dma_alloc(struct device *dev, size_t size, dma_addr_t *handle,
 			   gfp_t gfp, unsigned long attrs);
 
+extern void *arm_coherent_dma_alloc(struct device *dev, size_t size,
+				    dma_addr_t *handle, gfp_t gfp, unsigned long attrs);
+
 /**
  * arm_dma_free - free memory allocated by arm_dma_alloc
  * @dev: valid struct device pointer, or NULL for ISA and EISA-like devices
@@ -175,6 +178,9 @@ extern void *arm_dma_alloc(struct device *dev, size_t size, dma_addr_t *handle,
  */
 extern void arm_dma_free(struct device *dev, size_t size, void *cpu_addr,
 			 dma_addr_t handle, unsigned long attrs);
+
+extern void arm_coherent_dma_free(struct device *dev, size_t size, void *cpu_addr,
+				  dma_addr_t handle, unsigned long attrs);
 
 /**
  * arm_dma_mmap - map a coherent DMA allocation into user space

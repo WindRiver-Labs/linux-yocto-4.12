@@ -196,24 +196,6 @@ const struct dma_map_ops arm_dma_ops = {
 };
 EXPORT_SYMBOL(arm_dma_ops);
 
-static void *arm_coherent_dma_alloc(struct device *dev, size_t size,
-	dma_addr_t *handle, gfp_t gfp, unsigned long attrs);
-static void arm_coherent_dma_free(struct device *dev, size_t size, void *cpu_addr,
-				  dma_addr_t handle, unsigned long attrs);
-static int arm_coherent_dma_mmap(struct device *dev, struct vm_area_struct *vma,
-		 void *cpu_addr, dma_addr_t dma_addr, size_t size,
-		 unsigned long attrs);
-
-const struct dma_map_ops arm_coherent_dma_ops = {
-	.alloc			= arm_coherent_dma_alloc,
-	.free			= arm_coherent_dma_free,
-	.mmap			= arm_coherent_dma_mmap,
-	.get_sgtable		= arm_dma_get_sgtable,
-	.map_page		= arm_coherent_dma_map_page,
-	.map_sg			= arm_dma_map_sg,
-};
-EXPORT_SYMBOL(arm_coherent_dma_ops);
-
 static int __dma_supported(struct device *dev, u64 mask, bool warn)
 {
 	unsigned long max_dma_pfn;
@@ -843,7 +825,7 @@ void *arm_dma_alloc(struct device *dev, size_t size, dma_addr_t *handle,
 			   attrs, __builtin_return_address(0));
 }
 
-static void *arm_coherent_dma_alloc(struct device *dev, size_t size,
+void *arm_coherent_dma_alloc(struct device *dev, size_t size,
 	dma_addr_t *handle, gfp_t gfp, unsigned long attrs)
 {
 	return __dma_alloc(dev, size, handle, gfp, PAGE_KERNEL, true,
@@ -929,7 +911,7 @@ void arm_dma_free(struct device *dev, size_t size, void *cpu_addr,
 	__arm_dma_free(dev, size, cpu_addr, handle, attrs, false);
 }
 
-static void arm_coherent_dma_free(struct device *dev, size_t size, void *cpu_addr,
+void arm_coherent_dma_free(struct device *dev, size_t size, void *cpu_addr,
 				  dma_addr_t handle, unsigned long attrs)
 {
 	__arm_dma_free(dev, size, cpu_addr, handle, attrs, true);
@@ -2391,6 +2373,17 @@ static void arm_teardown_iommu_dma_ops(struct device *dev) { }
 #define arm_get_iommu_dma_map_ops arm_get_dma_map_ops
 
 #endif	/* CONFIG_ARM_DMA_USE_IOMMU */
+
+struct dma_map_ops arm_coherent_dma_ops = {
+	.alloc		= arm_coherent_dma_alloc,
+	.free		= arm_coherent_dma_free,
+	.mmap		= arm_coherent_dma_mmap,
+	.get_sgtable	= arm_dma_get_sgtable,
+	.map_page	= arm_coherent_dma_map_page,
+	.map_sg		= arm_dma_map_sg,
+	.set_dma_mask	= arm_dma_set_mask,
+};
+EXPORT_SYMBOL(arm_coherent_dma_ops);
 
 static const struct dma_map_ops *arm_get_dma_map_ops(bool coherent)
 {
