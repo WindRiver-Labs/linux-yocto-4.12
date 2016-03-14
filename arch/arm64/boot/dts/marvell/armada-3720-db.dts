@@ -209,9 +209,3 @@
 	phy = <&phy0>;
 	status = "okay";
 };
-
-&eth1 {
-	phy-mode = "sgmii";
-	phy = <&phy1>;
-	status = "okay";
-};
