@@ -259,6 +259,7 @@
 				clocks = <&ap_syscon 4>;
 				dma-coherent;
 				marvell,xenon-phy-slow-mode;
+				max-frequency = <50000000>;
 				status = "disabled";
 			};
 
