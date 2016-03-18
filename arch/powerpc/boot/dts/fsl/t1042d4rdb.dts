@@ -59,29 +59,36 @@
 
 	soc: soc@ffe000000 {
 		fman0: fman@400000 {
+			rcpm-wakeup = <&rcpm 0x00000008>;
+
 			ethernet@e0000 {
 				phy-handle = <&phy_sgmii_0>;
 				phy-connection-type = "sgmii";
+				rcpm-wakeup = <&rcpm 0x80000000>;
 			};
 
 			ethernet@e2000 {
 				phy-handle = <&phy_sgmii_1>;
 				phy-connection-type = "sgmii";
+				rcpm-wakeup = <&rcpm 0x40000000>;
 			};
 
 			ethernet@e4000 {
 				phy-handle = <&phy_sgmii_2>;
 				phy-connection-type = "sgmii";
+				rcpm-wakeup = <&rcpm 0x20000000>;		
 			};
 
 			ethernet@e6000 {
 				phy-handle = <&phy_rgmii_0>;
 				phy-connection-type = "rgmii";
+				rcpm-wakeup = <&rcpm 0x10000000>;
 			};
 
 			ethernet@e8000 {
 				phy-handle = <&phy_rgmii_1>;
 				phy-connection-type = "rgmii";
+				rcpm-wakeup = <&rcpm 0x08000000>;
 			};
 
 			mdio0: mdio@fc000 {
