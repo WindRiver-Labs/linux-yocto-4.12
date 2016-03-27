@@ -93,6 +93,14 @@
 
 				enable-active-high;
 			};
+
+			u3d@50000 {
+				status = "disabled";
+			};
+
+			udc@54100 {
+				status = "disabled";
+			};
 		};
 
 		reg_sata: pwr-sata {
