@@ -100,7 +100,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 	of_property_read_string_index(np, "clock-output-names",
 				      0, &name);
 	ap806_clks[0] = clk_register_fixed_rate(&pdev->dev, name, NULL,
-						0, cpuclk_freq);
+						CLK_IS_ROOT, cpuclk_freq);
 	if (IS_ERR(ap806_clks[0])) {
 		ret = PTR_ERR(ap806_clks[0]);
 		goto fail0;
@@ -108,7 +108,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 
 	of_property_read_string_index(np, "clock-output-names",
 				      1, &name);
-	ap806_clks[1] = clk_register_fixed_rate(&pdev->dev, name, NULL, 0,
+	ap806_clks[1] = clk_register_fixed_rate(&pdev->dev, name, NULL, CLK_IS_ROOT,
 						cpuclk_freq);
 	if (IS_ERR(ap806_clks[1])) {
 		ret = PTR_ERR(ap806_clks[1]);
@@ -118,7 +118,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 	/* Fixed clock is always 1200 Mhz */
 	of_property_read_string_index(np, "clock-output-names",
 				      2, &fixedclk_name);
-	ap806_clks[2] = clk_register_fixed_rate(&pdev->dev, fixedclk_name, NULL,
+	ap806_clks[2] = clk_register_fixed_rate(&pdev->dev, fixedclk_name, NULL, CLK_IS_ROOT,
 						0, 1200 * 1000 * 1000);
 	if (IS_ERR(ap806_clks[2])) {
 		ret = PTR_ERR(ap806_clks[2]);
