@@ -36,6 +36,7 @@ its hardware characteristcs.
 
 		- Qualcomm Configurable Replicator (version 1.x):
 			"qcom,coresight-replicator1x", "arm,primecell";
+		- "marvell,coresight-axim", "arm,primecell";
 
 		- System Trace Macrocell:
 			"arm,coresight-stm", "arm,primecell"; [1]
