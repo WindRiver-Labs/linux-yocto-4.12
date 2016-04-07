@@ -165,6 +165,7 @@
 			pic: interrupt-controller@3f0100 {
 				compatible = "marvell,armada-8k-pic";
 				reg = <0x3f0100 0x10>;
+				int-en-pol = <0>;
 				#interrupt-cells = <1>;
 				interrupt-controller;
 				interrupts = <GIC_PPI 15 IRQ_TYPE_LEVEL_HIGH>;
