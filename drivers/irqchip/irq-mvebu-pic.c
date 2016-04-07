@@ -24,12 +24,16 @@
 
 #define PIC_MAX_IRQS		32
 #define PIC_MAX_IRQ_MASK	((1UL << PIC_MAX_IRQS) - 1)
+#define PIC_INT_EN_POL		(0)
 
 struct mvebu_pic {
 	void __iomem *base;
 	u32 parent_irq;
 	struct irq_domain *domain;
 	struct irq_chip irq_chip;
+	u32 int_en_pol;		/* Interrupt mask bit polarity - 0 means that writing
+				 * 0 to the int-mask reg enables the interrupt.
+				 */
 };
 
 static void mvebu_pic_reset(struct mvebu_pic *pic)
@@ -52,7 +56,11 @@ static void mvebu_pic_mask_irq(struct irq_data *d)
 	u32 reg;
 
 	reg =  readl(pic->base + PIC_MASK);
-	reg |= (1 << d->hwirq);
+	if (pic->int_en_pol)
+		reg &= ~(1 << d->hwirq);
+	else
+		/* 1 enables the interrupt */
+		reg |= (1 << d->hwirq);
 	writel(reg, pic->base + PIC_MASK);
 }
 
@@ -62,7 +70,11 @@ static void mvebu_pic_unmask_irq(struct irq_data *d)
 	u32 reg;
 
 	reg = readl(pic->base + PIC_MASK);
-	reg &= ~(1 << d->hwirq);
+	if (pic->int_en_pol)
+		/* 1 enables the interrupt */
+		reg |= (1 << d->hwirq);
+	else
+		reg &= ~(1 << d->hwirq);
 	writel(reg, pic->base + PIC_MASK);
 }
 
@@ -145,6 +157,11 @@ static int mvebu_pic_probe(struct platform_device *pdev)
 	if (pic->parent_irq <= 0) {
 		dev_err(&pdev->dev, "Failed to parse parent interrupt\n");
 		return -EINVAL;
+	}
+
+	if (of_property_read_u32(node, "int-en-pol", &pic->int_en_pol)) {
+		pr_warn("Missing interrupt enable polarity. Assuming %d\n", PIC_INT_EN_POL);
+		pic->int_en_pol = PIC_INT_EN_POL;
 	}
 
 	pic->domain = irq_domain_add_linear(node, PIC_MAX_IRQS,
