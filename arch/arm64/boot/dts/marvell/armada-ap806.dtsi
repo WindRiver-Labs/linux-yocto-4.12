@@ -132,6 +132,12 @@
 				compatible = "arm,cortex-a72-pmu";
 				interrupt-parent = <&pic>;
 				interrupts = <17>;
+				status = "disabled";
+			};
+
+			ccu-spmu {
+				compatible = "marvell,mvebu-ccu-pmu";
+				reg = <0xF000 0x1000>;
 			};
 
 			smmu: iommu@5000000 {
