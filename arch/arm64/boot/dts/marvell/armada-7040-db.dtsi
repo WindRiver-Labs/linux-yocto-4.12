@@ -57,7 +57,12 @@
 	};
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
+			sdhci@6e0000 {
+				bus-width = <4>;
+				non-removable; /* For now, need to configure the GPIO for card detect */
+				status = "okay";
+			};
 			serial@512000 {
 				status = "okay";
 			};
@@ -69,7 +74,7 @@
 	};
 
 	cp110-master {
-		config-space {
+		config-space@f2000000 {
 			spi@700680 {
 				spi-flash@0 {
 					#address-cells = <0x1>;

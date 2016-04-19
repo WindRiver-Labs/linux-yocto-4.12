@@ -54,7 +54,7 @@
 		     "marvell,armada-ap806";
 
 	cp110-master {
-		config-space {
+		config-space@f2000000 {
 			ppv22@000000 {
 				dma-coherent;
 			};
