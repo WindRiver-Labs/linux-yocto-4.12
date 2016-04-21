@@ -239,6 +239,8 @@ static int armada8k_pcie_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, pcie);
 
+	pci_add_flags(PCI_REASSIGN_ALL_RSRC | PCI_REASSIGN_ALL_BUS);
+
 	ret = armada8k_add_pcie_port(pcie, pdev);
 	if (ret)
 		goto fail;
