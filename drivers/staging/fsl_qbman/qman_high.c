@@ -3026,8 +3026,8 @@ static int qman_ceetm_configure_lfqmt(struct qm_mcc_ceetm_lfqmt_config *opts)
 	return 0;
 }
 
-static int qman_ceetm_query_lfqmt(int lfqid,
-			struct qm_mcr_ceetm_lfqmt_query *lfqmt_query)
+int qman_ceetm_query_lfqmt(int lfqid,
+			   struct qm_mcr_ceetm_lfqmt_query *lfqmt_query)
 {
 	struct qm_mc_command *mcc;
 	struct qm_mc_result *mcr;
@@ -3056,6 +3056,7 @@ static int qman_ceetm_query_lfqmt(int lfqid,
 	}
 	return 0;
 }
+EXPORT_SYMBOL(qman_ceetm_query_lfqmt);
 
 static int qman_ceetm_configure_cq(struct qm_mcc_ceetm_cq_config *opts)
 {
@@ -3454,8 +3455,9 @@ static int qman_ceetm_query_statistics(u16 cid,
 	return 0;
 }
 
-static int qman_ceetm_write_statistics(u16 cid, enum qm_dc_portal dcp_idx,
-			u16 command_type, u64 frame_count, u64 byte_count)
+int qman_ceetm_query_write_statistics(u16 cid, enum qm_dc_portal dcp_idx,
+				      u16 command_type, u64 frame_count,
+				      u64 byte_count)
 {
 	struct qm_mc_command *mcc;
 	struct qm_mc_result *mcr;
@@ -3489,6 +3491,7 @@ static int qman_ceetm_write_statistics(u16 cid, enum qm_dc_portal dcp_idx,
 	}
 	return 0;
 }
+EXPORT_SYMBOL(qman_ceetm_query_write_statistics);
 
 int qman_ceetm_bps2tokenrate(u64 bps, struct qm_ceetm_rate *token_rate,
 							int rounding)
