@@ -143,6 +143,14 @@
 				clocks = <&coreclk 1>;
 			};
 
+			coredivclk: corediv-clock@18740 {
+				compatible = "marvell,armada-370-corediv-clock";
+				reg = <0x18740 0xc>;
+				#clock-cells = <1>;
+				clocks = <&mainpll>;
+				clock-output-names = "nand";
+			};
+
 			cpu-config@21000 {
 				compatible = "marvell,armada-xp-cpu-config";
 				reg = <0x21000 0x8>;
