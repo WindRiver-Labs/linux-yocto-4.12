@@ -183,6 +183,7 @@ static int imx_pmx_set(struct pinctrl_dev *pctldev, unsigned selector,
 
 	for (i = 0; i < npins; i++) {
 		struct imx_pin *pin = &((struct imx_pin *)(grp->data))[i];
+		u32 mux_shift = info->mux_mask ? ffs(info->mux_mask) - 1 : 0;
 
 		pin_id = pin->pin;
 		pin_reg = &info->pin_regs[pin_id];
@@ -196,8 +197,8 @@ static int imx_pmx_set(struct pinctrl_dev *pctldev, unsigned selector,
 		if (info->flags & SHARE_MUX_CONF_REG) {
 			u32 reg;
 			reg = readl(ipctl->base + pin_reg->mux_reg);
-			reg &= ~(0x7 << 20);
-			reg |= (pin->mux_mode << 20);
+			reg &= ~info->mux_mask;
+			reg |= (pin->mux_mode << mux_shift);
 			writel(reg, ipctl->base + pin_reg->mux_reg);
 		} else {
 			writel(pin->mux_mode, ipctl->base + pin_reg->mux_reg);
@@ -287,7 +288,7 @@ static int imx_pmx_gpio_request_enable(struct pinctrl_dev *pctldev,
 
 mux_pin:
 	reg = readl(ipctl->base + pin_reg->mux_reg);
-	reg &= ~(0x7 << 20);
+	reg &= ~info->mux_mask;
 	reg |= imx_pin->config;
 	writel(reg, ipctl->base + pin_reg->mux_reg);
 
@@ -739,6 +740,9 @@ int imx_pinctrl_probe(struct platform_device *pdev,
 	ipctl->base = devm_ioremap_resource(&pdev->dev, res);
 	if (IS_ERR(ipctl->base))
 		return PTR_ERR(ipctl->base);
+
+	/* only for share mux and conf reg */
+	of_property_read_u32(dev_np, "fsl,mux_mask", &info->mux_mask);
 
 	if (of_property_read_bool(dev_np, "fsl,input-sel")) {
 		np = of_parse_phandle(dev_np, "fsl,input-sel", 0);
