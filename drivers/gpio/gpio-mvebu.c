@@ -1189,6 +1189,7 @@ static int mvebu_gpio_probe(struct platform_device *pdev)
 	struct irq_chip_generic *gc;
 	struct irq_chip_type *ct;
 	unsigned int ngpios;
+	unsigned int gpio_base = -1;
 	bool have_irqs;
 	int soc_variant;
 	int i, cpu, id;
@@ -1214,6 +1215,9 @@ static int mvebu_gpio_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Missing ngpios OF property\n");
 		return -ENODEV;
 	}
+
+	if (of_property_read_u32(pdev->dev.of_node, "gpiobase", &gpio_base))
+		gpio_base = -1;
 
 	id = of_alias_get_id(pdev->dev.of_node, "gpio");
 	if (id < 0) {
@@ -1243,7 +1247,10 @@ static int mvebu_gpio_probe(struct platform_device *pdev)
 		mvchip->chip.get = mvebu_gpio_get;
 		mvchip->chip.direction_output = mvebu_gpio_direction_output;
 		mvchip->chip.set = mvebu_gpio_set;
-		mvchip->chip.base = id * MVEBU_MAX_GPIO_PER_BANK;
+		if (gpio_base != -1)
+			mvchip->chip.base = gpio_base;
+		else
+			mvchip->chip.base = id * MVEBU_MAX_GPIO_PER_BANK;
 		mvchip->chip.dbg_show = mvebu_gpio_dbg_show;
 	}
 	if (have_irqs)
