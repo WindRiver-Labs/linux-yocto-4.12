@@ -1921,7 +1921,7 @@ static void mvneta_rxq_drop_pkts(struct mvneta_port *pp,
 		struct mvneta_rx_desc *rx_desc = rxq->descs + i;
 		void *data = rxq->buf_virt_addr[i];
 
-		dma_unmap_single(pp->dev->dev.parent, rx_desc->buf_phys_addr,
+		dma_unmap_single(pp->dev->dev.parent, rx_desc->buf_phys_addr - pp->rx_offset_correction,
 				 MVNETA_RX_BUF_SIZE(pp->pkt_size), DMA_FROM_DEVICE);
 		mvneta_frag_free(pp->frag_size, data);
 	}
@@ -1973,17 +1973,23 @@ err_drop_frame:
 		if (rx_bytes <= rx_copybreak) {
 		/* better copy a small frame and not unmap the DMA region */
 			skb = netdev_alloc_skb_ip_align(dev, rx_bytes);
-			if (unlikely(!skb))
+			if (unlikely(!skb)) {
+				netdev_warn(dev, "rxq #%d - Can't allocate skb. rx_bytes = %d bytes\n",
+					    rxq->id, rx_bytes);
 				goto err_drop_frame;
+			}
 
-			dma_sync_single_range_for_cpu(dev->dev.parent,
-						      phys_addr,
-						      MVNETA_MH_SIZE + NET_SKB_PAD,
-						      rx_bytes,
-						      DMA_FROM_DEVICE);
-			memcpy(skb_put(skb, rx_bytes),
+			/* Copy data from buffer to SKB without Marvell header */
+			memcpy(skb->data,
 			       data + MVNETA_MH_SIZE + NET_SKB_PAD,
 			       rx_bytes);
+
+			skb_put(skb, rx_bytes);
+			dma_sync_single_range_for_cpu(dev->dev.parent,
+						      phys_addr,
+						      NET_SKB_PAD - pp->rx_offset_correction,
+						      rx_bytes + MVNETA_MH_SIZE,
+						      DMA_FROM_DEVICE);
 
 			skb->protocol = eth_type_trans(skb, dev);
 			mvneta_rx_csum(pp, rx_status, skb);
@@ -1996,6 +2002,21 @@ err_drop_frame:
 			continue;
 		}
 
+		frag_size = pp->frag_size;
+		skb = build_skb(data, frag_size > PAGE_SIZE ? 0 : frag_size);
+		if (unlikely(!skb)) {
+			netdev_warn(dev, "rxq #%d - Can't build skb. frag_size = %d bytes\n",
+				    rxq->id, pp->frag_size);
+			goto err_drop_frame;
+		}
+
+		/* After refill old buffer has to be unmapped regardless
+		 * the skb is successfully built or not.
+		 */
+		dma_unmap_single(dev->dev.parent, phys_addr - pp->rx_offset_correction,
+				 MVNETA_RX_BUF_SIZE(pp->pkt_size),
+				 DMA_FROM_DEVICE);
+
 		/* Refill processing */
 		err = mvneta_rx_refill(pp, rx_desc, rxq);
 		if (err) {
@@ -2003,20 +2024,6 @@ err_drop_frame:
 			rxq->missed++;
 			goto err_drop_frame;
 		}
-
-		frag_size = pp->frag_size;
-
-		skb = build_skb(data, frag_size > PAGE_SIZE ? 0 : frag_size);
-
-		/* After refill old buffer has to be unmapped regardless
-		 * the skb is successfully built or not.
-		 */
-		dma_unmap_single(dev->dev.parent, phys_addr,
-				 MVNETA_RX_BUF_SIZE(pp->pkt_size),
-				 DMA_FROM_DEVICE);
-
-		if (!skb)
-			goto err_drop_frame;
 
 		rcvd_pkts++;
 		rcvd_bytes += rx_bytes;
