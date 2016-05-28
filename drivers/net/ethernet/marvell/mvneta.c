@@ -2014,7 +2014,8 @@ static void mvneta_rxq_drop_pkts(struct mvneta_port *pp,
 
 /* Main rx processing when using software buffer management */
 static int mvneta_rx_swbm(struct mvneta_port *pp, int rx_todo,
-			  struct mvneta_rx_queue *rxq)
+			  struct mvneta_rx_queue *rxq,
+			  struct napi_struct *napi)
 {
 	struct mvneta_pcpu_port *port = this_cpu_ptr(pp->ports);
 	struct net_device *dev = pp->dev;
@@ -2059,7 +2060,7 @@ err_drop_frame:
 
 		if (rx_bytes <= rx_copybreak) {
 		/* better copy a small frame and not unmap the DMA region */
-			skb = netdev_alloc_skb_ip_align(dev, rx_bytes);
+			skb = napi_alloc_skb(napi, rx_bytes);
 			if (unlikely(!skb)) {
 				netdev_warn(dev, "rxq #%d - Can't allocate skb. rx_bytes = %d bytes\n",
 					    rxq->id, rx_bytes);
@@ -2160,7 +2161,8 @@ err_drop_frame:
 
 /* Main rx processing when using hardware buffer management */
 static int mvneta_rx_hwbm(struct mvneta_port *pp, int rx_todo,
-			  struct mvneta_rx_queue *rxq)
+			  struct mvneta_rx_queue *rxq,
+			  struct napi_struct *napi)
 {
 	struct mvneta_pcpu_port *port = this_cpu_ptr(pp->ports);
 	struct net_device *dev = pp->dev;
@@ -2210,7 +2212,7 @@ err_drop_frame:
 
 		if (rx_bytes <= rx_copybreak) {
 			/* better copy a small frame and not unmap the DMA region */
-			skb = netdev_alloc_skb_ip_align(dev, rx_bytes);
+			skb = napi_alloc_skb(napi, rx_bytes);
 			if (unlikely(!skb))
 				goto err_drop_frame_ret_pool;
 
