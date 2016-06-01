@@ -138,6 +138,15 @@
 				};
 			};
 
+			sdhci@d8000 {
+				clock-frequency = <200000000>;
+				broken-cd;
+				wp-inverted;
+				bus-width = <8>;
+				status = "okay";
+				no-1-8-v;
+			};
+
 			/* CON98 */
 			usb3@f8000 {
 				status = "okay";
@@ -148,6 +157,7 @@
 			pinctrl-0 = <&smi_nss_pins>;
 			pinctrl-names="default";
 		};
+
 		nss_complex {
 			status = "okay";
 			pinctrl-0 = <&smi_nss_pins>;
