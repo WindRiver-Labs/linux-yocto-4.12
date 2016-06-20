@@ -89,8 +89,12 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 		cpuclk_freq = 600;
 		break;
 	default:
+		/* set cpuclk_freq as invalid value to continue and
+		** configure the MSS clock (used to calculate the
+		** baudrate of the UART
+		*/
+		cpuclk_freq = 0;
 		dev_err(&pdev->dev, "invalid SAR value\n");
-		return -EINVAL;
 	}
 
 	/* Convert to hertz */
