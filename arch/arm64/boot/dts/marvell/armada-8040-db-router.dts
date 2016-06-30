@@ -114,6 +114,9 @@
 	};
 	cp110-slave {
 		config-space@f4000000 {
+			usb3h0_1: usb3@500000 {
+				status = "okay";
+			};
 			sata@540000 {
 				status = "okay";
 			};
