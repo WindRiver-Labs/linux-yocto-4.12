@@ -305,3 +305,7 @@ config QCOM_IRQ_COMBINER
 	help
 	  Say yes here to add support for the IRQ combiner devices embedded
 	  in Qualcomm Technologies chips.
+
+config MVEBU_SEI_IRQ
+        bool
+	default y
