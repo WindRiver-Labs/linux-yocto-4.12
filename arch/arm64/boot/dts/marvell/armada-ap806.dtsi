@@ -218,6 +218,7 @@
 				      <0x410000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
+				status = "disabled";
 			};
 
 			xor@420000 {
@@ -226,6 +227,7 @@
 				      <0x430000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
+				status = "disabled";
 			};
 
 			xor@440000 {
@@ -234,6 +236,7 @@
 				      <0x450000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
+				status = "disabled";
 			};
 
 			xor@460000 {
@@ -242,6 +245,7 @@
 				      <0x470000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
+				status = "disabled";
 			};
 
 			thermal@6f808c {
