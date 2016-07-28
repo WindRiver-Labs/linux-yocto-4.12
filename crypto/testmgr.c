@@ -1071,7 +1071,7 @@ static int __test_tls(struct crypto_aead *tfm, int enc,
 		key = template[i].key;
 
 		ret = crypto_aead_setkey(tfm, key, template[i].klen);
-		if (!ret == template[i].fail) {
+		if (template[i].fail == !ret) {
 			pr_err("alg: tls%s: setkey failed on test %d for %s: flags=%x\n",
 			       d, i, algo, crypto_aead_get_flags(tfm));
 			goto out;
