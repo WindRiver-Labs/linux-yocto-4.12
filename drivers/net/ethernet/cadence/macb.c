@@ -691,6 +691,7 @@ static inline void macb_handle_txtstamp(struct macb *bp, struct sk_buff *skb,
 {
 	u32 ts_s, ts_ns;
 	u8 msg_type;
+	struct skb_shared_hwtstamps *shhwtstamps;
 
 	skb_copy_from_linear_data_offset(skb, GEM_TX_PTPHDR_OFFSET,
 					 &msg_type, 1);
@@ -713,7 +714,7 @@ static inline void macb_handle_txtstamp(struct macb *bp, struct sk_buff *skb,
 		ts_ns = desc->tsl & GEM_TSL_NSEC_MASK;
 	}
 
-	struct skb_shared_hwtstamps *shhwtstamps = skb_hwtstamps(skb);
+	shhwtstamps = skb_hwtstamps(skb);
 
 	memset(shhwtstamps, 0, sizeof(struct skb_shared_hwtstamps));
 	shhwtstamps->hwtstamp = ns_to_ktime((ts_s * NS_PER_SEC) + ts_ns);
@@ -877,6 +878,7 @@ static inline void macb_handle_rxtstamp(struct macb *bp, struct sk_buff *skb,
 {
 	u8 msg_type;
 	u32 ts_ns, ts_s;
+	struct skb_shared_hwtstamps *shhwtstamps;
 
 	skb_copy_from_linear_data_offset(skb, GEM_RX_PTPHDR_OFFSET,
 					 &msg_type, 1);
@@ -899,7 +901,7 @@ static inline void macb_handle_rxtstamp(struct macb *bp, struct sk_buff *skb,
 		ts_ns = desc->tsl & GEM_TSL_NSEC_MASK;
 	}
 
-	struct skb_shared_hwtstamps *shhwtstamps = skb_hwtstamps(skb);
+	shhwtstamps = skb_hwtstamps(skb);
 
 	memset(shhwtstamps, 0, sizeof(struct skb_shared_hwtstamps));
 	shhwtstamps->hwtstamp = ns_to_ktime((ts_s * NS_PER_SEC) + ts_ns);
