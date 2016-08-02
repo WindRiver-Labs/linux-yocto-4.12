@@ -1718,7 +1718,7 @@ static void mvneta_tx_done_pkts_coal_set(struct mvneta_port *pp,
 }
 
 /* Handle rx descriptor fill by setting buf_cookie and buf_phys_addr */
-static void mvneta_rx_desc_fill(struct mvneta_rx_desc *rx_desc,
+static inline void mvneta_rx_desc_fill(struct mvneta_rx_desc *rx_desc,
 				u32 phys_addr, void *virt_addr,
 				struct mvneta_rx_queue *rxq)
 {
@@ -1941,7 +1941,7 @@ void mvneta_frag_free(unsigned int frag_size, void *data)
 EXPORT_SYMBOL_GPL(mvneta_frag_free);
 
 /* Refill processing for SW buffer management */
-static int mvneta_rx_refill(struct mvneta_port *pp,
+static inline int mvneta_rx_refill(struct mvneta_port *pp,
 			    struct mvneta_rx_desc *rx_desc,
 			    struct mvneta_rx_queue *rxq)
 
@@ -2129,6 +2129,8 @@ static int mvneta_rx_swbm(struct mvneta_port *pp, int rx_todo,
 		rx_bytes = rx_desc->data_size - (ETH_FCS_LEN + MVNETA_MH_SIZE);
 		index = rx_desc - rxq->descs;
 		data = rxq->buf_virt_addr[index];
+		/* Prefetch header */
+		prefetch(data + NET_SKB_PAD);
 		phys_addr = rx_desc->buf_phys_addr;
 
 		if (!mvneta_rxq_desc_is_first_last(rx_status) ||
