@@ -624,8 +624,7 @@ static int txq_number = 8;
 
 static int rxq_def;
 
-/* Default value is 0 - no copybreak */
-static int rx_copybreak __read_mostly;
+static int rx_copybreak __read_mostly = 256;
 
 /* HW BM need that each port be identify by a unique ID */
 static int global_port_id;
