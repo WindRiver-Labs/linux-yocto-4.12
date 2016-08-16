@@ -23,7 +23,7 @@
 #define AP806_SAR_REG			0x400
 #define AP806_SAR_CLKFREQ_MODE_MASK	0x1f
 
-#define AP806_CLK_NUM			5
+#define AP806_CLK_NUM			6
 
 static struct clk *ap806_clks[AP806_CLK_NUM];
 
@@ -34,7 +34,7 @@ static struct clk_onecell_data ap806_clk_data = {
 
 static int ap806_syscon_clk_probe(struct platform_device *pdev)
 {
-	unsigned int freq_mode, cpuclk_freq;
+	unsigned int freq_mode, cpuclk_freq, hclk_freq;
 	const char *name, *fixedclk_name;
 	struct device_node *np = pdev->dev.of_node;
 	struct regmap *regmap;
@@ -97,14 +97,52 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "invalid SAR value\n");
 	}
 
+	/* Get HCLK frequency */
+	switch (freq_mode) {
+	case 0x4:
+	case 0x10:
+	case 0x14:
+	case 0x19 ... 0x1D:
+		hclk_freq = 400;
+		break;
+	case 0xC:
+		hclk_freq = 600;
+		break;
+	case 0xD:
+	case 0x16:
+		hclk_freq = 525;
+		break;
+	case 0xB:
+	case 0xE:
+	case 0xF:
+		hclk_freq = 450;
+		break;
+	case 0x12:
+	case 0x13:
+	case 0x17:
+		hclk_freq = 325;
+		break;
+	case 0x11:
+	case 0x15:
+		hclk_freq = 800;
+		break;
+	case 0x18:
+		hclk_freq = 650;
+		break;
+	default:
+		hclk_freq = 0;
+		pr_err("invalid SAR value\n");
+	}
+
 	/* Convert to hertz */
 	cpuclk_freq *= 1000 * 1000;
+	hclk_freq *= 1000 * 1000;
 
 	/* CPU clocks depend on the Sample At Reset configuration */
 	of_property_read_string_index(np, "clock-output-names",
 				      0, &name);
 	ap806_clks[0] = clk_register_fixed_rate(&pdev->dev, name, NULL,
-						CLK_IS_ROOT, cpuclk_freq);
+						0, cpuclk_freq);
 	if (IS_ERR(ap806_clks[0])) {
 		ret = PTR_ERR(ap806_clks[0]);
 		goto fail0;
@@ -112,7 +150,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 
 	of_property_read_string_index(np, "clock-output-names",
 				      1, &name);
-	ap806_clks[1] = clk_register_fixed_rate(&pdev->dev, name, NULL, CLK_IS_ROOT,
+	ap806_clks[1] = clk_register_fixed_rate(&pdev->dev, name, NULL, 0,
 						cpuclk_freq);
 	if (IS_ERR(ap806_clks[1])) {
 		ret = PTR_ERR(ap806_clks[1]);
@@ -122,7 +160,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 	/* Fixed clock is always 1200 Mhz */
 	of_property_read_string_index(np, "clock-output-names",
 				      2, &fixedclk_name);
-	ap806_clks[2] = clk_register_fixed_rate(&pdev->dev, fixedclk_name, NULL, CLK_IS_ROOT,
+	ap806_clks[2] = clk_register_fixed_rate(&pdev->dev, fixedclk_name, NULL,
 						0, 1200 * 1000 * 1000);
 	if (IS_ERR(ap806_clks[2])) {
 		ret = PTR_ERR(ap806_clks[2]);
@@ -155,7 +193,21 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 		}
 	}
 
-	of_clk_add_provider(np, of_clk_src_onecell_get, &ap806_clk_data);
+	of_property_read_string_index(np, "clock-output-names",
+				      5, &name);
+	ap806_clks[5] = clk_register_fixed_rate(NULL, name, NULL, 0,
+						dclk_freq);
+	of_property_read_string_index(np, "clock-output-names",
+				      6, &ringclk_name);
+	ap806_clks[6] = clk_register_fixed_rate(NULL, ringclk_name, NULL, 0,
+						ringclk_freq);
+
+	/* External ring is 1/2 of ring clk */
+	of_property_read_string_index(np, "clock-output-names",
+				      7, &name);
+	ap806_clks[7] = clk_register_fixed_factor(NULL, name, ringclk_name,
+						  0, 1, 2);
+
 	ret = of_clk_add_provider(np, of_clk_src_onecell_get, &ap806_clk_data);
 	if (ret)
 		goto fail_clk_add;
