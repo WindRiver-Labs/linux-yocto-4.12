@@ -143,6 +143,7 @@ static struct clk_hw *cp110_register_gate(const char *name,
 
 	init.name = name;
 	init.ops = &cp110_gate_ops;
+	init.flags = CLK_IS_BASIC;
 	init.parent_names = &parent_name;
 	init.num_parents = 1;
 
