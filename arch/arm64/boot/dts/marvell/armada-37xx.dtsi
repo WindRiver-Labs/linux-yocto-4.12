@@ -315,10 +315,6 @@
 					marvell,function = "sdio";
 				};
 
-				pcie_pins: pcie_pins {
-					marvell,pins = "mpp3";
-					marvell,function = "gpio";
-				};
 			};
 
 			usb3: usb@58000 {
@@ -355,16 +351,6 @@
 				};
 			};
 
-			advk_ic: interrupt-controller@74840 {
-				compatible = "marvell,advk-ic";
-				reg = <0x74840 0x60
-				       0x8b000 0x8>;
-				interrupt-controller;
-				msi-controller;
-				#interrupt-cells = <1>;
-				interrupts = <GIC_SPI 29 IRQ_TYPE_LEVEL_HIGH>;
-				status = "disabled";
-			};
 
 			sdhci1: sdhci@d0000 {
 				compatible = "marvell,armada-3700-sdhci",
