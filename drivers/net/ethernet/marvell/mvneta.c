@@ -3452,7 +3452,8 @@ static int mvneta_mdio_probe(struct mvneta_port *pp)
 	phy_ethtool_get_wol(phy_dev, &wol);
 	device_set_wakeup_capable(&pp->dev->dev, !!wol.supported);
 
-	phy_dev->supported &= PHY_GBIT_FEATURES;
+	/* Neta does not support 1000baseT_Half */
+	phy_dev->supported &= (PHY_GBIT_FEATURES & (~SUPPORTED_1000baseT_Half));
 	phy_dev->advertising = phy_dev->supported;
 
 	pp->link    = 0;
@@ -3753,6 +3754,27 @@ static int mvneta_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 
 /* Ethtool methods */
 
+/* Check speed and duplex when set auto-nego with ethtool */
+static int mvneta_spd_dplx_valid(struct mvneta_port *pp,
+				 struct ethtool_cmd *cmd)
+{
+	int ret = 0;
+	u32 speed = ethtool_cmd_speed(cmd);
+
+	if ((speed + cmd->duplex) == (SPEED_1000 + DUPLEX_HALF)) {
+		/* When auto-nego disabled, 1000Base-Half is illegal.
+		 * When auto-nego enabled, 1000Base-Half is invalid,
+		 * but no error return for this, ethtool will show results.
+		 */
+		if (cmd->autoneg == AUTONEG_DISABLE) {
+			netdev_err(pp->dev, "Unsupported Speed/Duplex configuration\n");
+			ret = -EINVAL;
+		}
+	}
+
+	return ret;
+}
+
 /* Set link ksettings (phy address, speed) for ethtools */
 static int
 mvneta_ethtool_set_link_ksettings(struct net_device *ndev,
@@ -3763,6 +3785,9 @@ mvneta_ethtool_set_link_ksettings(struct net_device *ndev,
 
 	if (!phydev)
 		return -ENODEV;
+
+	if (mvneta_spd_dplx_valid(pp, cmd))
+		return -EINVAL;
 
 	if ((cmd->base.autoneg == AUTONEG_ENABLE) != pp->use_inband_status) {
 		u32 val;
