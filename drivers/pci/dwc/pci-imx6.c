@@ -77,6 +77,7 @@ struct imx6_pcie {
 	int			link_gen;
 	struct regmap		*reg_src;
 	struct regulator	*pcie_phy_regulator;
+	struct regulator	*pcie_bus_regulator;
 };
 
 /* Parameters for the waiting for PCIe PHY PLL to lock on i.MX7 */
@@ -520,6 +521,12 @@ static void imx6_pcie_init_phy(struct imx6_pcie *imx6_pcie)
 				   IMX6SX_GPR12_PCIE_RX_EQ_2);
 	}
 
+	if (imx6_pcie->pcie_bus_regulator != NULL) {
+		ret = regulator_enable(imx6_pcie->pcie_bus_regulator);
+		if (ret)
+			dev_err(imx6_pcie->pp.dev, "failed to enable pcie regulator.\n");
+	}
+
 	if (imx6_pcie->variant != IMX7D) {
 		regmap_update_bits(imx6_pcie->iomuxc_gpr, IOMUXC_GPR12,
 				IMX6Q_GPR12_PCIE_CTL_2, 0 << 10);
@@ -578,6 +585,8 @@ static int imx6_pcie_wait_for_link(struct imx6_pcie *imx6_pcie)
 		release_bus_freq(BUS_FREQ_HIGH);
 		if (imx6_pcie->pcie_phy_regulator != NULL)
 			regulator_disable(imx6_pcie->pcie_phy_regulator);
+		if (imx6_pcie->pcie_bus_regulator != NULL)
+			regulator_disable(imx6_pcie->pcie_bus_regulator);
 	}
 
 	return -ETIMEDOUT;
@@ -1027,6 +1036,8 @@ static int pci_imx_suspend_noirq(struct device *dev)
 		/* Power down PCIe PHY. */
 		if (imx6_pcie->pcie_phy_regulator != NULL)
 			regulator_disable(imx6_pcie->pcie_phy_regulator);
+		if (imx6_pcie->pcie_bus_regulator != NULL)
+			regulator_disable(imx6_pcie->pcie_bus_regulator);
 		if (gpio_is_valid(imx6_pcie->power_on_gpio))
 			gpio_set_value_cansleep(imx6_pcie->power_on_gpio, 0);
 	} else {
@@ -1235,6 +1246,11 @@ static int imx6_pcie_probe(struct platform_device *pdev)
 	default:
 		break;
 	}
+
+	imx6_pcie->pcie_bus_regulator = devm_regulator_get(pci->dev,
+			"pcie-bus");
+	if (IS_ERR(imx6_pcie->pcie_bus_regulator))
+		imx6_pcie->pcie_bus_regulator = NULL;
 
 	/* Grab GPR config register range */
 	if (imx6_pcie->variant == IMX7D) {
