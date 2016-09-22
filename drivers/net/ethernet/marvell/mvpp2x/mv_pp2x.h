@@ -22,6 +22,7 @@
 #include <linux/netdevice.h>
 #include <linux/string.h>
 #include <linux/log2.h>
+#include <linux/phy.h>
 
 #include "mv_pp2x_hw_type.h"
 #include "mv_gop110_hw_type.h"
