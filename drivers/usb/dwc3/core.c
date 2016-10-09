@@ -85,7 +85,7 @@ static int dwc3_get_dr_mode(struct dwc3 *dwc)
 		break;
 	default:
 	/* Enable Snooping */
-	if (node && of_dma_is_coherent(node)) {
+	if (device_property_read_bool(dev, "dma-coherent")) {
 		dwc3_writel(dwc->regs, DWC3_GSBUSCFG0,
 		dwc3_readl(dwc->regs, DWC3_GSBUSCFG0) | 0x22220000);
 		dev_dbg(dev, "enabled snooping for usb\n");
