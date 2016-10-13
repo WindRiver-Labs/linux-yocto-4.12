@@ -1002,8 +1002,6 @@ static void dwc3_get_properties(struct dwc3 *dwc)
 				&hird_threshold);
 	dwc->usb3_lpm_capable = device_property_read_bool(dev,
 				"snps,usb3_lpm_capable");
-	dwc->configure_gfladj = device_property_read_bool(dev,
-				"configure-gfladj");
 
 	dwc->disable_scramble_quirk = device_property_read_bool(dev,
 				"snps,disable_scramble_quirk");
@@ -1183,11 +1181,6 @@ static int dwc3_probe(struct platform_device *pdev)
 		goto err2;
 	}
 	
-	/* Adjust Frame Length */
-	if (dwc->configure_gfladj)
-		dwc3_writel(dwc->regs, DWC3_GFLADJ, GFLADJ_30MHZ_REG_SEL |
-			    GFLADJ_30MHZ(GFLADJ_30MHZ_DEFAULT));
-
 	/* Change burst beat and outstanding pipelined transfers requests */
 	dwc3_writel(dwc->regs, DWC3_GSBUSCFG0,
 		(dwc3_readl(dwc->regs, DWC3_GSBUSCFG0) & ~0xff) | 0xf);
