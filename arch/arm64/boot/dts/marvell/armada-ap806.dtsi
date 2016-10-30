@@ -143,6 +143,11 @@
 				interrupts = <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>;
 			};
 
+			revision-info@610fcc {
+				compatible = "marvell,ap806-rev-info";
+				reg = <0x610FCC 0x4>;
+			};
+
 			smmu: iommu@5000000 {
 				compatible = "arm,mmu-500";
 				reg = <0x100000 0x100000>;
