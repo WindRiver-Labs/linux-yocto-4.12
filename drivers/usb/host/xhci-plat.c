@@ -20,6 +20,7 @@
 #include <linux/usb/phy.h>
 #include <linux/slab.h>
 #include <linux/acpi.h>
+#include <linux/usb/otg.h>
 
 #include "xhci.h"
 #include "xhci-plat.h"
@@ -125,6 +126,8 @@ static const struct of_device_id usb_xhci_of_match[] = {
 		.compatible = "generic-xhci",
 	}, {
 		.compatible = "xhci-platform",
+	}, {
+		.compatible = "marvell,armada-3700-xhci-otg"
 	}, {
 		.compatible = "marvell,armada-375-xhci",
 		.data = &xhci_plat_marvell_armada,
@@ -289,16 +292,37 @@ static int xhci_plat_probe(struct platform_device *pdev)
 			goto put_usb3_hcd;
 	}
 
-	ret = usb_add_hcd(hcd, irq, IRQF_SHARED);
-	if (ret)
-		goto disable_usb_phy;
+	if (of_device_is_compatible(pdev->dev.of_node,
+				    "marvell,armada-3700-xhci-otg")) {
+		/* If Armada3700 needs to enable OTG support, register XHCI
+		 * driver to OTG PHY, and wait for it to call usb_add_hcd
+		 * at the right time (start working in USB Host mode).
+		 */
 
-	if (HCC_MAX_PSA(xhci->hcc_params) >= 4)
-		xhci->shared_hcd->can_do_streams = 1;
+		if (hcd->usb_phy == NULL) {
+			dev_err(&pdev->dev, "unable to find OTG PHY\n");
+			goto disable_usb_phy;
+		}
 
-	ret = usb_add_hcd(xhci->shared_hcd, irq, IRQF_SHARED);
-	if (ret)
-		goto dealloc_usb2_hcd;
+		hcd->irq = irq;
+
+		ret = otg_set_host(hcd->usb_phy->otg, &hcd->self);
+		if (ret) {
+			dev_err(&pdev->dev, "unable to register with OTG PHY\n");
+			goto disable_usb_phy;
+		}
+	} else {
+		ret = usb_add_hcd(hcd, irq, IRQF_SHARED);
+		if (ret)
+			goto disable_usb_phy;
+
+		if (HCC_MAX_PSA(xhci->hcc_params) >= 4)
+			xhci->shared_hcd->can_do_streams = 1;
+
+		ret = usb_add_hcd(xhci->shared_hcd, irq, IRQF_SHARED);
+		if (ret)
+			goto dealloc_usb2_hcd;
+	}
 
 	device_enable_async_suspend(&pdev->dev);
 	pm_runtime_put_noidle(&pdev->dev);
@@ -343,10 +367,16 @@ static int xhci_plat_remove(struct platform_device *dev)
 
 	xhci->xhc_state |= XHCI_STATE_REMOVING;
 
-	usb_remove_hcd(xhci->shared_hcd);
-	usb_phy_shutdown(hcd->usb_phy);
+	if (of_device_is_compatible(dev->dev.of_node,
+				    "marvell,armada-3700-xhci-otg")) {
+		otg_set_host(hcd->usb_phy->otg, NULL);
+	} else {
+		usb_remove_hcd(xhci->shared_hcd);
+		usb_phy_shutdown(hcd->usb_phy);
 
-	usb_remove_hcd(hcd);
+		usb_remove_hcd(hcd);
+	}
+
 	usb_put_hcd(xhci->shared_hcd);
 
 	if (!IS_ERR(clk))
