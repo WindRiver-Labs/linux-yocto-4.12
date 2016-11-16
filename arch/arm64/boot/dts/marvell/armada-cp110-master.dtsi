@@ -44,6 +44,8 @@
  * Device Tree file for Marvell Armada CP110 Master.
  */
 
+#include <dt-bindings/phy/phy-mvebu-comphy.h>
+
 / {
 	cp110-master {
 		#address-cells = <2>;
