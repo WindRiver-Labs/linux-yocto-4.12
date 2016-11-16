@@ -3767,7 +3767,7 @@ static int mvneta_open(struct net_device *dev)
 		err = mvneta_mdio_probe(pp);
 		if (err < 0) {
 			netdev_err(dev, "cannot probe MDIO bus\n");
-			goto err_free_stats;
+			goto err_free_dead_hp;
 		}
 	}
 
