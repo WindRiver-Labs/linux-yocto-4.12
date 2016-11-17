@@ -56,6 +56,86 @@
 		reg = <0x0 0x0 0x0 0x80000000>;
 	};
 
+	ap806 {
+		config-space@f0000000 {
+			vccq_mmc_reg: regulator@0 {
+				compatible = "regulator-fixed";
+				regulator-name = "vccq-mmc-reg";
+				regulator-min-microvolt = <3300000>;
+				regulator-max-microvolt = <3300000>;
+				regulator-always-on;
+				status = "okay";
+			};
+		};
+	};
+
+	cp110-master {
+		config-space@f2000000 {
+			pinctrl@440000 {
+				xhci0_vbus_pins: xhci0-vbus-pins {
+					marvell,pins = "mpp47";
+					marvell,function = "gpio";
+				};
+				pcie_reset_pins: pcie-reset-pins {
+					marvell,pins = "mpp52";
+					marvell,function = "gpio";
+				};
+			};
+
+			gop {
+				emac0_0: mac0 {
+					phy-mode = "kr"; /* lane-4 */
+				};
+			};
+			ppv22@000000 {
+				pinctrl-names = "default";
+				eth0_0: eth0@010000 {
+					status = "okay";
+				};
+			};
+		};
+		pcie@0x600000 {
+			num-lanes = <4>;
+			status = "okay";
+		};
+		vccq_sdio_reg: regulator@1 {
+			compatible = "regulator-fixed";
+			regulator-name = "vccq-sdio-reg";
+			regulator-min-microvolt = <3300000>;
+			regulator-max-microvolt = <3300000>;
+			regulator-always-on;
+			status = "okay";
+		};
+	};
+
+	cp110-slave {
+		config-space@f4000000 {
+			gop {
+				emac0_1: mac0 {
+					phy-mode = "kr"; /* lane-4 */
+				};
+				emac2_1: mac2 {
+					phy-mode = "sgmii"; /* lane-0 */
+				};
+				emac3_1: mac3 {
+					phy-mode = "sgmii"; /* lane-5 */
+				};
+			};
+			ppv22@000000 {
+				pinctrl-names = "default";
+				eth0_1: eth0@010000 {
+					status = "okay";
+				};
+				eth1_1: eth1@020000 {
+					status = "okay";
+				};
+				eth2_1: eth2@030000 {
+					status = "okay";
+				};
+			};
+		};
+	};
+
 	/* Regulator labels correspond with schematics */
 	v_3_3: regulator-3-3v {
 		compatible = "regulator-fixed";
@@ -97,6 +177,8 @@
 
 &cpm_i2c0 {
 	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&cpm_i2c0_pins>;
 	status = "okay";
 };
 
@@ -134,5 +216,23 @@
 &cps_usb3_0 {
 	/* CPS Lane 2 - CON7 */
 	usb-phy = <&usb3h0_phy>;
+	status = "okay";
+};
+
+&ap_sdhci0 {
+	vqmmc-supply = <&vccq_mmc_reg>;
+	bus-width = <8>;
+	no-1-8-v;
+	non-removable;
+	xenon,phy-slow-mode;
+	status = "okay";
+};
+
+&cpm_sdhci0 {
+	vqmmc-supply = <&vccq_sdio_reg>;
+	bus-width = <4>;
+	broken-cd;
+	pinctrl-names = "default";
+	pinctrl-0 = <&cpm_sdhci_pins>;
 	status = "okay";
 };

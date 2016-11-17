@@ -242,6 +242,36 @@
 				clocks = <&cpm_syscon0 1 26>;
 				status = "disabled";
 			};
+
+			cpm_gpio0: gpio@440100 {
+				compatible = "marvell,orion-gpio";
+				reg = <0x440100 0x40>;
+				ngpios = <32>;
+				gpiobase = <20>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <ICU_GRP_NSR 86 IRQ_TYPE_LEVEL_HIGH>,
+					   <ICU_GRP_NSR 85 IRQ_TYPE_LEVEL_HIGH>,
+					   <ICU_GRP_NSR 84 IRQ_TYPE_LEVEL_HIGH>,
+					   <ICU_GRP_NSR 83 IRQ_TYPE_LEVEL_HIGH>;
+			};
+
+			cpm_gpio1: gpio@440140 {
+				compatible = "marvell,orion-gpio";
+				reg = <0x440140 0x40>;
+				ngpios = <31>;
+				gpiobase = <52>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				interrupts = <ICU_GRP_NSR 82 IRQ_TYPE_LEVEL_HIGH>,
+					   <ICU_GRP_NSR 81 IRQ_TYPE_LEVEL_HIGH>,
+					   <ICU_GRP_NSR 80 IRQ_TYPE_LEVEL_HIGH>,
+					   <ICU_GRP_NSR 79 IRQ_TYPE_LEVEL_HIGH>;
+			};
 		};
 
 		cpm_pcie0: pcie@f2600000 {
