@@ -114,6 +114,14 @@
 				mmu-masters = <&usb3h0 0x483>,
 					      <&usb3h1 0x484>;
 			};
+			pinctrl@6f4000 {
+				ap_emmc_pins: emmc-pins-0 {
+					marvell,pins = "mpp0", "mpp1", "mpp2",
+					"mpp3", "mpp4", "mpp5", "mpp6", "mpp7",
+					"mpp8", "mpp9", "mpp10";
+					marvell,function = "sdio";
+				};
+			};
 		};
 	};
 
