@@ -196,7 +196,7 @@
 			ap806_clock: ap806_clock@6f8200 {
 				compatible = "marvell,ap806-cpu-clk", "syscon";
 				#clock-cells = <1>;
-				clocks = <&syscon 0>;
+				clocks = <&ap_syscon 0>;
 				reg = <0x6f8200 0x100>;
 				status = "okay";
 			};
@@ -204,23 +204,23 @@
 			axim-ddr-rd@840000 {
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x840000 0x1000>;
-				clocks = <&syscon 3>, <&syscon 5>;
-				clock-names = "apb_pclk", "hclk";
+				clocks = <&ap_syscon 3>, <&ap_syscon 5>;
+				clock-names = "apb_pclk", "dclk";
 				bus-width = <40>;
 			};
 
 			axim-ddr-wr@841000 {
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x841000 0x1000>;
-				clocks = <&syscon 3>, <&syscon 5>;
-				clock-names = "apb_pclk", "hclk";
+				clocks = <&ap_syscon 3>, <&ap_syscon 5>;
+				clock-names = "apb_pclk", "dclk";
 				bus-width = <40>;
 			};
 
 			axim-ihb-rd@848000 {
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x848000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 				bus-width = <40>;
 			};
@@ -228,7 +228,7 @@
 			axim-ihb-rd@849000 {
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x849000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 				bus-width = <40>;
 			};
@@ -270,7 +270,7 @@
 				      <0x410000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				status = "okay";
 			};
 
@@ -280,7 +280,7 @@
 				      <0x430000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				status = "okay";
 			};
 
@@ -290,7 +290,7 @@
 				      <0x450000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				status = "okay";
 			};
 
@@ -300,7 +300,7 @@
 				      <0x470000 0x1000>;
 				msi-parent = <&gic_v2m0>;
 				dma-coherent;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				status = "okay";
 			};
 
