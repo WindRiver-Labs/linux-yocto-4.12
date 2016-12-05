@@ -1308,6 +1308,7 @@ static const struct hash_testvec rmd320_tv_template[] = {
 	}
 };
 
+#define CRCT10DIF_TEST_VECTORS	ARRAY_SIZE(crct10dif_tv_template)
 static const struct hash_testvec crct10dif_tv_template[] = {
 	{
 		.plaintext	= "abc",
