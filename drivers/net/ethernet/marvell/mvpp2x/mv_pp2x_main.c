@@ -5146,7 +5146,7 @@ static int mv_pp2x_platform_data_get(struct platform_device *pdev,
 	*port_count = of_get_available_child_count(dn);
 	if (*port_count == 0) {
 		dev_err(&pdev->dev, "no ports enabled\n");
-		err = -ENODEV;
+		return -ENODEV;
 	}
 	return 0;
 }
@@ -5328,14 +5328,6 @@ static int mv_pp2x_probe(struct platform_device *pdev)
 		err = -ENOMEM;
 		goto err_clk;
 	}
-
-	priv->workqueue = create_singlethread_workqueue("mv_pp2x");
-
-	if (!priv->workqueue) {
-		err = -ENOMEM;
-		goto err_clk;
-	}
-	INIT_DELAYED_WORK(&priv->stats_task, mv_pp2x_get_device_stats);
 
 	/* Init PP22 rxfhindir table evenly in probe */
 	if (priv->pp2_version == PPV22)
