@@ -980,6 +980,37 @@ static int mvebu_uart_probe(struct platform_device *pdev)
 	return 0;
 }
 
+#ifdef CONFIG_PM
+static int mvebu_uart_suspend(struct device *dev)
+{
+	struct mvebu_uart_data *data = dev_get_drvdata(dev);
+
+	if (data->port)
+		uart_suspend_port(&mvebu_uart_driver, data->port);
+
+	device_set_wakeup_enable(dev, true);
+
+	return 0;
+}
+
+static int mvebu_uart_resume(struct device *dev)
+{
+	struct mvebu_uart_data *data = dev_get_drvdata(dev);
+
+	if (data->port)
+		uart_resume_port(&mvebu_uart_driver, data->port);
+
+	device_set_wakeup_enable(dev, false);
+
+	return 0;
+}
+
+static const struct dev_pm_ops mvebu_uart_pm_ops = {
+	.suspend	= mvebu_uart_suspend,
+	.resume		= mvebu_uart_resume,
+};
+#endif
+
 /* Match table for of_platform binding */
 static const struct of_device_id mvebu_uart_of_match[] = {
 	{ .compatible = "marvell,armada-3700-uart",     .data = (void *)REG_UART_A3700     },
@@ -992,6 +1023,9 @@ static struct platform_driver mvebu_uart_platform_driver = {
 	.driver	= {
 		.name  = "mvebu-uart",
 		.of_match_table = of_match_ptr(mvebu_uart_of_match),
+#ifdef CONFIG_PM
+		.pm	= &mvebu_uart_pm_ops,
+#endif
 		.suppress_bind_attrs = true,
 	},
 };
