@@ -122,6 +122,8 @@
 				compatible = "marvell,armada-8k-rtc";
 				reg = <0x284000 0x20>, <0x284080 0x24>;
 				reg-names = "rtc", "rtc-soc";
+				#address-cells = <1>;
+				#size-cells = <0>;
 				interrupts = <GIC_SPI 71 IRQ_TYPE_LEVEL_HIGH>;
 			};
 
