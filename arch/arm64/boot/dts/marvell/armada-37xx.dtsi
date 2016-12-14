@@ -349,15 +349,6 @@
 					marvell,pins = "mpp36";
 					marvell,function = "spi";
 				};
-
-				spi_quad_pins: spi-quad-pins {
-					marvell,pins = "mpp15", "mpp16";
-					marvell,function = "spi-quad";
-				};
-				uart1_pins: uart1_pins {
-					marvell,pins = "mpp18", "mpp19";
-					marvell,function = "uart2";
-				};
 			};
 
 			cpu_pm_clk: cpu-pm-clk@14018 {
