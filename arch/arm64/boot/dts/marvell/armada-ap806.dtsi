@@ -231,7 +231,7 @@
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x840000 0x1000>;
 				clocks = <&ap_syscon 3>, <&ap_syscon 5>;
-				clock-names = "apb_pclk", "dclk";
+				clock-names = "apb_pclk", "hclk";
 				bus-width = <40>;
 			};
 
@@ -239,23 +239,23 @@
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x841000 0x1000>;
 				clocks = <&ap_syscon 3>, <&ap_syscon 5>;
-				clock-names = "apb_pclk", "dclk";
+				clock-names = "apb_pclk", "hclk";
 				bus-width = <40>;
 			};
 
 			axim-sb-rd@848000 {
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x848000 0x1000>;
-				clocks = <&ap_syscon 3>;
-				clock-names = "apb_pclk";
+				clocks = <&ap_syscon 3>, <&ap_syscon 7>;
+				clock-names = "apb_pclk", "hclk";
 				bus-width = <40>;
 			};
 
 			axim-sb-wr@849000 {
 				compatible = "marvell,coresight-axim", "arm,primecell";
 				reg = <0x849000 0x1000>;
-				clocks = <&ap_syscon 3>;
-				clock-names = "apb_pclk";
+				clocks = <&ap_syscon 3>, <&ap_syscon 7>;
+				clock-names = "apb_pclk", "hclk";
 				bus-width = <40>;
 			};
 
