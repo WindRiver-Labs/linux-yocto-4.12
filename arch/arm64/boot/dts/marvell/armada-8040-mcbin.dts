@@ -193,6 +193,13 @@
 &cpm_sata0 {
 	/* CPM Lane 0 - U29 */
 	status = "okay";
+
+	sata-port@0 {
+		status = "disabled";
+	};
+	sata-port@1 {
+		status = "okay";
+	};
 };
 
 &cpm_usb3_0 {
@@ -209,6 +216,13 @@
 	/* CPS Lane 1 - U32 */
 	/* CPS Lane 3 - U31 */
 	status = "okay";
+
+	sata-port@0 {
+		status = "okay";
+	};
+	sata-port@1 {
+		status = "okay";
+	};
 };
 
 &cps_spi1 {
