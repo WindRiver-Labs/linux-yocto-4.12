@@ -57,7 +57,10 @@
 	#size-cells = <2>;
 
 	aliases {
+		ethernet0 = &eth0;
+		ethernet1 = &eth1;
 		serial0 = &uart0;
+		serial1 = &uart1;
 	};
 
 	cpus {
@@ -144,6 +147,17 @@
 				reg = <0x12000 0x200>;
 				interrupts = <GIC_SPI 11 IRQ_TYPE_LEVEL_HIGH>;
 				interrupt-names = "irq_sum";
+				status = "disabled";
+			};
+
+			uart1: serial@12200 {
+				compatible = "marvell,armada-3700-uart-ext";
+				reg = <0x12200 0x30>,
+					<0x8a00 0x30>;
+				clocks = <&xtalclk>;
+				interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>,
+						<GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>;
+				interrupt-names = "irq_rx", "irq_tx";
 				status = "disabled";
 			};
 
