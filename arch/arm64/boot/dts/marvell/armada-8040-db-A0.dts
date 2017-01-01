@@ -42,15 +42,14 @@
 
 /*
  * Device Tree file for Marvell Armada 8040 development board
- * This file supports option A configuration
- * CP0_RGMII1,CP1_RGMII0,CP0_EMMC,CP1_SPI(BOOT),CP1_UART,CP0_I2C,AP_eMMC,AP_UART
+ * This board file supports the A0 revision of the board
  */
 
 #include "armada-8040-db.dtsi"
 
 / {
-	model = "Marvell Armada-8040 development board A setup";
-	compatible = "marvell,armada8040-db-A", "marvell,armada8040-db", "marvell,armada8040",
+	model = "Marvell Armada-8040 development board default A0 setup";
+	compatible = "marvell,armada8040-db-A0", "marvell,armada8040-db", "marvell,armada8040",
 			"marvell,armada-ap806-quad", "marvell,armada-ap806";
 	#address-cells = <2>;
 	#size-cells = <2>;
@@ -58,30 +57,60 @@
 	chosen { };
 
 	ap806 {
-		config-space@f0000000 {
+		config-space {
 			serial@512000 {
 				status = "okay";
 			};
 			sdhci@6e0000 {
-				status = "okay";
+				status = "disabled";
 			};
 			i2c@511000 {
-				status = "disabled";
+				status = "okay";
+				clock-frequency = <100000>;
+				pinctrl-names = "default";
+				pinctrl-0 = <&ap_i2c0_pins>;
+				eeprom@57 {
+					compatible = "at24,24c64";
+					reg = <0x57>;
+					pagesize = <32>;
+				};
+				eeprom@50 {
+					compatible = "at24,24c64";
+					reg = <0x50>;
+					pagesize = <32>;
+				};
 			};
 			spi0: spi@510600 {
-				status = "disabled";
+				status = "okay";
+				spi-flash@0 {
+					#address-cells = <0x1>;
+					#size-cells = <0x1>;
+					compatible = "jedec,spi-nor";
+					reg = <0x0>;
+					spi-max-frequency = <20000000>;
+					partition@0 {
+						label = "boot";
+						reg = <0x0 0x200000>;
+					};
+					partition@200000 {
+						label = "Filesystem";
+						reg = <0x200000 0xd00000>;
+					};
+					partition@d00000 {
+						label = "boot_2nd";
+						reg = <0xf00000 0x100000>;
+					};
+				};
 			};
 		};
 	};
 
-	cp110-master {
-		config-space@f2000000 {
+	cpn-110-master {
+		config-space {
 			sata@540000 {
 				status = "okay";
 				sata-port@0 {
-					phys = <&comphy0 1 COMPHY_SATA0>;
-					phy-names = "comphy";
-					status = "okay";
+					satus = "disabled";
 				};
 				sata-port@1 {
 					phys = <&comphy0 3 COMPHY_SATA1>;
@@ -89,7 +118,6 @@
 					status = "okay";
 				};
 			};
-			/* usb3h0 is USB2 only (UTMI) */
 			usb3h0: usb3@500000 {
 				status = "okay";
 			};
@@ -141,25 +169,20 @@
 				status = "okay";
 			};
 		};
-		pcie@0x600000 {
-			status = "okay";
-		};
+
 		pcie@0x640000 {
 			status = "okay";
 		};
 	};
 	cpn-110-slave {
 		config-space {
-			/* usb3h0_1 is USB2 only (UTMI) */
 			usb3h0_1: usb3@500000 {
 				status = "okay";
 			};
 			sata@540000 {
 				status = "okay";
 				sata-port@0 {
-					phys = <&comphy1 1 COMPHY_SATA0>;
-					phy-names = "comphy";
-					status = "okay";
+					satus = "disabled";
 				};
 				sata-port@1 {
 					phys = <&comphy1 3 COMPHY_SATA1>;
@@ -205,39 +228,10 @@
 			comphy {
 				status = "okay";
 			};
-			spi1: spi@700680 {
-				status = "okay";
-				pinctrl-names = "default";
-				pinctrl-0 = <&cps_spi1_pins>;
-				spi-flash@0 {
-					#address-cells = <0x1>;
-					#size-cells = <0x1>;
-					compatible = "jedec,spi-nor";
-					reg = <0x0>;
-					spi-max-frequency = <20000000>;
-					partition@0 {
-						label = "boot";
-						reg = <0x0 0x200000>;
-					};
-					partition@200000 {
-						label = "Filesystem";
-						reg = <0x200000 0xd00000>;
-					};
-					partition@d00000 {
-						label = "boot_2nd";
-						reg = <0xf00000 0x100000>;
-					};
-				};
-			};
-		};
-		pcie@0x600000 {
-			status = "okay";
-		};
-		pcie@0x620000 {
-			status = "okay";
 		};
 		pcie@0x640000 {
 			status = "okay";
 		};
 	};
 };
+
