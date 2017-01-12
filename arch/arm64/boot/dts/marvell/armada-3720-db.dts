@@ -175,6 +175,7 @@
 /* CON3 */
 &sata {
 	target-supply = <&reg_5v_sata>;
+	phys = <&a3700_comphy 2 COMPHY_SATA0>;
 	status = "okay";
 };
 
