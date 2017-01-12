@@ -29,7 +29,6 @@
 #include <video/imx-ipu-v3.h>
 
 #include "imx-drm.h"
-#include "ipuv3-plane.h"
 
 #if IS_ENABLED(CONFIG_DRM_FBDEV_EMULATION)
 static int legacyfb_depth = 16;
@@ -333,7 +332,6 @@ static struct platform_driver imx_drm_pdrv = {
 
 static struct platform_driver * const drivers[] = {
 	&imx_drm_pdrv,
-	&ipu_drm_driver,
 };
 
 static int __init imx_drm_init(void)
