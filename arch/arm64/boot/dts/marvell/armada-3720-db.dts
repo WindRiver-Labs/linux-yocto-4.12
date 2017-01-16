@@ -250,12 +250,13 @@
 
 /* CON17 (PCIe) / CON12 (mini-PCIe) */
 &pcie0 {
-		reset-gpios = <&gpio_sb 3 GPIO_ACTIVE_LOW>;
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&pcie_pins>;
+	reset-gpios = <&gpio_sb 3 GPIO_ACTIVE_LOW>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&pcie_pins>;
 
 	status = "okay";
+	phys = <&a3700_comphy 0 COMPHY_PCIE0>;
+	phy-names = "comphy";
 };
 
 /* CON27 */
