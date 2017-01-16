@@ -22,6 +22,7 @@
 #include <linux/platform_device.h>
 #include <linux/of_address.h>
 #include <linux/of_pci.h>
+#include <linux/phy/phy.h>
 
 /* PCIe core registers */
 #define PCIE_CORE_CMD_STATUS_REG				0x4
@@ -42,6 +43,10 @@
 #define     PCIE_CORE_ERR_CAPCTL_ECRC_CHK_TX_EN			BIT(6)
 #define     PCIE_CORE_ERR_CAPCTL_ECRC_CHCK			BIT(7)
 #define     PCIE_CORE_ERR_CAPCTL_ECRC_CHCK_RCV			BIT(8)
+#define PCIE_PHY_REF_CLOCK					0x4814
+#define     PCIE_PHY_CTRL_OFF					16
+#define     PCIE_PHY_BUF_CTRL_OFF				0
+#define     PCIE_PHY_BUF_CTRL_INIT_VAL				0x1342
 
 /* PIO registers base address and register offsets */
 #define PIO_BASE_ADDR				0x4000
@@ -188,6 +193,7 @@
 struct advk_pcie {
 	struct platform_device *pdev;
 	void __iomem *base;
+	struct phy *phy;
 	struct list_head resources;
 	struct irq_domain *irq_domain;
 	struct irq_chip irq_chip;
@@ -878,6 +884,8 @@ static int advk_pcie_probe(struct platform_device *pdev)
 	struct resource *res;
 	struct pci_bus *bus, *child;
 	struct clk *clk;
+	struct phy *comphy;
+	struct device_node *dn = pdev->dev.of_node;
 	int ret, irq;
 
 	pcie = devm_kzalloc(dev, sizeof(struct advk_pcie), GFP_KERNEL);
@@ -890,6 +898,23 @@ static int advk_pcie_probe(struct platform_device *pdev)
 	pcie->base = devm_ioremap_resource(dev, res);
 	if (IS_ERR(pcie->base))
 		return PTR_ERR(pcie->base);
+
+	/* Get comphy and init if there is */
+	comphy = devm_of_phy_get(&pdev->dev, dn, "comphy");
+	if (!IS_ERR(comphy)) {
+		/* Set HW Reference Clock Buffer Control */
+		advk_writel(pcie, PCIE_PHY_BUF_CTRL_INIT_VAL, PCIE_PHY_REF_CLOCK);
+		pcie->phy = comphy;
+		ret = phy_init(pcie->phy);
+		if (ret)
+			return ret;
+
+		ret = phy_power_on(pcie->phy);
+		if (ret) {
+			phy_exit(pcie->phy);
+			goto err_exit_phy;
+		}
+	}
 
 	irq = platform_get_irq(pdev, 0);
 	ret = devm_request_irq(dev, irq, advk_pcie_irq_handler,
@@ -952,6 +977,10 @@ static int advk_pcie_probe(struct platform_device *pdev)
 
 err_clk:
 	clk_disable_unprepare(clk);
+err_exit_phy:
+	if (pcie->phy)
+		phy_exit(pcie->phy);
+
 	return ret;
 }
 
