@@ -36,6 +36,7 @@
 #include <net/ip.h>
 #include <net/ipv6.h>
 #include <net/tso.h>
+#include <linux/phy/phy.h>
 
 /* Registers */
 #define MVNETA_RXQ_CONFIG_REG(q)                (0x1400 + ((q) << 2))
@@ -422,6 +423,11 @@ struct mvneta_port {
 	struct mii_bus *mii_bus;
 	phy_interface_t phy_interface;
 	struct device_node *phy_node;
+	/* comphy handler, current it supports a 1:1 relation between the port
+	 * and the phy. The phy here means serdes, which is different from
+	 * phy_dev above.
+	 */
+	struct phy *comphy;
 	unsigned int link;
 	unsigned int duplex;
 	unsigned int speed;
@@ -4681,6 +4687,20 @@ static int mvneta_probe(struct platform_device *pdev)
 	pp->phy_node = phy_node;
 	pp->phy_interface = phy_mode;
 
+	/* Get comphy and init if there is */
+	pp->comphy = devm_of_phy_get(&pdev->dev, dn, "comphy");
+	if (!IS_ERR(pp->comphy)) {
+		err = phy_init(pp->comphy);
+		if (err)
+			goto err_put_phy_node;
+
+		err = phy_power_on(pp->comphy);
+		if (err) {
+			phy_exit(pp->comphy);
+			goto err_exit_phy;
+		}
+	}
+
 	err = of_property_read_string(dn, "managed", &managed);
 	pp->use_inband_status = (err == 0 &&
 				 strcmp(managed, "in-band-status") == 0);
@@ -4705,7 +4725,7 @@ static int mvneta_probe(struct platform_device *pdev)
 		pp->clk = devm_clk_get(&pdev->dev, NULL);
 	if (IS_ERR(pp->clk)) {
 		err = PTR_ERR(pp->clk);
-		goto err_put_phy_node;
+		goto err_off_phy;
 	}
 
 	clk_prepare_enable(pp->clk);
@@ -4871,6 +4891,12 @@ err_free_ports:
 err_clk:
 	clk_disable_unprepare(pp->clk_bus);
 	clk_disable_unprepare(pp->clk);
+err_off_phy:
+	if (!IS_ERR(pp->comphy))
+		phy_power_off(pp->comphy);
+err_exit_phy:
+	if (!IS_ERR(pp->comphy))
+		phy_exit(pp->comphy);
 err_put_phy_node:
 	of_node_put(phy_node);
 	if (of_phy_is_fixed_link(dn))
@@ -4904,6 +4930,11 @@ static int mvneta_remove(struct platform_device *pdev)
 		mvneta_bm_pool_destroy(pp->bm_priv, pp->pool_long, 1 << pp->id);
 		mvneta_bm_pool_destroy(pp->bm_priv, pp->pool_short,
 				       1 << pp->id);
+	}
+
+	if (!IS_ERR(pp->comphy)) {
+		phy_power_off(pp->comphy);
+		phy_exit(pp->comphy);
 	}
 
 	return 0;
