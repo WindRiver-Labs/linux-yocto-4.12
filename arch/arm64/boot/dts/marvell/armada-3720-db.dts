@@ -78,7 +78,7 @@
 	};
 
 	soc {
-		internal-regs {
+		internal-regs@d0000000 {
 			vcc_sd_reg1: regulator@0 {
 				compatible = "regulator-gpio";
 				regulator-name = "vcc_sd1";
@@ -100,6 +100,8 @@
 
 			udc@54100 {
 				status = "disabled";
+				phys = <&utmi_usb32>;
+				phy-names = "usb";
 			};
 		};
 
