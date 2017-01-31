@@ -31,6 +31,8 @@
 #define MMDC_MDMISC		0x18
 #define BM_MMDC_MDMISC_DDR_TYPE	0x18
 #define BP_MMDC_MDMISC_DDR_TYPE	0x3
+#define BM_MMDC_MDMISC_LPDDR2_2CH	0x4
+#define BP_MMDC_MDMISC_LPDDR2_2CH	0x2
 
 #define TOTAL_CYCLES		0x0
 #define BUSY_CYCLES		0x1
@@ -64,6 +66,7 @@
 #define to_mmdc_pmu(p) container_of(p, struct mmdc_pmu, pmu)
 
 static int ddr_type;
+static int lpddr2_2ch_mode;
 
 struct fsl_mmdc_devtype_data {
 	unsigned int flags;
@@ -75,6 +78,11 @@ static const struct fsl_mmdc_devtype_data imx6q_data = {
 static const struct fsl_mmdc_devtype_data imx6qp_data = {
 	.flags = MMDC_FLAG_PROFILE_SEL,
 };
+
+int imx_mmdc_get_lpddr2_2ch_mode(void)
+{
+	return lpddr2_2ch_mode;
+}
 
 static const struct of_device_id imx_mmdc_dt_ids[] = {
 	{ .compatible = "fsl,imx6q-mmdc", .data = (void *)&imx6q_data},
@@ -557,6 +565,9 @@ static int imx_mmdc_probe(struct platform_device *pdev)
 	val = readl_relaxed(reg);
 	ddr_type = (val & BM_MMDC_MDMISC_DDR_TYPE) >>
 		 BP_MMDC_MDMISC_DDR_TYPE;
+	/* Get lpddr2 2ch-mode */
+	lpddr2_2ch_mode = (val & BM_MMDC_MDMISC_LPDDR2_2CH) >>
+			BP_MMDC_MDMISC_LPDDR2_2CH;
 
 	reg = mmdc_base + MMDC_MAPSR;
 
