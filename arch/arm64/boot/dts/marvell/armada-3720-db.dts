@@ -103,6 +103,12 @@
 				phys = <&utmi_usb32>;
 				phy-names = "usb";
 			};
+			bm: bm@c0000 {
+				status = "okay";
+			};
+			bm_bppi: bm-bppi {
+				status = "okay";
+			};
 		};
 
 		reg_sata: pwr-sata {
@@ -284,4 +290,7 @@
 	phy-mode = "rgmii-id";
 	phy = <&phy0>;
 	status = "okay";
+	buffer-manager = <&bm>;
+	bm,pool-long = <1>;
+	bm,pool-short = <3>;
 };
