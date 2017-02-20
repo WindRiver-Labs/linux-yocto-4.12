@@ -548,6 +548,7 @@
 				marvell,crypto-srams = <&crypto_sram0>,
 						       <&crypto_sram1>;
 				marvell,crypto-sram-size = <0x800>;
+				status = "disabled";
 			};
 
 			rtc: rtc@a3800 {

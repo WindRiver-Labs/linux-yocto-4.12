@@ -397,3 +397,7 @@
 &spi0 {
 	status = "disabled";
 };
+
+&cesa {
+	status = "okay";
+};
