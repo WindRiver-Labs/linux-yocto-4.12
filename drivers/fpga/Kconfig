@@ -120,6 +120,7 @@ config XILINX_PR_DECOUPLER
 
 config FPGA_MGR_ZYNQMP_FPGA
 	tristate "Xilinx Zynqmp FPGA"
+	depends on ARCH_ZYNQMP || COMPILE_TEST
 	help
 	  FPGA manager driver support for Xilinx ZynqMp FPGAs.
 
