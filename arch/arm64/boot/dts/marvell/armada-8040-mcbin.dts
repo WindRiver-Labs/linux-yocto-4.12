@@ -81,6 +81,9 @@
 					marvell,function = "gpio";
 				};
 			};
+			comphy0: comphy {
+				status = "okay";
+			};
 
 			gop {
 				emac0_0: mac0 {
@@ -113,6 +116,9 @@
 
 	cp110-slave {
 		config-space@f4000000 {
+			comphy1: comphy {
+				status = "okay";
+			};
 			gop {
 				emac0_1: mac0 {
 					phy-mode = "sfi"; /* lane-4 */
