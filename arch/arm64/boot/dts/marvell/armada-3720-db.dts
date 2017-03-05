@@ -124,6 +124,9 @@
 				vcc-supply = <&exp_usb3_vbus>;
 				status = "okay";
 			};
+			eip97: eip97@90000 {
+				status = "okay";
+			};
 		};
 
 		reg_sata: pwr-sata {
