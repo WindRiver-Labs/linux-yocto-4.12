@@ -1436,9 +1436,10 @@ gckOS_AllocateNonPagedMemory(
         gcmkONERROR(gcvSTATUS_OUT_OF_MEMORY);
     }
 
-#if IMX8_CMA_LIMIT
-    flag |= gcvALLOC_FLAG_CMA_LIMIT;
-#endif
+    if (Os->allocatorLimitMarker)
+    {
+        flag |= gcvALLOC_FLAG_CMA_LIMIT;
+    }
 
     /* Walk all allocators. */
     list_for_each_entry(allocator, &Os->allocatorList, head)
@@ -3178,14 +3179,14 @@ gckOS_AllocatePagedMemoryEx(
         gcmkONERROR(gcvSTATUS_OUT_OF_MEMORY);
     }
 
-#if IMX8_CMA_LIMIT
-    if (Flag & gcvALLOC_FLAG_CMA_LIMIT)
+    if (Os->allocatorLimitMarker && (Flag & gcvALLOC_FLAG_CMA_LIMIT))
     {
         Flag &= ~gcvALLOC_FLAG_CACHEABLE;
     }
-#else
-    Flag &= ~gcvALLOC_FLAG_CMA_LIMIT;
-#endif
+    else
+    {
+        Flag &= ~gcvALLOC_FLAG_CMA_LIMIT;
+    }
 
     /* Walk all allocators. */
     list_for_each_entry(allocator, &Os->allocatorList, head)
