@@ -261,6 +261,9 @@
 &usb3 {
 	status = "okay";
 	usb-phy = <&usb3_phy>;
+	phys = <&utmi_usb32>, /* utmi usb32 dedicated phy */
+       <&a3700_comphy 1 COMPHY_USB3>; /* usb3 comphy */
+	phy-names = "usb2", "usb3";
 };
 
 /* CON17 (PCIe) / CON12 (mini-PCIe) */
