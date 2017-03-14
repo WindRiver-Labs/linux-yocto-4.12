@@ -280,6 +280,8 @@
 /* CON27 */
 &usb2 {
 	status = "okay";
+	phys = <&utmi_usb2>;
+	phy-names = "usb";
 };
 
 
