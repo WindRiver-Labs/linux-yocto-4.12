@@ -111,6 +111,10 @@
 			bm_bppi: bm-bppi {
 				status = "okay";
 			};
+			reg_avs: avs@11500 {
+				status = "okay";
+			};
+
 		};
 
 		reg_sata: pwr-sata {
