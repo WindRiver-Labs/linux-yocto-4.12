@@ -105,16 +105,26 @@
 				phys = <&utmi_usb32>;
 				phy-names = "usb";
 			};
+
 			bm: bm@c0000 {
 				status = "okay";
 			};
+
 			bm_bppi: bm-bppi {
 				status = "okay";
 			};
+
 			reg_avs: avs@11500 {
 				status = "okay";
 			};
 
+			utmi_usb32: utmi@5d000 {
+				status = "okay";
+			};
+
+			utmi_usb2: utmi@5f000 {
+				status = "okay";
+			};
 		};
 
 		reg_sata: pwr-sata {
