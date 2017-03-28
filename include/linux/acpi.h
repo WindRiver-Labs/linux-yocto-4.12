@@ -965,6 +965,11 @@ int devm_acpi_dev_add_driver_gpios(struct device *dev,
 void devm_acpi_dev_remove_driver_gpios(struct device *dev);
 
 int acpi_dev_gpio_irq_get(struct acpi_device *adev, int index);
+int acpi_node_add_pin_mapping(struct fwnode_handle *fwnode,
+			      const char *propname,
+			      const char *pinctl_name,
+			      unsigned int pin_offset,
+			      unsigned int npins);
 #else
 static inline int acpi_dev_add_driver_gpios(struct acpi_device *adev,
 			      const struct acpi_gpio_mapping *gpios)
@@ -981,6 +986,15 @@ static inline int devm_acpi_dev_add_driver_gpios(struct device *dev,
 static inline void devm_acpi_dev_remove_driver_gpios(struct device *dev) {}
 
 static inline int acpi_dev_gpio_irq_get(struct acpi_device *adev, int index)
+{
+	return -ENXIO;
+}
+
+static inline int acpi_node_add_pin_mapping(struct fwnode_handle *fwnode,
+					    const char *propname,
+					    const char *pinctl_name,
+					    unsigned int pin_offset,
+					    unsigned int npins)
 {
 	return -ENXIO;
 }
