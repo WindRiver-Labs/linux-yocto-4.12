@@ -1331,7 +1331,10 @@ static int marvell_read_status_page(struct phy_device *phydev, int page)
 		phydev->pause = phydev->asym_pause = 0;
 		phydev->lp_advertising = 0;
 	}
-
+	if (!phydev->link) {
+		phydev->speed = SPEED_UNKNOWN;
+		phydev->duplex = DUPLEX_UNKNOWN;
+	}
 	return 0;
 }
 
