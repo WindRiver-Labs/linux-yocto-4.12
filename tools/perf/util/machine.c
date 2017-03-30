@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <regex.h>
+#include "build-id.h"
 #include "callchain.h"
 #include "debug.h"
 #include "event.h"
@@ -543,7 +544,8 @@ int machine__process_namespaces_event(struct machine *machine __maybe_unused,
 }
 
 int machine__process_lost_event(struct machine *machine __maybe_unused,
-				union perf_event *event, struct perf_sample *sample __maybe_unused)
+				union perf_event *event,
+				struct perf_sample *sample __maybe_unused)
 {
 	dump_printf(": id:%" PRIu64 ": lost:%" PRIu64 "\n",
 		    event->lost.id, event->lost.lost);
@@ -551,7 +553,8 @@ int machine__process_lost_event(struct machine *machine __maybe_unused,
 }
 
 int machine__process_lost_samples_event(struct machine *machine __maybe_unused,
-					union perf_event *event, struct perf_sample *sample)
+					union perf_event *event,
+					struct perf_sample *sample)
 {
 	dump_printf(": id:%" PRIu64 ": lost samples :%" PRIu64 "\n",
 		    sample->id, event->lost_samples.lost);
@@ -762,8 +765,16 @@ static struct dso *machine__get_kernel(struct machine *machine)
 						 DSO_TYPE_GUEST_KERNEL);
 	}
 
-	if (kernel != NULL && (!kernel->has_build_id))
-		dso__read_running_kernel_build_id(kernel, machine);
+	if (kernel != NULL && (!kernel->has_build_id)) {
+		if (symbol_conf.vmlinux_name != NULL) {
+			filename__read_build_id(symbol_conf.vmlinux_name,
+						kernel->build_id,
+						sizeof(kernel->build_id));
+			kernel->has_build_id = 1;
+		} else {
+			dso__read_running_kernel_build_id(kernel, machine);
+		}
+	}
 
 	return kernel;
 }
@@ -777,8 +788,19 @@ static void machine__get_kallsyms_filename(struct machine *machine, char *buf,
 {
 	if (machine__is_default_guest(machine))
 		scnprintf(buf, bufsz, "%s", symbol_conf.default_guest_kallsyms);
-	else
-		scnprintf(buf, bufsz, "%s/proc/kallsyms", machine->root_dir);
+	else {
+		if (symbol_conf.vmlinux_name != 0) {
+			unsigned char build_id[BUILD_ID_SIZE];
+			char build_id_hex[SBUILD_ID_SIZE];
+			filename__read_build_id(symbol_conf.vmlinux_name,
+						build_id,
+						sizeof(build_id));
+			build_id__sprintf(build_id, sizeof(build_id), build_id_hex);
+			build_id_cache__linkname((char *)build_id_hex, buf, bufsz);
+		} else {
+			scnprintf(buf, bufsz, "%s/proc/kallsyms", machine->root_dir);
+		}
+	}
 }
 
 const char *ref_reloc_sym_names[] = {"_text", "_stext", NULL};
@@ -787,7 +809,7 @@ const char *ref_reloc_sym_names[] = {"_text", "_stext", NULL};
  * Returns the name of the start symbol in *symbol_name. Pass in NULL as
  * symbol_name if it's not that important.
  */
-static int machine__get_running_kernel_start(struct machine *machine,
+static u64 machine__get_kallsyms_kernel_start(struct machine *machine,
 					     const char **symbol_name, u64 *start)
 {
 	char filename[PATH_MAX];
@@ -821,7 +843,7 @@ int __machine__create_kernel_maps(struct machine *machine, struct dso *kernel)
 	int type;
 	u64 start = 0;
 
-	if (machine__get_running_kernel_start(machine, NULL, &start))
+	if (machine__get_kallsyms_kernel_start(machine, NULL, &start))
 		return -1;
 
 	/* In case of renewal the kernel map, destroy previous one */
@@ -1187,7 +1209,7 @@ int machine__create_kernel_maps(struct machine *machine)
 	u64 addr = 0;
 	int ret;
 
-	if (kernel == NULL)
+	if (!addr || kernel == NULL)
 		return -1;
 
 	ret = __machine__create_kernel_maps(machine, kernel);
@@ -1209,7 +1231,7 @@ int machine__create_kernel_maps(struct machine *machine)
 	 */
 	map_groups__fixup_end(&machine->kmaps);
 
-	if (!machine__get_running_kernel_start(machine, &name, &addr)) {
+	if (!machine__get_kallsyms_kernel_start(machine, &name, &addr)) {
 		if (name &&
 		    maps__set_kallsyms_ref_reloc_sym(machine->vmlinux_maps, name, addr)) {
 			machine__destroy_kernel_maps(machine);
