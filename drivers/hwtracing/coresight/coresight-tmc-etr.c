@@ -15,10 +15,29 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <linux/circ_buf.h>
 #include <linux/coresight.h>
 #include <linux/dma-mapping.h>
+#include <linux/slab.h>
+
 #include "coresight-priv.h"
 #include "coresight-tmc.h"
+
+/**
+ * struct cs_etr_buffer - keep track of a recording session' specifics
+ * @tmc:	generic portion of the TMC buffers
+ * @paddr:	the physical address of a DMA'able contiguous memory area
+ * @vaddr:	the virtual address associated to @paddr
+ * @size:	how much memory we have, starting at @paddr
+ * @dev:	the device @vaddr has been tied to
+ */
+struct cs_etr_buffers {
+	struct cs_buffers	tmc;
+	dma_addr_t		paddr;
+	void __iomem		*vaddr;
+	u32			size;
+	struct device		*dev;
+};
 
 static void tmc_etr_enable_hw(struct tmc_drvdata *drvdata)
 {

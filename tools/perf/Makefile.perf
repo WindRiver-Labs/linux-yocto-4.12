@@ -87,6 +87,8 @@ include ../scripts/utilities.mak
 # Define FEATURES_DUMP to provide features detection dump file
 # and bypass the feature detection
 #
+# Define NO_CSTRACE if you do not want CoreSight trace decoding support
+#
 # Define NO_JVMTI if you do not want jvmti agent built
 #
 # Define LIBCLANGLLVM if you DO want builtin clang and llvm support.
