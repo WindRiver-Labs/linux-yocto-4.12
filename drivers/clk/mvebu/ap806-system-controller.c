@@ -99,6 +99,12 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 
 	/* Get DCLK frequency */
 	switch (freq_mode) {
+	case 0x0:
+		dclk_freq = 600;
+		break;
+	case 0x1:
+		dclk_freq = 525;
+		break;
 	case 0x4:
 	case 0x10:
 	case 0x14:
