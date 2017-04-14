@@ -68,13 +68,7 @@
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 		enable-active-high;
-		regulator-always-on;
 		gpio = <&gpio_exp 1 GPIO_ACTIVE_HIGH>;
-	};
-
-	usb3_phy: usb3-phy {
-		compatible = "usb-nop-xceiv";
-		vcc-supply = <&exp_usb3_vbus>;
 	};
 
 	soc {
@@ -95,13 +89,13 @@
 			};
 
 			u3d@50000 {
-				status = "disabled";
+				status = "okay";
 				phys = <&a3700_comphy 1 COMPHY_USB3>;
 				phy-names = "usb";
 			};
 
 			udc@54100 {
-				status = "disabled";
+				status = "okay";
 				phys = <&utmi_usb32>;
 				phy-names = "usb";
 			};
@@ -125,6 +119,11 @@
 			utmi_usb2: utmi@5f000 {
 				status = "okay";
 			};
+
+			usb_phy: usb_phy@5d800 {
+				vcc-supply = <&exp_usb3_vbus>;
+				status = "okay";
+			};
 		};
 
 		reg_sata: pwr-sata {
@@ -134,7 +133,7 @@
 			regulator-max-microvolt = <12000000>;
 			enable-active-high;
 			regulator-boot-on;
-			gpio = <&expander0 2 GPIO_ACTIVE_HIGH>;
+			gpio = <&gpio_exp 2 GPIO_ACTIVE_HIGH>;
 		};
 
 		reg_5v_sata: v5-sata {
@@ -270,7 +269,7 @@
 /* CON31 */
 &usb3 {
 	status = "okay";
-	usb-phy = <&usb3_phy>;
+	usb-phy = <&usb_phy>;
 	phys = <&utmi_usb32>, /* utmi usb32 dedicated phy */
        <&a3700_comphy 1 COMPHY_USB3>; /* usb3 comphy */
 	phy-names = "usb2", "usb3";
