@@ -819,6 +819,7 @@ static int mv_xor_v2_probe(struct platform_device *pdev)
 	struct dma_device *dma_dev;
 	struct mv_xor_v2_sw_desc *sw_desc;
 	struct msi_desc *msi_desc;
+	u32 dma_bus_width;
 
 	BUILD_BUG_ON(sizeof(struct mv_xor_v2_descriptor) !=
 		     MV_XOR_V2_EXT_DESC_SIZE);
@@ -854,6 +855,18 @@ static int mv_xor_v2_probe(struct platform_device *pdev)
 
 	ret = platform_msi_domain_alloc_irqs(&pdev->dev, 1,
 					     mv_xor_v2_set_msi_msg);
+	if (ret)
+		goto disable_clk;
+
+	/* Read the DMA bus width from the device-tree and configure it */
+	ret = of_property_read_u32(pdev->dev.of_node, "dma-bus-width",
+				   &dma_bus_width);
+	if (ret) {
+		dev_err(&pdev->dev, "Failed to read dma-bus-width property\n");
+		goto disable_clk;
+	}
+
+	ret = dma_set_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(dma_bus_width));
 	if (ret)
 		goto disable_clk;
 
