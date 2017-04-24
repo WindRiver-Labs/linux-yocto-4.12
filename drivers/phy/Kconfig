@@ -530,4 +530,11 @@ config PHY_MESON8B_USB2
 	  and GXBB SoCs.
 	  If unsure, say N.
 
+
+config PHY_MIXEL_LVDS
+	bool
+	depends on OF
+	select GENERIC_PHY
+	default ARCH_FSL_IMX8QM
+
 endmenu
