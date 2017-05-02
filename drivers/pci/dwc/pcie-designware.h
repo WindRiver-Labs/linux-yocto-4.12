@@ -284,6 +284,7 @@ irqreturn_t dw_handle_msi_irq(struct pcie_port *pp);
 void dw_pcie_msi_init(struct pcie_port *pp);
 void dw_pcie_setup_rc(struct pcie_port *pp);
 int dw_pcie_host_init(struct pcie_port *pp);
+void dw_pcie_disable_outbound_atu(struct dw_pcie *pci, int index);
 #else
 static inline irqreturn_t dw_handle_msi_irq(struct pcie_port *pp)
 {
