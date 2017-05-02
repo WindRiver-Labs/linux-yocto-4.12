@@ -367,7 +367,7 @@ _QueryProcessPageTable(
     )
 {
 #ifndef CONFIG_DEBUG_SPINLOCK
-    spinlock_t *lock;
+    spinlock_t *lock = NULL;
 #endif
     gctUINTPTR_T logical = (gctUINTPTR_T)Logical;
     pgd_t *pgd;
@@ -416,6 +416,14 @@ _QueryProcessPageTable(
 
     if (!pte)
     {
+#ifndef CONFIG_DEBUG_SPINLOCK
+        if (lock)
+        {
+            spin_unlock(lock);
+        }
+#else
+        spin_unlock(&current->mm->page_table_lock);
+#endif
         return gcvSTATUS_NOT_FOUND;
     }
 
@@ -424,6 +432,7 @@ _QueryProcessPageTable(
 #ifndef CONFIG_DEBUG_SPINLOCK
         pte_unmap_unlock(pte, lock);
 #else
+        pte_unmap(pte);
         spin_unlock(&current->mm->page_table_lock);
 #endif
         return gcvSTATUS_NOT_FOUND;
@@ -433,6 +442,7 @@ _QueryProcessPageTable(
 #ifndef CONFIG_DEBUG_SPINLOCK
     pte_unmap_unlock(pte, lock);
 #else
+    pte_unmap(pte);
     spin_unlock(&current->mm->page_table_lock);
 #endif
 
