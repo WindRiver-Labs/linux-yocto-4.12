@@ -2238,10 +2238,11 @@ err_drop_frame:
 		if (!atomic_read(&rxq->refill_stop)) {
 			err = mvneta_rx_refill(pp, rx_desc, rxq);
 			if (err) {
-				netdev_err(dev, "Linux processing - Can't refill\n");
 				/* set refill stop flag */
 				atomic_set(&rxq->refill_stop, 1);
-
+				netdev_dbg(dev, "Linux processing - Can't refill queue %d\n",
+					   rxq->id);
+				rx_copybreak = 0;
 				atomic_inc(&rxq->missed);
 
 				/* record the first rx desc refilled failure */
