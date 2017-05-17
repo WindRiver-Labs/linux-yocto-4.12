@@ -709,16 +709,11 @@ ehci_port_speed(struct ehci_hcd *ehci, unsigned int portsc)
  * incoming packets get corrupted in HS mode
  */
 #define ehci_has_fsl_hs_errata(e)	((e)->has_fsl_hs_errata)
+#define ehci_has_fsl_susp_errata(e)     ((e)->has_fsl_susp_errata)
 #else
 #define ehci_has_fsl_hs_errata(e)	(0)
+#define ehci_has_fsl_susp_errata(e)     (0)
 #endif
-
-/*
- * Some Freescale/NXP processors have an erratum (USB A-005697)
- * in which we need to wait for 10ms for bus to enter suspend mode
- * after setting SUSP bit.
- */
-#define ehci_has_fsl_susp_errata(e)	((e)->has_fsl_susp_errata)
 
 /*
  * While most USB host controllers implement their registers in
