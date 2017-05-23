@@ -7,6 +7,14 @@ config IMX7_PM_DOMAINS
 	select PM_GENERIC_DOMAINS
 	default y if SOC_IMX7D
 
+menuconfig ARCH_MXC_ARM64
+	bool "NXP i.MX family"
+	depends on ARM64
+	help
+	  Support for NXP MXC/iMX-based ARM64 family of processors
+
+if ARCH_MXC_ARM64
+
 config ARCH_FSL_IMX8QM
 	bool "i.MX8QM"
 	select HAVE_IMX_MU
@@ -21,6 +29,8 @@ config ARCH_FSL_IMX8MQ
 	bool "i.MX8MQ"
 	select HAVE_IMX_MU
 	select HAVE_IMX_RPMSG
+
+endif
 
 config HAVE_IMX_MU
 	bool
