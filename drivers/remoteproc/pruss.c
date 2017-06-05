@@ -52,16 +52,21 @@ static LIST_HEAD(pruss_list);
 /**
  * pruss_get() - get the pruss for the given device
  * @dev: device interested in the pruss
+ * @pruss_id: integer pointer to fill in the pruss instance id
  *
  * Finds the pruss device referenced by the "pruss" property in the
- * requesting (client) device's device node.
+ * requesting (client) device's device node. The function will also
+ * return the PRUSS instance id to requestors if @pruss_id is provided.
+ * This can be used by PRU client drivers to distinguish between
+ * multiple PRUSS instances, and build some customization around a
+ * specific PRUSS instance.
  *
  * This function increments the pruss device's refcount, so always
  * use pruss_put() to decrement it back once pruss isn't needed anymore.
  *
  * Returns the pruss handle on success, and NULL on failure.
  */
-struct pruss *pruss_get(struct device *dev)
+struct pruss *pruss_get(struct device *dev, int *pruss_id)
 {
 	struct pruss *pruss = NULL, *p;
 	struct device_node *np;
@@ -78,6 +83,8 @@ struct pruss *pruss_get(struct device *dev)
 		if (p->dev->of_node == np) {
 			pruss = p;
 			get_device(pruss->dev);
+			if (pruss_id)
+				*pruss_id = pruss->id;
 			break;
 		}
 	}
