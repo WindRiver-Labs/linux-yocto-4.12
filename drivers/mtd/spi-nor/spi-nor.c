@@ -88,6 +88,7 @@ struct flash_info {
 					 */
 #define NO_CHIP_ERASE		BIT(12) /* Chip does not support chip erase */
 #define	SPI_NOR_DDR_QUAD_READ	BIT(13)  /* Flash supports DDR Quad Read */
+#define	SPI_NOR_DDR_OCTAL_READ	BIT(14)  /* Flash supports DDR Octal Read */
 };
 
 #define JEDEC_MFR(info)	((info)->id[0])
@@ -160,6 +161,7 @@ static inline int spi_nor_read_dummy_cycles(struct spi_nor *nor)
 {
 	switch (nor->flash_read) {
 	case SPI_NOR_DDR_QUAD:
+	case SPI_NOR_DDR_OCTAL:
 	{
 		struct device_node *np = spi_nor_get_flash_node(nor);
 		u32 dummy;
@@ -172,11 +174,13 @@ static inline int spi_nor_read_dummy_cycles(struct spi_nor *nor)
 		*/
 		if (!of_property_read_u32(np, "spi-nor,ddr-quad-read-dummy",
 					 &dummy))
+			pr_err("DUMMY CYCLE : %d !!!\n", dummy);
 			return dummy;
 	}
 	case SPI_NOR_FAST:
 	case SPI_NOR_DUAL:
 	case SPI_NOR_QUAD:
+	case SPI_NOR_OCTAL:
 		return 8;
 	case SPI_NOR_NORMAL:
 		return 0;
@@ -285,6 +289,10 @@ static void spi_nor_set_4byte_opcodes(struct spi_nor *nor,
 
 	if (nor->flash_read == SPI_NOR_DDR_QUAD)
 		nor->read_opcode = SPINOR_OP_READ4_1_4_4_D;
+	else if (nor->flash_read == SPI_NOR_DDR_OCTAL)
+		nor->read_opcode = SPINOR_OP_READ_1_1_8_D;
+	else if (nor->flash_read == SPI_NOR_OCTAL)
+		nor->read_opcode = SPINOR_OP_READ_1_1_8_D;
 	else
 		nor->read_opcode = spi_nor_convert_3to4_read(nor->read_opcode);
 	nor->program_opcode = spi_nor_convert_3to4_program(nor->program_opcode);
@@ -1067,6 +1075,7 @@ static const struct flash_info spi_nor_ids[] = {
 	{ "n25q00",      INFO(0x20ba21, 0, 64 * 1024, 2048, SECT_4K | USE_FSR | SPI_NOR_QUAD_READ | NO_CHIP_ERASE) },
 	{ "n25q00a",     INFO(0x20bb21, 0, 64 * 1024, 2048, SECT_4K | USE_FSR | SPI_NOR_QUAD_READ | NO_CHIP_ERASE) },
 	{ "mt25qu02g",	 INFO(0x20bb22, 0, 64 * 1024, 4096, SECT_4K | USE_FSR | SPI_NOR_QUAD_READ | NO_CHIP_ERASE) },
+	{"mt35xu512aba", INFO(0x2c5b1a, 0, 128 * 1024, 512, SECT_4K | SPI_NOR_DDR_OCTAL_READ) },
 
 	/* PMC */
 	{ "pm25lv512",   INFO(0,        0, 32 * 1024,    2, SECT_4K_PMC) },
@@ -1734,8 +1743,11 @@ int spi_nor_scan(struct spi_nor *nor, const char *name, enum read_mode mode)
 	if (info->flags & SPI_NOR_NO_FR)
 		nor->flash_read = SPI_NOR_NORMAL;
 
-	/* DDR Quad/Quad/Dual-read mode takes precedence over fast/normal */
-	if (mode == SPI_NOR_DDR_QUAD && info->flags & SPI_NOR_DDR_QUAD_READ) {
+	/* DDR Octal/Quad/Dual-read mode takes precedence over fast/normal */
+	if (mode == SPI_NOR_DDR_OCTAL && info->flags & SPI_NOR_DDR_OCTAL_READ) {
+		nor->flash_read = SPI_NOR_DDR_OCTAL;
+	} else if (mode == SPI_NOR_DDR_QUAD &&
+		   info->flags & SPI_NOR_DDR_QUAD_READ) {
 		ret = set_ddr_quad_mode(nor, info);
 		if (ret) {
 			dev_err(dev, "DDR quad mode not supported\n");
@@ -1755,6 +1767,9 @@ int spi_nor_scan(struct spi_nor *nor, const char *name, enum read_mode mode)
 
 	/* Default commands */
 	switch (nor->flash_read) {
+	case SPI_NOR_DDR_OCTAL:
+		nor->read_opcode = SPINOR_OP_READ_1_1_8_D;
+		break;
 	case SPI_NOR_DDR_QUAD:
 		if (JEDEC_MFR(info) == CFI_MFR_AMD) { /* Spansion */
 			nor->read_opcode = SPINOR_OP_READ_1_4_4_D;
