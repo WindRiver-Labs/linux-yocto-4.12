@@ -1,5 +1,5 @@
 
-imxdrm-objs := imx-drm-core.o ipuv3-crtc.o ipuv3-plane.o
+imxdrm-objs := imx-drm-core.o ipuv3-crtc.o ipuv3-plane.o ipuv3-kms.o
 
 obj-$(CONFIG_DRM_IMX) += imxdrm.o
 
