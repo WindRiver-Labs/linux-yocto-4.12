@@ -391,6 +391,25 @@ static int cp110_syscon_common_probe(struct platform_device *pdev,
 		cp110_clks[CP110_MAX_CORE_CLOCKS + i] = hw;
 	}
 
+	/*
+	 * Gated clock 18 feeds many core clocks in CP110, one of this clocks
+	 * is the eMMC clock. eMMC driver supports only one clock - the core
+	 * clock of eMMC) so we need to enable clock 18 in CP110 clock level
+	 * and not the eMMC driver itself.
+	 * TODO:
+	 * This is a workaround, the complete solution should be nesting all
+	 * clock providers and consumers in the CP110 driver. One possible
+	 * drawback of this WA is the fact that if we boot without IOs which
+	 * use this clock, this clock will be still enabled.
+	 */
+	if (cp110_clks[CP110_MAX_CORE_CLOCKS + CP110_GATE_SDMMC_GOP]) {
+		ret = clk_prepare_enable(cp110_clks[CP110_MAX_CORE_CLOCKS +
+						    CP110_GATE_SDMMC_GOP]);
+		if (ret)
+			goto fail_clk_add;
+
+	}
+
 	ret = of_clk_add_hw_provider(np, cp110_of_clk_get, cp110_clk_data);
 	if (ret)
 		goto fail_clk_add;
@@ -445,7 +464,7 @@ static const struct of_device_id cp110_syscon_legacy_of_match[] = {
 };
 
 static struct platform_driver cp110_syscon_legacy_driver = {
-	.probe = *cp110_syscon_legacy_clk_probe,
+	.probe = cp110_syscon_legacy_clk_probe,
 	.driver		= {
 		.name	= "marvell-cp110-system-controller0",
 		.of_match_table = cp110_syscon_legacy_of_match,
