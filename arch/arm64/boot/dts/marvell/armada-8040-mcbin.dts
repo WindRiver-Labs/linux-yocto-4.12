@@ -119,6 +119,14 @@
 					status = "okay";
 				};
 			};
+
+			usb3h0: usb3@500000 {
+				usb-phy = <&usb3h0_phy>;
+				separated-phys-for-usb2-usb3;
+				phys = <&comphy1 2 COMPHY_USB3H0>;
+				phy-names = "usb3";
+				status = "okay";
+			};
 		};
 		pcie@0x600000 {
 			num-lanes = <4>;
