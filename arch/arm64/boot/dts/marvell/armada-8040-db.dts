@@ -116,9 +116,13 @@
 		};
 		pcie@0x600000 {
 			status = "okay";
+			phys = <&comphy0 0 COMPHY_PCIE0>;
+			phy-names = "pcie-phy0";
 		};
 		pcie@0x640000 {
 			status = "okay";
+			phys = <&comphy0 5 COMPHY_PCIE2>;
+			phy-names = "pcie-phy0";
 		};
 
 		cpm_usb3h0_phy: cpm_usb3_phy0 {
@@ -467,10 +471,16 @@
 
 &cps_pcie0 {
 	status = "okay";
-}
+	phys = <&comphy1 0 COMPHY_PCIE0>;
+	phy-names = "pcie-phy0";
+};
 &cps_pcie1 {
 	status = "okay";
-}
+	phys = <&comphy1 4 COMPHY_PCIE1>;
+	phy-names = "pcie-phy0";
+};
 &cps_pcie2 {
 	status = "okay";
-}
+	phys = <&comphy1 5 COMPHY_PCIE2>;
+	phy-names = "pcie-phy0";
+};
