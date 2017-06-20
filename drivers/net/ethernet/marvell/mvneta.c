@@ -2132,6 +2132,9 @@ static void mvneta_rxq_drop_pkts(struct mvneta_port *pp,
 		struct mvneta_rx_desc *rx_desc = rxq->descs + i;
 		void *data = rxq->buf_virt_addr[i];
 
+		if (!data)
+			continue;
+
 		dma_unmap_single(pp->dev->dev.parent, rx_desc->buf_phys_addr - pp->rx_offset_correction,
 				 MVNETA_RX_BUF_SIZE(pp->pkt_size), DMA_FROM_DEVICE);
 		mvneta_frag_free(pp->frag_size, data);
@@ -2251,6 +2254,7 @@ err_drop_frame:
 				atomic_inc(&rxq->missed);
 
 				/* record the first rx desc refilled failure */
+				rx_desc->buf_cookie = 0;
 				rxq->missed_desc = rx_desc;
 
 				/* add cleanup timer */
@@ -2261,6 +2265,7 @@ err_drop_frame:
 			}
 		} else {
 			/* refill already stopped - only update missed counter */
+			rx_desc->buf_cookie = 0;
 			atomic_inc(&rxq->missed);
 		}
 
@@ -3159,6 +3164,8 @@ static void mvneta_rxq_deinit(struct mvneta_port *pp,
 	rxq->last_desc         = 0;
 	rxq->next_desc_to_proc = 0;
 	rxq->descs_phys        = 0;
+	rxq->missed_desc       = NULL;
+	atomic_set(&rxq->missed, 0);
 }
 
 /* Create and initialize a tx queue */
@@ -3430,6 +3437,7 @@ static int mvneta_change_mtu(struct net_device *dev, int mtu)
 	 */
 	mvneta_stop_dev(pp);
 	on_each_cpu(mvneta_percpu_disable, pp, true);
+	usleep_range(10, 20);
 
 	mvneta_cleanup_txqs(pp);
 	mvneta_cleanup_rxqs(pp);
