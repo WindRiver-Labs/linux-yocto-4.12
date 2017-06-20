@@ -139,6 +139,12 @@ static const struct gpmi_devdata gpmi_devdata_imx6ull = {
 	.max_chain_delay = 12,
 };
 
+static const struct gpmi_devdata gpmi_devdata_imx8qxp = {
+	.type = IS_MX8QXP,
+	.bch_max_ecc_strength = 62,
+	.max_chain_delay = 12,
+};
+
 static irqreturn_t bch_irq(int irq, void *cookie)
 {
 	struct gpmi_nand_data *this = cookie;
@@ -784,6 +790,9 @@ static int acquire_dma_channels(struct gpmi_nand_data *this)
 {
 	struct platform_device *pdev = this->pdev;
 	struct dma_chan *dma_chan;
+	struct device_node *np = pdev->dev.of_node;
+
+	of_dma_configure(&pdev->dev, np);
 
 	/* request dma channel */
 	dma_chan = dma_request_slave_channel(&pdev->dev, "rx-tx");
@@ -808,6 +817,10 @@ static char *extra_clks_for_mx7d[GPMI_CLK_MAX] = {
 	"gpmi_bch_apb",
 };
 
+static char *extra_clks_for_mx8qxp[GPMI_CLK_MAX] = {
+	"gpmi_apb", "gpmi_bch", "gpmi_apb_bch",
+};
+
 static int gpmi_get_clks(struct gpmi_nand_data *this)
 {
 	struct resources *r = &this->resources;
@@ -827,6 +840,9 @@ static int gpmi_get_clks(struct gpmi_nand_data *this)
 		extra_clks = extra_clks_for_mx6q;
 	if (GPMI_IS_MX7(this))
 		extra_clks = extra_clks_for_mx7d;
+	if (GPMI_IS_MX8(this))
+		extra_clks = extra_clks_for_mx8qxp;
+
 	if (!extra_clks)
 		return 0;
 
@@ -843,7 +859,7 @@ static int gpmi_get_clks(struct gpmi_nand_data *this)
 		r->clock[i] = clk;
 	}
 
-	if (GPMI_IS_MX6(this) || GPMI_IS_MX7(this))
+	if (GPMI_IS_MX6(this) || GPMI_IS_MX7(this) || GPMI_IS_MX8(this))
 		/*
 		 * Set the default value for the gpmi clock.
 		 *
@@ -1485,7 +1501,7 @@ static int gpmi_ecc_read_subpage(struct mtd_info *mtd, struct nand_chip *chip,
 
 	/* set chunk0 size if meta size is 0 */
 	if (!meta) {
-		if (GPMI_IS_MX6(this) || GPMI_IS_MX7(this))
+		if (GPMI_IS_MX6(this) || GPMI_IS_MX7(this) || GPMI_IS_MX8(this))
 			r1_new &= ~MX6Q_BM_BCH_FLASH0LAYOUT0_DATA0_SIZE;
 		else
 			r1_new &= ~BM_BCH_FLASH0LAYOUT0_DATA0_SIZE;
@@ -2259,7 +2275,7 @@ static int gpmi_init_last(struct gpmi_nand_data *this)
 	 *  (1) the chip is imx6, and
 	 *  (2) the size of the ECC parity is byte aligned.
 	 */
-	if ((GPMI_IS_MX6(this) || GPMI_IS_MX7(this)) &&
+	if ((GPMI_IS_MX6(this) || GPMI_IS_MX7(this) || GPMI_IS_MX8(this)) &&
 		((bch_geo->gf_len * bch_geo->ecc_strength) % 8) == 0) {
 		ecc->read_subpage = gpmi_ecc_read_subpage;
 		chip->options |= NAND_SUBPAGE_READ;
@@ -2316,7 +2332,7 @@ static int gpmi_nand_init(struct gpmi_nand_data *this)
 		goto err_out;
 
 	ret = nand_scan_ident(mtd, GPMI_IS_MX6(this) || GPMI_IS_MX7(this)\
-				? 2 : 1, NULL);
+			      || GPMI_IS_MX8(this) ? 2 : 1, NULL);
 	if (ret)
 		goto err_out;
 
@@ -2385,6 +2401,9 @@ static const struct of_device_id gpmi_nand_id_table[] = {
 	}, {
 		.compatible = "fsl,imx6ull-gpmi-nand",
 		.data = (void *)&gpmi_devdata_imx6ull,
+	}, {
+		.compatible = "fsl,imx8qxp-gpmi-nand",
+		.data = (void *)&gpmi_devdata_imx8qxp,
 	}, { /* sentinel */ }
 };
 MODULE_DEVICE_TABLE(of, gpmi_nand_id_table);
