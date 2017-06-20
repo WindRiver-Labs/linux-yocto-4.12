@@ -61,6 +61,7 @@ obj-$(CONFIG_ASPEED_LPC_CTRL)	+= aspeed-lpc-ctrl.o
 obj-$(CONFIG_PCI_ENDPOINT_TEST)	+= pci_endpoint_test.o
 obj-$(CONFIG_MVEBU_A8K_DEBUGFS)	+= mvebu-a8k-debugfs.o
 obj-$(CONFIG_MVEBU_SOC_INFO)	+= mv_soc_info.o
+obj-$(CONFIG_MVEBU_A8K_SAR)	+= mvebu-sample-at-reset.o
 
 lkdtm-$(CONFIG_LKDTM)		+= lkdtm_core.o
 lkdtm-$(CONFIG_LKDTM)		+= lkdtm_bugs.o
