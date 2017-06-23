@@ -1861,10 +1861,14 @@ static int imx6_pcie_probe(struct platform_device *pdev)
 		break;
 	}
 
-	imx6_pcie->pcie_bus_regulator = devm_regulator_get(pci->dev,
-			"pcie-bus");
-	if (IS_ERR(imx6_pcie->pcie_bus_regulator))
+	if (imx6_pcie->variant == IMX6QP) {
+		imx6_pcie->pcie_bus_regulator = devm_regulator_get(pci->dev,
+				"pcie-bus");
+		if (IS_ERR(imx6_pcie->pcie_bus_regulator))
+			imx6_pcie->pcie_bus_regulator = NULL;
+	} else {
 		imx6_pcie->pcie_bus_regulator = NULL;
+	}
 
 	/* Grab GPR config register range */
 	if (imx6_pcie->variant == IMX7D) {
