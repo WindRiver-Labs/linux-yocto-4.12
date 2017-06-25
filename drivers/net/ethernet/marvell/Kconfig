@@ -55,6 +55,7 @@ config MVXMDIO
 config MVNETA_BM_ENABLE
 	tristate "Marvell Armada 38x/XP network interface BM support"
 	depends on MVNETA
+	select SRAM
 	depends on !64BIT
 	---help---
 	  This driver supports auxiliary block of the network
