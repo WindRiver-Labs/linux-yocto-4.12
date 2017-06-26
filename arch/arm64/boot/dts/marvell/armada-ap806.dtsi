@@ -239,6 +239,12 @@
 				timeout-sec = <30>;
 			};
 
+			ap806_sar: sar@6f8200 {
+				compatible = "marvell,sample-at-reset-ap806";
+				reg = <0x6f8200 0x8>;
+				status = "okay";
+			};
+
 			smmu: iommu@5000000 {
 				compatible = "arm,mmu-500";
 				reg = <0x100000 0x100000>;
