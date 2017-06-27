@@ -4991,17 +4991,27 @@ static int mvneta_resume(struct device *device)
 			pp->bm_priv = NULL;
 		}
 	}
+
+	if (pp->bm_priv) {
+		ret = mvneta_bm_port_init(pdev, pp);
+		if (ret < 0) {
+			netdev_err(dev, "Cannot resume HW BM, use SW buffer management\n");
+			pp->bm_priv = NULL;
+		}
+	}
+
 	mvneta_defaults_set(pp);
+	if (pp->use_inband_status)
+		mvneta_fixed_link_update(pp, dev->phydev);
+
+	netif_device_attach(dev);
+
 	err = mvneta_port_power_up(pp, pp->phy_interface);
 	if (err < 0) {
 		dev_err(device, "can't power up port\n");
 		return err;
 	}
 
-	if (pp->use_inband_status)
-		mvneta_fixed_link_update(pp, dev->phydev);
-
-	netif_device_attach(dev);
 	if (netif_running(dev)) {
 		mvneta_open(dev);
 		mvneta_set_rx_mode(dev);
