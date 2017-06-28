@@ -1135,46 +1135,6 @@ static int mvneta_bm_port_init(struct platform_device *pdev,
 	return 0;
 }
 
-/* Update settings of a pool for bigger packets */
-static void mvneta_bm_update_mtu(struct mvneta_port *pp, int mtu)
-{
-	struct mvneta_bm_pool *bm_pool = pp->pool_long;
-	struct hwbm_pool *hwbm_pool = &bm_pool->hwbm_pool;
-	int num;
-
-	/* Release all buffers from long pool */
-	mvneta_bm_bufs_free(pp->bm_priv, bm_pool, 1 << pp->id);
-	if (hwbm_pool->buf_num) {
-		WARN(1, "cannot free all buffers in pool %d\n",
-		     bm_pool->id);
-		goto bm_mtu_err;
-	}
-
-	bm_pool->pkt_size = MVNETA_RX_PKT_SIZE(mtu);
-	bm_pool->buf_size = MVNETA_RX_BUF_SIZE(bm_pool->pkt_size);
-	hwbm_pool->frag_size = SKB_DATA_ALIGN(sizeof(struct skb_shared_info)) +
-			SKB_DATA_ALIGN(MVNETA_RX_BUF_SIZE(bm_pool->pkt_size));
-
-	/* Fill entire long pool */
-	num = hwbm_pool_add(hwbm_pool, hwbm_pool->size, GFP_ATOMIC);
-	if (num != hwbm_pool->size) {
-		WARN(1, "pool %d: %d of %d allocated\n",
-		     bm_pool->id, num, hwbm_pool->size);
-		goto bm_mtu_err;
-	}
-	mvneta_bm_pool_bufsize_set(pp, bm_pool->buf_size, bm_pool->id);
-
-	return;
-
-bm_mtu_err:
-	mvneta_bm_pool_destroy(pp->bm_priv, pp->pool_long, 1 << pp->id);
-	mvneta_bm_pool_destroy(pp->bm_priv, pp->pool_short, 1 << pp->id);
-
-	pp->bm_priv = NULL;
-	mvreg_write(pp, MVNETA_ACC_MODE, MVNETA_ACC_MODE_EXT1);
-	netdev_info(pp->dev, "fail to update MTU, fall back to software BM\n");
-}
-
 /* Start the Ethernet port RX and TX activity */
 static void mvneta_port_up(struct mvneta_port *pp)
 {
@@ -3427,9 +3387,6 @@ static int mvneta_change_mtu(struct net_device *dev, int mtu)
 	dev->mtu = mtu;
 
 	if (!netif_running(dev)) {
-		if (pp->bm_priv)
-			mvneta_bm_update_mtu(pp, mtu);
-
 		netdev_update_features(dev);
 		return 0;
 	}
@@ -3443,9 +3400,6 @@ static int mvneta_change_mtu(struct net_device *dev, int mtu)
 
 	mvneta_cleanup_txqs(pp);
 	mvneta_cleanup_rxqs(pp);
-
-	if (pp->bm_priv)
-		mvneta_bm_update_mtu(pp, mtu);
 
 	pp->pkt_size = MVNETA_RX_PKT_SIZE(dev->mtu);
 	pp->frag_size = SKB_DATA_ALIGN(MVNETA_RX_BUF_SIZE(pp->pkt_size)) +
