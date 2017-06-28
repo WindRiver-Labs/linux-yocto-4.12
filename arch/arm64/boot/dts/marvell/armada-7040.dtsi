@@ -115,12 +115,6 @@
 			sata: sata@540000 {
 				#stream-id-cells = <1>;
 			};
-			usb3h0: usb3@500000 {
-				#stream-id-cells = <1>;
-			};
-			usb3h1: usb3@510000 {
-				#stream-id-cells = <1>;
-			};
 			cp_xor0: cpxor0@6a0000 {
 				#stream-id-cells = <1>;
 			};

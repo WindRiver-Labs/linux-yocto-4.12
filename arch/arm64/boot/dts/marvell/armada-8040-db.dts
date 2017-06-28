@@ -102,6 +102,12 @@
 			comphy {
 				status = "okay";
 			};
+			utmi0: utmi@580000 {
+				status = "okay";
+			};
+			utmi1: utmi@581000 {
+				status = "okay";
+			};
 
 			u3d@520000 {
 				/* There is no need to set pinctlr, since the
@@ -112,13 +118,6 @@
 				 * Must be disabled in U-Boot & Linux
 				 * vbus-gpio = <&expander0 3 GPIO_ACTIVE_HIGH>;
 				 */
-			};
-
-			usb3h1: usb3@510000 {
-				separated-phys-for-usb2-usb3;
-				phys = <&comphy0 4 COMPHY_USB3H1>;
-				phy-names = "usb3";
-				status = "okay";
 			};
 		};
 		pcie@0x600000 {
@@ -220,6 +219,9 @@
 					label = "Filesystem";
 					reg = <0x1000000 0x3f000000>;
 				};
+			};
+			utmi0_1: utmi@580000 {
+				status = "okay";
 			};
 		};
 
@@ -358,12 +360,18 @@
 &cpm_usb3_0 {
 	status = "okay";
 	usb-phy = <&cpm_usb3h0_phy>;
+	phys = <&utmi0>;
+	phy-names = "usb";
 };
 
 /* CON10 on CP0 expansion */
 &cpm_usb3_1 {
 	status = "okay";
 	usb-phy = <&cpm_usb3h1_phy>;
+	separated-phys-for-usb2-usb3;
+	phys = <&utmi1>,
+	       <&comphy0 4 COMPHY_USB3H1>;
+	phy-names = "usb2", "usb3";
 };
 
 &cpm_mdio {
@@ -426,6 +434,8 @@
 &cps_usb3_0 {
 	status = "okay";
 	usb-phy = <&cps_usb3h0_phy>;
+	phys = <&utmi0_1>;
+	phy-names = "usb";
 };
 
 /* CON10 on CP1 expansion */

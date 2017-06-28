@@ -148,6 +148,12 @@
 			comphy {
 				status = "okay";
 			};
+			utmi0: utmi@580000 {
+				status = "okay";
+			};
+			utmi1: utmi@581000 {
+				status = "okay";
+			};
 
 			nand@720000 {
 				nand-ecc-strength = <4>;
@@ -165,19 +171,6 @@
 					label = "Filesystem";
 					reg = <0x1000000 0x3f000000>;
 				};
-			};
-
-			usb3h0: usb3@500000 {
-				separated-phys-for-usb2-usb3;
-				phys = <&comphy0 1 COMPHY_USB3H0>;
-				phy-names = "usb3";
-				status = "okay";
-			};
-			usb3h1: usb3@510000 {
-				separated-phys-for-usb2-usb3;
-				phys = <&comphy0 4 COMPHY_USB3H1>;
-				phy-names = "usb3";
-				status = "okay";
 			};
 		};
 
@@ -344,11 +337,21 @@
 &cpm_usb3_0 {
 	status = "okay";
 	usb-phy = <&usb3h0_phy>;
+	#stream-id-cells = <1>;
+	separated-phys-for-usb2-usb3;
+	phys = <&utmi0>,
+	       <&comphy0 1 COMPHY_USB3H0>;
+	phy-names = "usb2", "usb3";
 };
 
 &cpm_usb3_1 {
 	status = "okay";
 	usb-phy = <&usb3h1_phy>;
+	#stream-id-cells = <1>;
+	separated-phys-for-usb2-usb3;
+	phys = <&utmi1>,
+	       <&comphy0 4 COMPHY_USB3H1>;
+	phy-names = "usb2", "usb3";
 };
 
 &ap_sdhci0 {
