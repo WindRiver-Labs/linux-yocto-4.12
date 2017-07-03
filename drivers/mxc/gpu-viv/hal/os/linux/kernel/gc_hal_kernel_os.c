@@ -7626,7 +7626,7 @@ gckOS_QueryOption(
     }
     else if (!strcmp(Option, "TA"))
     {
-        *Value = 1;
+        *Value = 0;
         return gcvSTATUS_OK;
     }
     else if (!strcmp(Option, "gpuProfiler"))
