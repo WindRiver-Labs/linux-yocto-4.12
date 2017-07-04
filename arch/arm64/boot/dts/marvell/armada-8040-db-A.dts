@@ -155,8 +155,8 @@
 			status = "okay";
 		};
 	};
-	cpn-110-slave {
-		config-space {
+	cp110-slave {
+		config-space@f4000000 {
 			/* usb3h0_1 is USB2 only (UTMI) */
 			usb3h0_1: usb3@500000 {
 				status = "okay";

@@ -59,6 +59,165 @@
 		device_type = "memory";
 		reg = <0x0 0x0 0x0 0x80000000>;
 	};
+
+	ap806 {
+		config-space@f0000000 {
+			serial@512000 {
+				status = "okay";
+			};
+			i2c@511000 {
+				status = "disabled";
+				clock-frequency = <100000>;
+			};
+			sd_mmc_reg0: regulator@0 {
+				gpios = <&gpio0 11 GPIO_ACTIVE_HIGH>;
+				gpios-states = <0>;
+				states = <1800000 0x1
+					3300000 0x0>;
+				enable-active-high;
+				status = "disabled";
+			};
+			sdhci@6e0000 {
+				status = "okay";
+				bus-width = <4>;
+				no-1-8-v;
+				non-removable; /* For now, need to configure the GPIO for card detect */
+			};
+		};
+	};
+
+	cp110-master {
+		config-space@f2000000 {
+			serial@702000 {
+				status = "disabled";
+			};
+			serial@702100 {
+				status = "disabled";
+			};
+			serial@702200 {
+				status = "disabled";
+			};
+			serial@702300 {
+				status = "disabled";
+			};
+			u3d@520000 {
+				status = "disabled";
+			};
+			udc@524100 {
+				status = "disabled";
+			};
+			mdio@12a200 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				phy2: ethernet-phy@2 {
+					reg = <0>;
+				};
+				phy3: ethernet-phy@3 {
+					reg = <1>;
+				};
+			};
+			gop {
+				emac0: mac0 {
+					phy-mode = "sfi"; /* lane-2 */
+					phys = <&comphy0 2 COMPHY_SFI>;
+					phy-names = "comphy";
+				};
+				emac2: mac2 {
+					phy-mode = "sgmii"; /* lane-0 */
+					phy = <&phy2>;
+					phys = <&comphy0 0 COMPHY_SGMII1>;
+					phy-names = "comphy";
+				};
+				emac3: mac3 {
+					phy-mode = "rgmii"; /* rgmii-1 */
+					phy = <&phy3>;
+				};
+			};
+			ppv22@000000 {
+				l4_chksum_jumbo_port = <0>;
+				eth0: eth0@010000 {
+					status = "okay";
+				};
+				eth1: eth1@020000 {
+					status = "okay";
+				};
+				eth2: eth2@030000 {
+					status = "okay";
+				};
+			};
+			comphy {
+				status = "okay";
+			};
+
+			nand@720000 {
+				nand-ecc-strength = <4>;
+				nand-ecc-step-size = <512>;
+				status = "disabled";
+				partition@0 {
+					label = "U-Boot";
+					reg = <0 0x200000>;
+				};
+				partition@200000 {
+					label = "Linux";
+					reg = <0x200000 0xd00000>;
+				};
+				partition@1000000 {
+					label = "Filesystem";
+					reg = <0x1000000 0x3f000000>;
+				};
+			};
+		};
+
+		pcie@0x640000 {
+			status = "okay";
+		};
+	};
+
+	usb3h0_phy: usb3-h0-phy {
+		compatible = "usb-nop-xceiv";
+		/* vcc-supply can be changed by io-expander or GPIO,
+		 * for A7040-DB we are using by default io-expander
+		 * for other board GPIO may be needed, should update
+		 * the phandle to gpio regulator
+		 */
+		vcc-supply = <&exp_usb3h0_vbus>;
+	};
+	usb3h1_phy: usb3-h1-phy {
+		compatible = "usb-nop-xceiv";
+		vcc-supply = <&exp_usb3h1_vbus>;
+	};
+	exp_usb3h0_vbus: usb3-0-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb3-0-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-active-high;
+		regulator-always-on;
+		gpio = <&expander0 0 GPIO_ACTIVE_HIGH>;
+	};
+	exp_usb3h1_vbus: usb3-1-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb3-1-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-active-high;
+		regulator-always-on;
+		gpio = <&expander0 1 GPIO_ACTIVE_HIGH>;
+	};
+	/* following GPIO entry is not used (for reference only)
+	 * GPIO is not connected in default A7040-DB board
+	 */
+	gpio_usb3_vbus: usb3-gpio-vbus {
+		compatible = "regulator-fixed";
+		pinctrl-names = "default";
+		pinctrl-0 = <&xhci0_vbus_pins>;
+		regulator-name = "xhci0-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-active-high;
+		gpio = <&cpm_gpio0 12 GPIO_ACTIVE_HIGH>;
+		status = "disabled";
+	};
 };
 
 &i2c0 {
@@ -105,6 +264,25 @@
 &cpm_i2c0 {
 	status = "okay";
 	clock-frequency = <100000>;
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c0_pins>;
+	eeprom@57 {
+		compatible = "at24,24c64";
+		reg = <0x57>;
+		pagesize = <32>;
+	};
+	eeprom@50 {
+		compatible = "at24,24c64";
+		reg = <0x50>;
+		pagesize = <32>;
+	};
+	expander0: pca9555@21 {
+		compatible = "nxp,pca9555";
+		pinctrl-names = "default";
+		gpio-controller;
+		#gpio-cells = <2>;
+		reg = <0x21>;
+	};
 };
 
 &cpm_spi1 {
@@ -137,14 +315,25 @@
 
 &cpm_sata0 {
 	status = "okay";
+
+	sata-port@0 {
+		status = "disabled";
+	};
+	sata-port@1 {
+		phys = <&comphy0 3 COMPHY_SATA1>;
+		phy-names = "comphy";
+		status = "okay";
+	};
 };
 
 &cpm_usb3_0 {
 	status = "okay";
+	usb-phy = <&usb3h0_phy>;
 };
 
 &cpm_usb3_1 {
 	status = "okay";
+	usb-phy = <&usb3h1_phy>;
 };
 
 &ap_sdhci0 {
@@ -159,6 +348,7 @@
 	bus-width = <4>;
 	no-1-8-v;
 	non-removable;
+	pinctrl-names = "default";
 };
 
 &cpm_mdio {
