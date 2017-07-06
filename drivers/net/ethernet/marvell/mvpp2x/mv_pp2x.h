@@ -590,10 +590,6 @@ struct mv_pp2x_port_pcpu {
 	int ext_buf_size;
 	struct list_head ext_buf_port_list;
 	struct mv_pp2x_ext_buf_pool *ext_buf_pool;
-
-	struct hrtimer tx_timer;
-	struct tasklet_struct tx_tasklet;
-	bool tx_timer_scheduled;
 };
 
 /* Per-CPU CP control */
@@ -601,6 +597,10 @@ struct mv_pp2x_cp_pcpu {
 	struct list_head skb_port_list;
 	struct mv_pp2x_skb_pool *skb_pool;
 	int in_use[MVPP2_BM_POOLS_NUM];
+
+	struct hrtimer tx_timer;
+	struct tasklet_struct tx_tasklet;
+	bool tx_timer_scheduled;
 };
 
 struct queue_vector {
