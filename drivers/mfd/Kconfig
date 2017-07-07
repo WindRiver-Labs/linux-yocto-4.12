@@ -1683,6 +1683,12 @@ config MFD_STW481X
 	  in various ST Microelectronics and ST-Ericsson embedded
 	  Nomadik series.
 
+config MFD_UPBOARD_FPGA
+	tristate "Support for the UP board FPGA"
+	select MFD_CORE
+	help
+	  Select this option to enable the UP and UP^2 on-board FPGA.
+
 config MFD_STM32_TIMERS
 	tristate "Support for STM32 Timers"
 	depends on (ARCH_STM32 && OF) || COMPILE_TEST
