@@ -278,6 +278,7 @@ empty_fq:
 		dev_err(qidev, "OOS of FQID: %u failed\n", fq->fqid);
 
 	qman_destroy_fq(fq, 0);
+	kfree(fq);
 
 	return ret;
 }
@@ -343,8 +344,7 @@ int caam_drv_ctx_update(struct caam_drv_ctx *drv_ctx, u32 *sh_desc)
 		drv_ctx->req_fq = old_fq;
 
 		if (kill_fq(qidev, new_fq))
-			dev_warn(qidev, "New CAAM FQ: %u kill failed\n",
-				 new_fq->fqid);
+			dev_warn(qidev, "New CAAM FQ kill failed\n");
 
 		return ret;
 	}
@@ -374,10 +374,9 @@ int caam_drv_ctx_update(struct caam_drv_ctx *drv_ctx, u32 *sh_desc)
 		drv_ctx->req_fq = old_fq;
 
 		if (kill_fq(qidev, new_fq))
-			dev_warn(qidev, "New CAAM FQ: %u kill failed\n",
-				 new_fq->fqid);
+			dev_warn(qidev, "New CAAM FQ kill failed\n");
 	} else if (kill_fq(qidev, old_fq)) {
-		dev_warn(qidev, "Old CAAM FQ: %u kill failed\n", old_fq->fqid);
+		dev_warn(qidev, "Old CAAM FQ kill failed\n");
 	}
 
 	return 0;
@@ -511,7 +510,6 @@ int caam_qi_shutdown(struct device *qidev)
 
 		if (kill_fq(qidev, per_cpu(pcpu_qipriv.rsp_fq, i)))
 			dev_err(qidev, "Rsp FQ kill failed, cpu: %d\n", i);
-		kfree(per_cpu(pcpu_qipriv.rsp_fq, i));
 	}
 
 	/*
