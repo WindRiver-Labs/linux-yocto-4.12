@@ -431,6 +431,10 @@ retry:
 		if (mode->status == MODE_OK && connector_funcs->mode_valid)
 			mode->status = connector_funcs->mode_valid(connector,
 								   mode);
+
+		if (mode->status == MODE_OK)
+			mode->status = drm_mode_validate_ycbcr420(mode,
+								  connector);
 	}
 
 prune:
