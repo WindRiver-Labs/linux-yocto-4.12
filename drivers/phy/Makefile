@@ -67,3 +67,4 @@ obj-$(CONFIG_PHY_MESON8B_USB2)		+= phy-meson8b-usb2.o
 obj-$(CONFIG_PHY_MIXEL_LVDS)	+= phy-mixel-lvds.o
 obj-$(CONFIG_PHY_MIXEL_LVDS_COMBO)	+= phy-mixel-lvds-combo.o
 obj-$(CONFIG_PHY_FSL_IMX8MQ_USB)	+= phy-fsl-imx8mq-usb.o
+obj-$(CONFIG_PHY_MIXEL_MIPI_DSI)	+= phy-mixel-mipi-dsi.o
