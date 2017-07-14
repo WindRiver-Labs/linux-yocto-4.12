@@ -869,13 +869,16 @@ static int install_framebuffer(struct fb_info *info)
 	info->flags = FBINFO_FLAG_DEFAULT;
 	info->pseudo_palette = &mfbi->pseudo_palette;
 
-	fb_alloc_cmap(&info->cmap, 16, 0);
+	if (ret = fb_alloc_cmap(&info->cmap, 16, 0))
+		return ret;
 
 	INIT_LIST_HEAD(&info->modelist);
 
 	ret = fsl_dcu_init_fbinfo(info);
-	if (ret)
+	if (ret) {
+		fb_dealloc_cmap(&info->cmap);
 		return ret;
+	}
 
 	modelist = list_first_entry(&info->modelist,
 			struct fb_modelist, list);
@@ -885,6 +888,8 @@ static int install_framebuffer(struct fb_info *info)
 	ret = register_framebuffer(info);
 	if (ret < 0) {
 		dev_err(dcufb->dev, "failed to register framebuffer device\n");
+		unmap_video_memory(info);
+		fb_dealloc_cmap(&info->cmap);
 		return ret;
 	}
 
