@@ -160,6 +160,7 @@ struct display_timings *of_get_display_timings(const struct device_node *np)
 	}
 
 	disp = kzalloc(sizeof(*disp), GFP_KERNEL);
+	kmemleak_ignore(disp);
 	if (!disp) {
 		pr_err("%s: could not allocate struct disp'\n",
 			of_node_full_name(np));
@@ -191,6 +192,7 @@ struct display_timings *of_get_display_timings(const struct device_node *np)
 
 	disp->timings = kzalloc(sizeof(struct display_timing *) *
 				disp->num_timings, GFP_KERNEL);
+	kmemleak_ignore(disp->timings);
 	if (!disp->timings) {
 		pr_err("%s: could not allocate timings array\n",
 			of_node_full_name(np));
@@ -210,7 +212,7 @@ struct display_timings *of_get_display_timings(const struct device_node *np)
 					of_node_full_name(np));
 			goto timingfail;
 		}
-
+		kmemleak_ignore(dt);
 		r = of_parse_display_timing(entry, dt);
 		if (r) {
 			/*
