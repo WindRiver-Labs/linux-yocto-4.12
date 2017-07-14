@@ -171,6 +171,7 @@ static int ehci_orion_drv_reset(struct usb_hcd *hcd)
 {
 	struct device *dev = hcd->self.controller;
 	int ret;
+	uint32_t regVal;
 
 	ret = ehci_setup(hcd);
 	if (ret)
@@ -183,8 +184,14 @@ static int ehci_orion_drv_reset(struct usb_hcd *hcd)
 	 * sbuscfg reg has to be set after usb controller reset, otherwise
 	 * the value would be override to 0.
 	 */
-	if (of_device_is_compatible(dev->of_node, "marvell,armada-3700-ehci"))
+	if (of_device_is_compatible(dev->of_node, "marvell,armada-3700-ehci")) {
 		wrl(USB_SBUSCFG, USB_SBUSCFG_DEF_VAL);
+		/*
+		 * Disable Streaming to guaratee DDR access in low bandwidth systems.
+		 */
+		regVal = rdl(USB_MODE);
+		wrl(USB_MODE, regVal | USB_MODE_SDIS);
+	}
 
 	return ret;
 }
