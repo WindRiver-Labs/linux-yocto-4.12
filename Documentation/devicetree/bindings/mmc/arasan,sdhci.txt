@@ -40,6 +40,10 @@ Optional Properties:
     the CD line is not connected properly, and the line is not connected
     properly. Test mode can be used to force the controller to function.
 
+Optional Properties for "xlnx,zynqmp-8.9a":
+ - nvmem-cells: list of phandle to the nvmem data cells.
+ - nvmem-cell-names: Names for the each nvmem-cells specified.
+
 Example:
 	sdhci@e0100000 {
 		compatible = "arasan,sdhci-8.9a";
