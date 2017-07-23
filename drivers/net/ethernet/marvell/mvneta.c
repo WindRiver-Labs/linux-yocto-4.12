@@ -2320,6 +2320,9 @@ err_drop_frame:
 			continue;
 		}
 
+		/* Prefetch header */
+		prefetch(data);
+
 		if (rx_bytes <= rx_copybreak) {
 			/* better copy a small frame and not unmap the DMA region */
 			skb = napi_alloc_skb(napi, rx_bytes);
