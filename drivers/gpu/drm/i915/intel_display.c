@@ -13799,7 +13799,7 @@ intel_cursor_plane_create(struct drm_i915_private *dev_priv, enum pipe pipe)
 				       0, &intel_cursor_plane_funcs,
 				       intel_cursor_formats,
 				       ARRAY_SIZE(intel_cursor_formats),
-				       DRM_PLANE_TYPE_CURSOR,
+				       NULL, DRM_PLANE_TYPE_CURSOR,
 				       "cursor %c", pipe_name(pipe));
 	if (ret)
 		goto fail;
