@@ -384,7 +384,6 @@ xilinx_drm_dp_sub_blend_layer_enable(struct xilinx_drm_dp_sub_blend *blend,
 			  XILINX_DP_SUB_V_BLEND_LAYER_CONTROL + layer->offset,
 			  reg);
 
-
 	if (layer->id == XILINX_DRM_DP_SUB_LAYER_VID)
 		offset = XILINX_DP_SUB_V_BLEND_IN1CSC_COEFF0;
 	else
@@ -1344,7 +1343,6 @@ xilinx_drm_dp_sub_layer_get(struct xilinx_drm_dp_sub *dp_sub, bool primary)
 		return ERR_PTR(-ENODEV);
 
 	return layer;
-
 }
 EXPORT_SYMBOL_GPL(xilinx_drm_dp_sub_layer_get);
 
