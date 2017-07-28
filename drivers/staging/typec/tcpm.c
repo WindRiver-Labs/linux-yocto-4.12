@@ -2691,6 +2691,7 @@ static void run_state_machine(struct tcpm_port *port)
 			       PD_T_PS_SOURCE_OFF);
 		break;
 	case PR_SWAP_SRC_SNK_SOURCE_OFF:
+		tcpm_set_pwr_role(port, TYPEC_SINK);
 		tcpm_set_cc(port, TYPEC_CC_RD);
 		/*
 		 * USB-PD standard, 6.2.1.4, Port Power Role:
@@ -2704,7 +2705,7 @@ static void run_state_machine(struct tcpm_port *port)
 			tcpm_set_state(port, ERROR_RECOVERY, 0);
 			break;
 		}
-		tcpm_set_state_cond(port, SNK_UNATTACHED, PD_T_PS_SOURCE_ON);
+		tcpm_set_state_cond(port, ERROR_RECOVERY, PD_T_PS_SOURCE_ON);
 		break;
 	case PR_SWAP_SRC_SNK_SINK_ON:
 		tcpm_swap_complete(port, 0);
