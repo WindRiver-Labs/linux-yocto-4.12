@@ -512,7 +512,7 @@ _GLOBAL(fsl_booke_deep_sleep_resume)
 	li	r0, 0
 3:	mr	r3, r0
 	bl	loadcam_entry
-	addi	r0, r0, 1
+	addi	r0, 0, 1
 	bdnz	3b
 
 	/* restore return address */
