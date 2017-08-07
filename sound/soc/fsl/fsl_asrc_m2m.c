@@ -762,8 +762,7 @@ static long fsl_asrc_ioctl_flush(struct fsl_asrc_pair *pair, void __user *user)
 
 static long fsl_asrc_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
-	struct miscdevice *asrc_miscdev = file->private_data;
-	struct fsl_asrc_pair *pair = dev_get_drvdata(asrc_miscdev->this_device);
+	struct fsl_asrc_pair *pair = file->private_data;
 	struct fsl_asrc *asrc_priv = pair->asrc_priv;
 	void __user *user = (void __user *)arg;
 	long ret = 0;
@@ -834,7 +833,7 @@ static int fsl_asrc_open(struct inode *inode, struct file *file)
 
 	spin_lock_init(&m2m->lock);
 
-	dev_set_drvdata(asrc_miscdev->this_device, pair);
+	file->private_data = pair;
 
 	pm_runtime_get_sync(dev);
 
@@ -847,8 +846,7 @@ out:
 
 static int fsl_asrc_close(struct inode *inode, struct file *file)
 {
-	struct miscdevice *asrc_miscdev = file->private_data;
-	struct fsl_asrc_pair *pair = dev_get_drvdata(asrc_miscdev->this_device);
+	struct fsl_asrc_pair *pair = file->private_data;
 	struct fsl_asrc_m2m *m2m = pair->private;
 	struct fsl_asrc *asrc_priv = pair->asrc_priv;
 	struct device *dev = &asrc_priv->pdev->dev;
@@ -886,6 +884,7 @@ static int fsl_asrc_close(struct inode *inode, struct file *file)
 	kfree(m2m);
 	kfree(pair);
 	spin_unlock_irqrestore(&asrc_priv->lock, lock_flags);
+	file->private_data = NULL;
 
 	pm_runtime_put_sync(dev);
 
