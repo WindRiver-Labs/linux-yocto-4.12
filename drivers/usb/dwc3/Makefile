@@ -5,6 +5,12 @@ obj-$(CONFIG_USB_DWC3)			+= dwc3.o
 
 dwc3-y					:= core.o
 
+ifneq ($(CONFIG_USB_DWC3_AXXIA), )
+	dwc3-y				:= core-axxia.o debug.o trace.o
+else
+	dwc3-y                          := core.o debug.o trace.o
+endif
+
 ifneq ($(CONFIG_FTRACE),)
 	dwc3-y				+= trace.o
 endif
