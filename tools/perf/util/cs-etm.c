@@ -1190,7 +1190,7 @@ static int cs_etm__process_event(struct perf_session *session,
 					etmq->decoder,
 					foffset,
 					fstart,
-					fsize & ~0xULL,
+					fsize & ~0x1ULL,
 					symbol_conf.vmlinux_name);
 
 				etmq->kernel_mapped = true;
