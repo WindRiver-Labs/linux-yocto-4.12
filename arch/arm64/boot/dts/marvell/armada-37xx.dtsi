@@ -341,27 +341,11 @@
 				clocks = <&xtalclk>;
 			};
 
-			npinctrl: north-bridge-pinctrl@13830 {
-				compatible = "marvell,armada-3700-nb-pinctrl";
-				reg = <0x13830 0x4>;
-
-				spi0_pins: spi-pins-0 {
-					marvell,pins = "mpp36";
-					marvell,function = "spi";
-				};
-			};
-
 			cpu_pm_clk: cpu-pm-clk@14018 {
 				compatible = "marvell,armada-37xx-cpu-pm-clk";
 				reg = <0x14018 0x1C>;
 				#clock-cells = <1>;
 				clocks = <&nb_periph_clk 16>;
-			};
-
-			spinctrl: south-bridge-pinctrl@18830 {
-				compatible = "marvell,armada-3700-sb-pinctrl";
-				reg = <0x18830 0x4>;
-
 			};
 
 			u3d@50000 {
