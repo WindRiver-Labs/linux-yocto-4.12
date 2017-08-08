@@ -80,7 +80,7 @@
 				regulator-max-microvolt = <3300000>;
 				regulator-boot-on;
 
-				gpios = <&gpio_sb 23 GPIO_ACTIVE_HIGH>;
+				gpios = <&gpiosb 23 GPIO_ACTIVE_HIGH>;
 				gpios-states = <0>;
 				states = <1800000 0x1
 					  3300000 0x0>;
@@ -262,7 +262,6 @@
 	vqmmc-supply = <&vcc_sd_reg1>;
 	mmc-pwrseq = <&sd_pwrseq>;
 	marvell,pad-type = "sd";
-	vqmmc-supply = <&vcc_sd_reg1>;
 	status = "okay";
 
 	pinctrl-names = "default";
@@ -280,7 +279,7 @@
 
 /* CON17 (PCIe) / CON12 (mini-PCIe) */
 &pcie0 {
-	reset-gpios = <&gpio_sb 3 GPIO_ACTIVE_LOW>;
+	reset-gpios = <&gpiosb 3 GPIO_ACTIVE_HIGH>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie_pins>;
 
