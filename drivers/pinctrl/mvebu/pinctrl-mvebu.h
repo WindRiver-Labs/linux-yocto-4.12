@@ -110,6 +110,7 @@ struct mvebu_mpp_mode {
 
 /**
  * struct mvebu_pinctrl_soc_info - SoC specific info passed to pinctrl-mvebu
+ * @node: global list node
  * @variant: variant mask of soc_info
  * @controls: list of available mvebu_mpp_ctrls
  * @control_data: optional array, one entry for each control
@@ -118,12 +119,14 @@ struct mvebu_mpp_mode {
  * @nmodes: number of available mvebu_mpp_modes
  * @gpioranges: list of pinctrl_gpio_ranges
  * @ngpioranges: number of available pinctrl_gpio_ranges
+ * @pm_save: saved register values during suspend
  *
  * This struct describes all pinctrl related information for a specific SoC.
  * If variant is unequal 0 it will be matched (AND) with variant of each
  * setting and allows to distinguish between different revisions of one SoC.
  */
 struct mvebu_pinctrl_soc_info {
+	struct list_head node;
 	u8 variant;
 	const struct mvebu_mpp_ctrl *controls;
 	struct mvebu_mpp_ctrl_data *control_data;
@@ -132,6 +135,17 @@ struct mvebu_pinctrl_soc_info {
 	int nmodes;
 	struct pinctrl_gpio_range *gpioranges;
 	int ngpioranges;
+	struct mvebu_pinctrl_pm_save *pm_save;
+};
+
+/**
+ * struct mvebu_pinctrl_pm_save - pinctrl register save when PM
+ * @regs: to save register value when suspend
+ * @settings: inidcates register space length to save
+ */
+struct mvebu_pinctrl_pm_save {
+	unsigned int *regs;
+	unsigned int length;
 };
 
 #define MPP_FUNC_CTRL(_idl, _idh, _name, _func)			\
