@@ -829,7 +829,7 @@ static int fsl_dcu_init_fbinfo(struct fb_info *info)
 	if (!timings_np) {
 		dev_err(dcufb->dev, "failed to find display-timings node\n");
 		ret = -ENOENT;
-		goto put_display_node;
+		goto free_timings_and_display_node;
 	}
 
 	for (i = 0; i < of_get_child_count(timings_np); i++) {
@@ -852,6 +852,8 @@ static int fsl_dcu_init_fbinfo(struct fb_info *info)
 put_timings_node:
 	display_timings_release(timings);
 	of_node_put(timings_np);
+free_timings_and_display_node:
+	display_timings_release(timings);
 put_display_node:
 	of_node_put(display_np);
 	return ret;
