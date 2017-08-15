@@ -55,6 +55,13 @@
 		stdout-path = "serial0:115200n8";
 	};
 
+	aliases {
+		ethernet0 = &emac0;
+		ethernet1 = &emac3;
+		ethernet2 = &emac0_1;
+		ethernet3 = &emac2_1;
+	};
+
 	memory@00000000 {
 		device_type = "memory";
 		reg = <0x0 0x0 0x0 0x80000000>;
