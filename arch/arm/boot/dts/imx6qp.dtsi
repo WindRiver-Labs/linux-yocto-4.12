@@ -178,10 +178,6 @@
 	compatible = "fsl,imx6qp-mmdc", "fsl,imx6q-mmdc";
 };
 
-&pcie {
-	compatible = "fsl,imx6qp-pcie", "snps,dw-pcie";
-};
-
 &ldb {
 	compatible = "fsl,imx6qp-ldb", "fsl,imx6q-ldb", "fsl,imx53-ldb";
 };
