@@ -9,3 +9,4 @@ obj-$(CONFIG_NET_DSA_SMSC_LAN9303_MDIO) += lan9303_mdio.o
 obj-y				+= b53/
 obj-y				+= mv88e6xxx/
 obj-$(CONFIG_NET_DSA_LOOP)	+= dsa_loop.o dsa_loop_bdinfo.o
+obj-$(CONFIG_DSA_MVMDIO) += dsa_mvmdio.o
