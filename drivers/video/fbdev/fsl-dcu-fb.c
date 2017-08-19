@@ -871,7 +871,8 @@ static int install_framebuffer(struct fb_info *info)
 	info->flags = FBINFO_FLAG_DEFAULT;
 	info->pseudo_palette = &mfbi->pseudo_palette;
 
-	if (ret = fb_alloc_cmap(&info->cmap, 16, 0))
+	ret = fb_alloc_cmap(&info->cmap, 16, 0);
+	if (ret)
 		return ret;
 
 	INIT_LIST_HEAD(&info->modelist);
