@@ -1061,6 +1061,7 @@ void fb_edid_add_monspecs(unsigned char *edid, struct fb_monspecs *specs)
 	if (!m)
 		return;
 
+	kmemleak_ignore(m);
 	memcpy(m, specs->modedb, specs->modedb_len * sizeof(struct fb_videomode));
 
 	for (i = specs->modedb_len; i < specs->modedb_len + num; i++) {
