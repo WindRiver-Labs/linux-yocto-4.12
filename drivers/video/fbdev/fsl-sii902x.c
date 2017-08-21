@@ -510,6 +510,8 @@ static int sii902x_probe(struct i2c_client *client,
 
 static int sii902x_remove(struct i2c_client *client)
 {
+	if (sii902x && sii902x->fbi && sii902x->fbi->monspecs.modedb)
+		fb_destroy_modedb(sii902x->fbi->monspecs.modedb);
 	fb_unregister_client(&nb);
 	sii902x_poweroff();
 	return 0;
