@@ -73,6 +73,11 @@
 
 	soc {
 		internal-regs@d0000000 {
+			sd_pwrseq: sd-pwrseq {
+				compatible = "mmc-pwrseq-a3700-sd";
+				pwren-gpios = <&expander0 4 GPIO_ACTIVE_HIGH>;
+			};
+
 			vcc_sd_reg1: regulator@0 {
 				compatible = "regulator-gpio";
 				regulator-name = "vcc_sd1";
