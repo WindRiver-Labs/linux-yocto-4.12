@@ -1721,6 +1721,11 @@ int spi_nor_scan(struct spi_nor *nor, const char *name, enum read_mode mode)
 		if (JEDEC_MFR(info) == SNOR_MFR_SPANSION ||
 		    info->flags & SPI_NOR_4B_OPCODES)
 			spi_nor_set_4byte_opcodes(nor, info);
+		else if (of_property_read_bool(np, "spi-3byte-addressing")) {
+			nor->addr_width = 3;
+			mtd->size = 0x1000000;
+			dev_info(dev, "Force 3B addressing mode\n");
+		}
 		else
 			set_4byte(nor, info, 1);
 	} else {
