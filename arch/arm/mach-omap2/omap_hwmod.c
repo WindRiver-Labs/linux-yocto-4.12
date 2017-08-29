@@ -998,6 +998,34 @@ static int _enable_clocks(struct omap_hwmod *oh)
 }
 
 /**
+ * _omap4_clkctrl_managed_by_clkfwk - true if clkctrl managed by clock framework
+ * @oh: struct omap_hwmod *
+ */
+static bool _omap4_clkctrl_managed_by_clkfwk(struct omap_hwmod *oh)
+{
+	if (oh->prcm.omap4.flags & HWMOD_OMAP4_CLKFWK_CLKCTR_CLOCK)
+		return true;
+
+	return false;
+}
+
+/**
+ * _omap4_has_clkctrl_clock - returns true if a module has clkctrl clock
+ * @oh: struct omap_hwmod *
+ */
+static bool _omap4_has_clkctrl_clock(struct omap_hwmod *oh)
+{
+	if (oh->prcm.omap4.clkctrl_offs)
+		return true;
+
+	if (!oh->prcm.omap4.clkctrl_offs &&
+	    oh->prcm.omap4.flags & HWMOD_OMAP4_ZERO_CLKCTRL_OFFSET)
+		return true;
+
+	return false;
+}
+
+/**
  * _disable_clocks - disable hwmod main clock and interface clocks
  * @oh: struct omap_hwmod *
  *
@@ -1034,7 +1062,8 @@ static int _disable_clocks(struct omap_hwmod *oh)
  */
 static void _omap4_enable_module(struct omap_hwmod *oh)
 {
-	if (!oh->clkdm || !oh->prcm.omap4.modulemode)
+	if (!oh->clkdm || !oh->prcm.omap4.modulemode ||
+	    _omap4_clkctrl_managed_by_clkfwk(oh))
 		return;
 
 	pr_debug("omap_hwmod: %s: %s: %d\n",
@@ -1065,8 +1094,10 @@ static int _omap4_wait_target_disable(struct omap_hwmod *oh)
 	if (oh->flags & HWMOD_NO_IDLEST)
 		return 0;
 
-	if (!oh->prcm.omap4.clkctrl_offs &&
-	    !(oh->prcm.omap4.flags & HWMOD_OMAP4_ZERO_CLKCTRL_OFFSET))
+	if (_omap4_clkctrl_managed_by_clkfwk(oh))
+		return 0;
+
+	if (!_omap4_has_clkctrl_clock(oh))
 		return 0;
 
 	return omap_cm_wait_module_idle(oh->clkdm->prcm_partition,
@@ -1851,7 +1882,8 @@ static int _omap4_disable_module(struct omap_hwmod *oh)
 {
 	int v;
 
-	if (!oh->clkdm || !oh->prcm.omap4.modulemode)
+	if (!oh->clkdm || !oh->prcm.omap4.modulemode ||
+	    _omap4_clkctrl_managed_by_clkfwk(oh))
 		return -EINVAL;
 
 	/*
@@ -2855,8 +2887,10 @@ static int _omap4_wait_target_ready(struct omap_hwmod *oh)
 	if (!_find_mpu_rt_port(oh))
 		return 0;
 
-	if (!oh->prcm.omap4.clkctrl_offs &&
-	    !(oh->prcm.omap4.flags & HWMOD_OMAP4_ZERO_CLKCTRL_OFFSET))
+	if (_omap4_clkctrl_managed_by_clkfwk(oh))
+		return 0;
+
+	if (!_omap4_has_clkctrl_clock(oh))
 		return 0;
 
 	/* XXX check module SIDLEMODE, hardreset status */
@@ -3012,8 +3046,7 @@ static int _omap4_disable_direct_prcm(struct omap_hwmod *oh)
 	if (!oh)
 		return -EINVAL;
 
-	oh->prcm.omap4.clkctrl_offs = 0;
-	oh->prcm.omap4.modulemode = 0;
+	oh->prcm.omap4.flags |= HWMOD_OMAP4_CLKFWK_CLKCTR_CLOCK;
 
 	return 0;
 }
