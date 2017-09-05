@@ -243,6 +243,7 @@ static int qoriq_tmu_probe(struct platform_device *pdev)
 {
 	int ret;
 	struct qoriq_tmu_data *data;
+	const struct thermal_trip *trip;
 	struct device_node *np = pdev->dev.of_node;
 	u32 site = 0;
 
@@ -313,6 +314,7 @@ static int qoriq_tmu_probe(struct platform_device *pdev)
 		return ret;
 	}
 
+	trip = of_thermal_get_trip_points(data->tz);
 	data->temp_passive = trip[0].temperature;
 	data->temp_critical = trip[1].temperature;
 
