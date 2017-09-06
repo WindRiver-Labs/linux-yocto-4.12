@@ -446,8 +446,9 @@ static int cs_etm__setup_queue(struct cs_etm_auxtrace *etm,
 		if (etm->sampling_mode)
 			if (etm->timeless_decoding)
 				etmq->step_through_buffers = true;
-			if (etm->timeless_decoding || !etm->have_sched_switch)
-				etmq->use_buffer_pid_tid = true;
+
+		if (etm->timeless_decoding || !etm->have_sched_switch)
+			etmq->use_buffer_pid_tid = true;
 	}
 
 	if (!etmq->on_heap &&
@@ -1258,12 +1259,6 @@ static int cs_etm__process_auxtrace_event(struct perf_session *session,
 	return 0;
 
 }
-
-static const char * const cs_etm_global_header_fmts[] = {
-  [CS_HEADER_VERSION_0]	= "   Header version		%"PRIx64"\n",
-  [CS_PMU_TYPE_CPUS]	= "   PMU type/num cpus		%"PRIx64"\n",
-  [CS_ETM_SNAPSHOT]	= "   Snapshot			%"PRIx64"\n",
-};
 
 static const char * const cs_etm_priv_fmts[] = {
   [CS_ETM_MAGIC]	= "   Magic number		%"PRIx64"\n",
