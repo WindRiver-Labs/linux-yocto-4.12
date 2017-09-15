@@ -221,6 +221,17 @@ static struct sk_buff *build_frag_skb(struct dpaa2_eth_priv *priv,
 	ch->buf_count -= i + 2;
 
 	return skb;
+
+err_build:
+	/* We still need to subtract the buffers used by this FD from our
+	 * software counter
+	 */
+	for (i = 0; i < DPAA2_ETH_MAX_SG_ENTRIES; i++)
+		if (dpaa2_sg_is_final(&sgt[i]))
+			break;
+	ch->buf_count -= i + 2;
+
+	return NULL;
 }
 
 static void free_bufs(struct dpaa2_eth_priv *priv, u64 *buf_array, int count)
