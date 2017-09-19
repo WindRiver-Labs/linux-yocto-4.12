@@ -254,7 +254,6 @@ struct ctxld_commit {
 	struct list_head list;
 	struct work_struct work;
 	void *data;
-	uint32_t fifo_in;	/* kfifo's 'in' value */
 	uint32_t sb_data_len;
 	uint32_t sb_hp_data_len;
 	uint32_t db_data_len;
@@ -2222,7 +2221,7 @@ static void dtg_irq_clear(unsigned long hwirq,
 static void dcss_ctxld_config(struct work_struct *work)
 {
 	int ret;
-	uint32_t dsb_len, nsgl, esize;
+	uint32_t dsb_len, nsgl, esize, offset;
 	struct dcss_info *info;
 	struct platform_device *pdev;
 	struct dcss_channels *chans;
@@ -2247,10 +2246,12 @@ static void dcss_ctxld_config(struct work_struct *work)
 			BUG_ON(1);
 	}
 
+	offset = cfifo->fifo.kfifo.out & cfifo->fifo.kfifo.mask;
+
 	/* configure sb buffer */
 	if (cc->sb_data_len) {
 		/* cfifo first store sb and than store db */
-		writel(cfifo->dma_handle + cc->fifo_in * kfifo_esize(&cfifo->fifo),
+		writel(cfifo->dma_handle + offset * kfifo_esize(&cfifo->fifo),
 		       info->base + chans->ctxld_addr + CTXLD_SB_BASE_ADDR);
 		writel(cc->sb_hp_data_len |
 		       ((cc->sb_data_len - cc->sb_hp_data_len) << 16),
@@ -2260,7 +2261,7 @@ static void dcss_ctxld_config(struct work_struct *work)
 	/* configure db buffer */
 	if (cc->db_data_len) {
 		writel(cfifo->dma_handle +
-		       (cc->fifo_in + cc->sb_data_len) *
+		       (offset + cc->sb_data_len) *
 		       kfifo_esize(&cfifo->fifo),
 		       info->base + chans->ctxld_addr + CTXLD_DB_BASE_ADDR);
 		writel(cc->db_data_len,
@@ -2342,8 +2343,6 @@ restart:
 	}
 
 	unit = (struct ctxld_unit *)cb->sb_addr;
-
-	cc->fifo_in = cfifo->fifo.kfifo.in & cfifo->fifo.kfifo.mask;
 
 	if (cb->sb_data_len) {
 		count = kfifo_in(&cfifo->fifo, cb->sb_addr, cb->sb_data_len);
