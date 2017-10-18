@@ -201,8 +201,8 @@
 #define DDRC_MSTR_DEV_CONFIG_SHIFT	30
 #define DDRC_MSTR_DEV_CONFIG_X4_MASK	0
 #define DDRC_MSTR_DEV_CONFIG_X8_MASK	1
-#define DDRC_MSTR_DEV_CONFIG_X16_MASK	0x10
-#define DDRC_MSTR_DEV_CONFIG_X32_MASK	0X11
+#define DDRC_MSTR_DEV_CONFIG_X16_MASK	0x2
+#define DDRC_MSTR_DEV_CONFIG_X32_MASK	0x3
 
 /* DDR4 and DDR3 device Row,Column,Bank Mapping */
 #define DDR4_COL_SHIFT		3
@@ -817,7 +817,7 @@ MODULE_DEVICE_TABLE(of, synps_edac_match);
 static void ddr4_poison_setup(enum dev_type dttype, int device_config,
 				struct synps_edac_priv *priv)
 {
-	int col, row, bank, bankgrp, regval, shift_val = 0, col_shift;
+	int col, row, bank, bankgrp, regval, shift_val = 0, col_shift = 0;
 
 	/* Check the Configuration of the device */
 	if (device_config & DDRC_MSTR_DEV_CONFIG_X8_MASK) {
