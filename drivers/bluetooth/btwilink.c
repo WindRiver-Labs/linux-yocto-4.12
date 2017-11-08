@@ -282,7 +282,6 @@ static const struct of_device_id btwilink_of_match[] = {
 	},
 	{}
 };
-MODULE_DEVICE_TABLE(of, btwilink_of_match);
 
 static int bt_ti_probe(struct platform_device *pdev)
 {
