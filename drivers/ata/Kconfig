@@ -136,7 +136,7 @@ config AHCI_ST
 
 config AHCI_IMX
 	tristate "Freescale i.MX AHCI SATA support"
-	depends on MFD_SYSCON && (SOC_IMX6Q || ARCH_FSL_IMX8QM)
+	depends on MFD_SYSCON && (SOC_IMX53 || SOC_IMX6Q || ARCH_FSL_IMX8QM|| COMPILE_TEST)
 	default y
 	depends on (HWMON && (THERMAL || !THERMAL_OF)) || !HWMON
 	help
