@@ -1423,6 +1423,7 @@ gckOS_AllocateNonPagedMemory(
     if (Os->allocatorLimitMarker)
     {
         flag |= gcvALLOC_FLAG_CMA_LIMIT;
+        flag |= gcvALLOC_FLAG_CMA_PREEMPT;
     }
 
     /* Walk all allocators. */
