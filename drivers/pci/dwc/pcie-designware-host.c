@@ -84,8 +84,10 @@ irqreturn_t dw_handle_msi_irq(struct pcie_port *pp)
 void dw_pcie_msi_init(struct pcie_port *pp)
 {
 	struct dw_pcie *pci = to_dw_pcie_from_pp(pp);
+	dma_addr_t msi_addr;
 
-	dma_alloc_coherent(pci->dev, 64, &pp->msi_target, GFP_KERNEL);
+	dma_alloc_coherent(pci->dev, 64, &msi_addr, GFP_KERNEL);
+	pp->msi_target = (u64)msi_addr;
 
 	/* program the msi_data */
 	dw_pcie_wr_own_conf(pp, PCIE_MSI_ADDR_LO, 4,
