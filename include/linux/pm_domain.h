@@ -77,6 +77,7 @@ struct generic_pm_domain {
 	struct genpd_power_state *states;
 	unsigned int state_count; /* number of states */
 	unsigned int state_idx; /* state that genpd will go to when off */
+	unsigned int state_idx_saved; /* saved power state for recovery after system suspend/resume */
 	void *free; /* Free the state that was allocated for default */
 	const struct genpd_lock_ops *lock_ops;
 	union {
