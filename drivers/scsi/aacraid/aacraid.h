@@ -2697,4 +2697,9 @@ extern int update_interval;
 extern int check_interval;
 extern int aac_check_reset;
 extern int aac_fib_dump;
+
+static inline int aac_supports_2T(struct aac_dev *dev)
+{
+	return (dev->adapter_info.options & AAC_OPT_NEW_COMM_64);
+}
 #endif
