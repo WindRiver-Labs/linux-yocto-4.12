@@ -1099,6 +1099,11 @@ static inline bool iwl_mvm_is_radio_hw_killed(struct iwl_mvm *mvm)
 	return test_bit(IWL_MVM_STATUS_HW_RFKILL, &mvm->status);
 }
 
+static inline bool iwl_mvm_firmware_running(struct iwl_mvm *mvm)
+{
+	return mvm->ucode_loaded;
+}
+
 /* Must be called with rcu_read_lock() held and it can only be
  * released when mvmsta is not needed anymore.
  */
@@ -1355,6 +1360,10 @@ const char *iwl_mvm_get_tx_fail_reason(u32 status);
 static inline const char *iwl_mvm_get_tx_fail_reason(u32 status) { return ""; }
 #endif
 int iwl_mvm_flush_tx_path(struct iwl_mvm *mvm, u32 tfd_msk, u32 flags);
+int iwl_mvm_flush_sta(struct iwl_mvm *mvm, void *sta, bool internal, u32 flags);
+int iwl_mvm_flush_sta_tids(struct iwl_mvm *mvm, u32 sta_id,
+			   u16 tids, u32 flags);
+
 void iwl_mvm_async_handlers_purge(struct iwl_mvm *mvm);
 
 static inline void iwl_mvm_set_tx_cmd_ccmp(struct ieee80211_tx_info *info,

@@ -217,7 +217,7 @@ EXPORT_SYMBOL(blk_start_queue_async);
  **/
 void blk_start_queue(struct request_queue *q)
 {
-	WARN_ON_NONRT(!irqs_disabled());
+	WARN_ON_NONRT(!in_interrupt() && !irqs_disabled());
 
 	queue_flag_clear(QUEUE_FLAG_STOPPED, q);
 	__blk_run_queue(q);
@@ -2201,7 +2201,12 @@ int blk_insert_cloned_request(struct request_queue *q, struct request *rq)
 	if (q->mq_ops) {
 		if (blk_queue_io_stat(q))
 			blk_account_io_start(rq, true);
-		blk_mq_sched_insert_request(rq, false, true, false, false);
+		/*
+		 * Since we have a scheduler attached on the top device,
+		 * bypass a potential scheduler on the bottom device for
+		 * insert.
+		 */
+		blk_mq_request_bypass_insert(rq);
 		return 0;
 	}
 
