@@ -1350,8 +1350,9 @@ static void __aac_shutdown(struct aac_dev * aac)
 {
 	int i;
 
+	mutex_lock(&aac->ioctl_mutex);
 	aac->adapter_shutdown = 1;
-	aac_send_shutdown(aac);
+	mutex_unlock(&aac->ioctl_mutex);
 
 	if (aac->aif_thread) {
 		int i;
@@ -1364,7 +1365,11 @@ static void __aac_shutdown(struct aac_dev * aac)
 		}
 		kthread_stop(aac->thread);
 	}
+
+	aac_send_shutdown(aac);
+
 	aac_adapter_disable_int(aac);
+
 	if (aac->pdev->device == PMC_DEVICE_S6 ||
 	    aac->pdev->device == PMC_DEVICE_S7 ||
 	    aac->pdev->device == PMC_DEVICE_S8 ||
