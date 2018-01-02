@@ -238,20 +238,6 @@ out_unlock:
 }
 EXPORT_SYMBOL_GPL(nf_ct_l3proto_register);
 
-#ifdef CONFIG_SYSCTL
-extern unsigned int nf_conntrack_default_on;
-
-int nf_ct_l3proto_pernet_register(struct net *net,
-				  struct nf_conntrack_l3proto *proto)
-{
-	if (nf_conntrack_default_on == 0)
-		return 0;
-
-	return proto->net_ns_get ? proto->net_ns_get(net) : 0;
-}
-EXPORT_SYMBOL_GPL(nf_ct_l3proto_pernet_register);
-#endif
-
 void nf_ct_l3proto_unregister(struct nf_conntrack_l3proto *proto)
 {
 	BUG_ON(proto->l3proto >= AF_MAX);
@@ -265,26 +251,10 @@ void nf_ct_l3proto_unregister(struct nf_conntrack_l3proto *proto)
 	mutex_unlock(&nf_ct_proto_mutex);
 
 	synchronize_rcu();
+	/* Remove all contrack entries for this protocol */
+	nf_ct_iterate_destroy(kill_l3proto, proto);
 }
 EXPORT_SYMBOL_GPL(nf_ct_l3proto_unregister);
-
-void nf_ct_l3proto_pernet_unregister(struct net *net,
-				     struct nf_conntrack_l3proto *proto)
-{
-	/*
-	 * nf_conntrack_default_on *might* have registered hooks.
-	 * ->net_ns_put must cope with more puts() than get(), i.e.
-	 * if nf_conntrack_default_on was 0 at time of
-	 * nf_ct_l3proto_pernet_register invocation this net_ns_put()
-	 * should be a noop.
-	 */
-	if (proto->net_ns_put)
-		proto->net_ns_put(net);
-
-	/* Remove all contrack entries for this protocol */
-	nf_ct_iterate_cleanup(net, kill_l3proto, proto, 0, 0);
-}
-EXPORT_SYMBOL_GPL(nf_ct_l3proto_pernet_unregister);
 
 static struct nf_proto_net *nf_ct_l4proto_net(struct net *net,
 					      struct nf_conntrack_l4proto *l4proto)
@@ -421,17 +391,23 @@ out:
 }
 EXPORT_SYMBOL_GPL(nf_ct_l4proto_pernet_register_one);
 
-void nf_ct_l4proto_unregister_one(struct nf_conntrack_l4proto *l4proto)
+static void __nf_ct_l4proto_unregister_one(struct nf_conntrack_l4proto *l4proto)
+
 {
 	BUG_ON(l4proto->l3proto >= PF_MAX);
 
-	mutex_lock(&nf_ct_proto_mutex);
 	BUG_ON(rcu_dereference_protected(
 			nf_ct_protos[l4proto->l3proto][l4proto->l4proto],
 			lockdep_is_held(&nf_ct_proto_mutex)
 			) != l4proto);
 	rcu_assign_pointer(nf_ct_protos[l4proto->l3proto][l4proto->l4proto],
 			   &nf_conntrack_l4proto_generic);
+}
+
+void nf_ct_l4proto_unregister_one(struct nf_conntrack_l4proto *l4proto)
+{
+	mutex_lock(&nf_ct_proto_mutex);
+	__nf_ct_l4proto_unregister_one(l4proto);
 	mutex_unlock(&nf_ct_proto_mutex);
 
 	synchronize_rcu();
@@ -448,9 +424,6 @@ void nf_ct_l4proto_pernet_unregister_one(struct net *net,
 
 	pn->users--;
 	nf_ct_l4proto_unregister_sysctl(net, pn, l4proto);
-
-	/* Remove all contrack entries for this protocol */
-	nf_ct_iterate_cleanup(net, kill_l4proto, l4proto, 0, 0);
 }
 EXPORT_SYMBOL_GPL(nf_ct_l4proto_pernet_unregister_one);
 
@@ -500,8 +473,14 @@ EXPORT_SYMBOL_GPL(nf_ct_l4proto_pernet_register);
 void nf_ct_l4proto_unregister(struct nf_conntrack_l4proto *l4proto[],
 			      unsigned int num_proto)
 {
+	mutex_lock(&nf_ct_proto_mutex);
 	while (num_proto-- != 0)
-		nf_ct_l4proto_unregister_one(l4proto[num_proto]);
+		__nf_ct_l4proto_unregister_one(l4proto[num_proto]);
+	mutex_unlock(&nf_ct_proto_mutex);
+
+	synchronize_net();
+	/* Remove all contrack entries for this protocol */
+	nf_ct_iterate_destroy(kill_l4proto, l4proto);
 }
 EXPORT_SYMBOL_GPL(nf_ct_l4proto_unregister);
 
