@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 NXP
+ * Copyright 2017-2018 NXP
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -137,12 +137,13 @@ static void dpu_crtc_enable(struct drm_crtc *crtc)
 	tcon_set_operation_mode(dpu_crtc->tcon);
 }
 
-static void dpu_crtc_disable(struct drm_crtc *crtc)
+static void dpu_crtc_atomic_disable(struct drm_crtc *crtc,
+				    struct drm_crtc_state *old_crtc_state)
 {
 	struct dpu_crtc *dpu_crtc = to_dpu_crtc(crtc);
 
 	framegen_disable(dpu_crtc->fg);
-	framegen_wait_done(dpu_crtc->fg);
+	framegen_wait_done(dpu_crtc->fg, &old_crtc_state->adjusted_mode);
 	framegen_disable_clock(dpu_crtc->fg);
 
 	WARN_ON(!crtc->state->event);
@@ -222,6 +223,22 @@ static void dpu_drm_crtc_destroy_state(struct drm_crtc *crtc,
 		kfree(dcstate->dpu_plane_states);
 		kfree(dcstate);
 	}
+}
+
+static int dpu_enable_vblank(struct drm_crtc *crtc)
+{
+	struct dpu_crtc *dpu_crtc = to_dpu_crtc(crtc);
+
+	enable_irq(dpu_crtc->vbl_irq);
+
+	return 0;
+}
+
+static void dpu_disable_vblank(struct drm_crtc *crtc)
+{
+	struct dpu_crtc *dpu_crtc = to_dpu_crtc(crtc);
+
+	disable_irq_nosync(dpu_crtc->vbl_irq);
 }
 
 static const struct drm_crtc_funcs dpu_crtc_funcs = {
@@ -503,29 +520,13 @@ static void dpu_crtc_mode_set_nofb(struct drm_crtc *crtc)
 	extdst_pixengcfg_src_sel(plane_ed, ed_src);
 }
 
-static int dpu_enable_vblank(struct drm_crtc *crtc)
-{
-	struct dpu_crtc *dpu_crtc = to_dpu_crtc(crtc);
-
-	enable_irq(dpu_crtc->vbl_irq);
-
-	return 0;
-}
-
-static void dpu_disable_vblank(struct drm_crtc *crtc)
-{
-	struct dpu_crtc *dpu_crtc = to_dpu_crtc(crtc);
-
-	disable_irq_nosync(dpu_crtc->vbl_irq);
-}
-
 static const struct drm_crtc_helper_funcs dpu_helper_funcs = {
 	.mode_set_nofb = dpu_crtc_mode_set_nofb,
 	.atomic_check = dpu_crtc_atomic_check,
 	.atomic_begin = dpu_crtc_atomic_begin,
 	.atomic_flush = dpu_crtc_atomic_flush,
 	.enable = dpu_crtc_enable,
-	.disable = dpu_crtc_disable,
+	.atomic_disable = dpu_crtc_atomic_disable,
 };
 
 static void dpu_crtc_put_resources(struct dpu_crtc *dpu_crtc)
