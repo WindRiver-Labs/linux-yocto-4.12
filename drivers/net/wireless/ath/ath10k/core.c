@@ -715,6 +715,7 @@ static int ath10k_core_get_board_id_from_otp(struct ath10k *ar)
 		   "boot get otp board id result 0x%08x board_id %d chip_id %d\n",
 		   result, board_id, chip_id);
 
+	/* Murata -- https:/patchwork.kernel.org/patch/9486941/  ; */
 	if ((result & ATH10K_BMI_BOARD_ID_STATUS_MASK) != 0 ||
 	    (board_id == 0)) {
 		ath10k_dbg(ar, ATH10K_DBG_BOOT,
@@ -1398,6 +1399,7 @@ static void ath10k_core_get_fw_name(struct ath10k *ar, char *fw_name,
 	scnprintf(fw_name, fw_name_len, "%s-%d.bin", ATH10K_FW_FILE_BASE, fw_api);
 }
 
+/* Murata -- make significant changes to following function to pull correct firmware file */
 static int ath10k_core_fetch_firmware_files(struct ath10k *ar)
 {
 	int ret, i;
