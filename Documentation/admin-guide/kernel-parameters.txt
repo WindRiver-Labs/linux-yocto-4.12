@@ -3114,6 +3114,10 @@
 			allowed (eg kernel_enable_fpu()/kernel_disable_fpu()).
 			There is some performance impact when enabling this.
 
+	ppc_tm=		[PPC]
+			Format: {"off"}
+			Disable Hardware Transactional Memory
+
 	print-fatal-signals=
 			[KNL] debug: print fatal signals
 
@@ -3537,6 +3541,12 @@
 			Format: <full_path>
 			Run specified binary instead of /init from the ramdisk,
 			used for early userspace startup. See initrd.
+
+	rdt=		[HW,X86,RDT]
+			Turn on/off individual RDT features. List is:
+			cmt, mbmtotal, mbmlocal, l3cat, l3cdp, l2cat, mba.
+			E.g. to turn on cmt and turn off mba use:
+				rdt=cmt,!mba
 
 	reboot=		[KNL]
 			Format (x86 or x86_64):

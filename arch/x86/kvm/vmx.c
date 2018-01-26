@@ -5625,6 +5625,8 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 			return 1;
 		}
 		er = emulate_instruction(vcpu, EMULTYPE_TRAP_UD);
+		if (er == EMULATE_USER_EXIT)
+			return 0;
 		if (er != EMULATE_DONE)
 			kvm_queue_exception(vcpu, UD_VECTOR);
 		return 1;
@@ -6473,12 +6475,7 @@ static __init int hardware_setup(void)
 	memset(vmx_vmread_bitmap, 0xff, PAGE_SIZE);
 	memset(vmx_vmwrite_bitmap, 0xff, PAGE_SIZE);
 
-	/*
-	 * Allow direct access to the PC debug port (it is often used for I/O
-	 * delays, but the vmexits simply slow things down).
-	 */
 	memset(vmx_io_bitmap_a, 0xff, PAGE_SIZE);
-	clear_bit(0x80, vmx_io_bitmap_a);
 
 	memset(vmx_io_bitmap_b, 0xff, PAGE_SIZE);
 
@@ -8619,7 +8616,6 @@ static void vmx_complete_atomic_exit(struct vcpu_vmx *vmx)
 static void vmx_handle_external_intr(struct kvm_vcpu *vcpu)
 {
 	u32 exit_intr_info = vmcs_read32(VM_EXIT_INTR_INFO);
-	register void *__sp asm(_ASM_SP);
 
 	if ((exit_intr_info & (INTR_INFO_VALID_MASK | INTR_INFO_INTR_TYPE_MASK))
 			== (INTR_INFO_VALID_MASK | INTR_TYPE_EXT_INTR)) {
@@ -8648,7 +8644,7 @@ static void vmx_handle_external_intr(struct kvm_vcpu *vcpu)
 #ifdef CONFIG_X86_64
 			[sp]"=&r"(tmp),
 #endif
-			"+r"(__sp)
+			ASM_CALL_CONSTRAINT
 			:
 			[entry]"r"(entry),
 			[ss]"i"(__KERNEL_DS),
@@ -10877,6 +10873,8 @@ static void load_vmcs12_host_state(struct kvm_vcpu *vcpu,
 	vmcs_writel(GUEST_SYSENTER_EIP, vmcs12->host_ia32_sysenter_eip);
 	vmcs_writel(GUEST_IDTR_BASE, vmcs12->host_idtr_base);
 	vmcs_writel(GUEST_GDTR_BASE, vmcs12->host_gdtr_base);
+	vmcs_write32(GUEST_IDTR_LIMIT, 0xFFFF);
+	vmcs_write32(GUEST_GDTR_LIMIT, 0xFFFF);
 
 	/* If not VM_EXIT_CLEAR_BNDCFGS, the L2 value propagates to L1.  */
 	if (vmcs12->vm_exit_controls & VM_EXIT_CLEAR_BNDCFGS)
