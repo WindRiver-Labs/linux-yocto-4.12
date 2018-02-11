@@ -1603,6 +1603,8 @@ static void init_sb_info(struct f2fs_sb_info *sbi)
 	mutex_init(&sbi->wio_mutex[NODE]);
 	mutex_init(&sbi->wio_mutex[DATA]);
 	spin_lock_init(&sbi->cp_lock);
+
+	mutex_init(&sbi->sb_lock);
 }
 
 static int init_percpu_info(struct f2fs_sb_info *sbi)
