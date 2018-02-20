@@ -204,11 +204,11 @@ static uint32_t __init xen_platform_hvm(void)
 	return xen_cpuid_base();
 }
 
-const struct hypervisor_x86 x86_hyper_xen_hvm = {
+const __initconst struct hypervisor_x86 x86_hyper_xen_hvm = {
 	.name                   = "Xen HVM",
 	.detect                 = xen_platform_hvm,
-	.init_platform          = xen_hvm_guest_init,
-	.pin_vcpu               = xen_pin_vcpu,
-	.x2apic_available       = xen_x2apic_para_available,
+	.type			= X86_HYPER_XEN_HVM,
+	.init.init_platform     = xen_hvm_guest_init,
+	.runtime.pin_vcpu       = xen_pin_vcpu,
+	.init.x2apic_available  = xen_x2apic_para_available,
 };
-EXPORT_SYMBOL(x86_hyper_xen_hvm);
