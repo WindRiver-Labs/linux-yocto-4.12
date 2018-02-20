@@ -18,6 +18,7 @@
 #include <linux/nmi.h>
 #include <linux/sysfs.h>
 
+#include <asm/cpu_entry_area.h>
 #include <asm/stacktrace.h>
 #include <asm/unwind.h>
 
@@ -36,6 +37,24 @@ bool in_task_stack(unsigned long *stack, struct task_struct *task,
 		return false;
 
 	info->type	= STACK_TYPE_TASK;
+	info->begin	= begin;
+	info->end	= end;
+	info->next_sp	= NULL;
+
+	return true;
+}
+
+bool in_entry_stack(unsigned long *stack, struct stack_info *info)
+{
+	struct entry_stack *ss = cpu_entry_stack(smp_processor_id());
+
+	void *begin = ss;
+	void *end = ss + 1;
+
+	if ((void *)stack < begin || (void *)stack >= end)
+		return false;
+
+	info->type	= STACK_TYPE_ENTRY;
 	info->begin	= begin;
 	info->end	= end;
 	info->next_sp	= NULL;
@@ -71,24 +90,28 @@ void show_trace_log_lvl(struct task_struct *task, struct pt_regs *regs,
 	 * - task stack
 	 * - interrupt stack
 	 * - HW exception stacks (double fault, nmi, debug, mce)
+	 * - entry stack
 	 *
-	 * x86-32 can have up to three stacks:
+	 * x86-32 can have up to four stacks:
 	 * - task stack
 	 * - softirq stack
 	 * - hardirq stack
+	 * - entry stack
 	 */
 	for (regs = NULL; stack; stack = PTR_ALIGN(stack_info.next_sp, sizeof(long))) {
 		const char *stack_name;
 
-		/*
-		 * If we overflowed the task stack into a guard page, jump back
-		 * to the bottom of the usable stack.
-		 */
-		if (task_stack_page(task) - (void *)stack < PAGE_SIZE)
-			stack = task_stack_page(task);
-
-		if (get_stack_info(stack, task, &stack_info, &visit_mask))
-			break;
+		if (get_stack_info(stack, task, &stack_info, &visit_mask)) {
+			/*
+			 * We weren't on a valid stack.  It's possible that
+			 * we overflowed a valid stack into a guard page.
+			 * See if the next page up is valid so that we can
+			 * generate some kind of backtrace if this happens.
+			 */
+			stack = (unsigned long *)PAGE_ALIGN((unsigned long)stack);
+			if (get_stack_info(stack, task, &stack_info, &visit_mask))
+				break;
+		}
 
 		stack_name = stack_type_name(stack_info.type);
 		if (stack_name)
@@ -250,11 +273,13 @@ int __die(const char *str, struct pt_regs *regs, long err)
 	unsigned long sp;
 #endif
 	printk(KERN_DEFAULT
-	       "%s: %04lx [#%d]%s%s%s%s\n", str, err & 0xffff, ++die_counter,
+	       "%s: %04lx [#%d]%s%s%s%s%s\n", str, err & 0xffff, ++die_counter,
 	       IS_ENABLED(CONFIG_PREEMPT) ? " PREEMPT"         : "",
 	       IS_ENABLED(CONFIG_SMP)     ? " SMP"             : "",
 	       debug_pagealloc_enabled()  ? " DEBUG_PAGEALLOC" : "",
-	       IS_ENABLED(CONFIG_KASAN)   ? " KASAN"           : "");
+	       IS_ENABLED(CONFIG_KASAN)   ? " KASAN"           : "",
+	       IS_ENABLED(CONFIG_PAGE_TABLE_ISOLATION) ?
+	       (boot_cpu_has(X86_FEATURE_PTI) ? " PTI" : " NOPTI") : "");
 
 	if (notify_die(DIE_OOPS, str, regs, err,
 			current->thread.trap_nr, SIGSEGV) == NOTIFY_STOP)

@@ -104,7 +104,7 @@ void __show_regs(struct pt_regs *regs, int all)
 
 	cr0 = read_cr0();
 	cr2 = read_cr2();
-	cr3 = read_cr3();
+	cr3 = __read_cr3();
 	cr4 = __read_cr4();
 
 	printk(KERN_DEFAULT "FS:  %016lx(%04x) GS:%016lx(%04x) knlGS:%016lx\n",
@@ -142,7 +142,7 @@ void release_thread(struct task_struct *dead_task)
 			pr_warn("WARNING: dead process %s still has LDT? <%p/%d>\n",
 				dead_task->comm,
 				dead_task->mm->context.ldt->entries,
-				dead_task->mm->context.ldt->size);
+				dead_task->mm->context.ldt->nr_entries);
 			BUG();
 		}
 #endif
@@ -275,7 +275,6 @@ int copy_thread_tls(unsigned long clone_flags, unsigned long sp,
 	struct inactive_task_frame *frame;
 	struct task_struct *me = current;
 
-	p->thread.sp0 = (unsigned long)task_stack_page(p) + THREAD_SIZE;
 	childregs = task_pt_regs(p);
 	fork_frame = container_of(childregs, struct fork_frame, regs);
 	frame = &fork_frame->frame;
@@ -402,7 +401,10 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	struct fpu *prev_fpu = &prev->fpu;
 	struct fpu *next_fpu = &next->fpu;
 	int cpu = smp_processor_id();
-	struct tss_struct *tss = &per_cpu(cpu_tss, cpu);
+	struct tss_struct *tss = &per_cpu(cpu_tss_rw, cpu);
+
+	WARN_ON_ONCE(IS_ENABLED(CONFIG_DEBUG_ENTRY) &&
+		     this_cpu_read(irq_count) != -1);
 
 	switch_fpu_prepare(prev_fpu, cpu);
 
@@ -461,9 +463,10 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	 * Switch the PDA and FPU contexts.
 	 */
 	this_cpu_write(current_task, next_p);
+	this_cpu_write(cpu_current_top_of_stack, task_top_of_stack(next_p));
 
-	/* Reload esp0 and ss1.  This changes current_thread_info(). */
-	load_sp0(tss, next);
+	/* Reload sp0. */
+	update_sp0(next_p);
 
 	/*
 	 * Now maybe reload the debug registers and handle I/O bitmaps

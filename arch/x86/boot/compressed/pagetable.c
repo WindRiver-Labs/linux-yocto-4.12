@@ -15,6 +15,9 @@
 #define __pa(x)  ((unsigned long)(x))
 #define __va(x)  ((void *)((unsigned long)(x)))
 
+/* No PAGE_TABLE_ISOLATION support needed either: */
+#undef CONFIG_PAGE_TABLE_ISOLATION
+
 #include "misc.h"
 
 /* These actually do the work of building the kernel identity maps. */
@@ -92,7 +95,7 @@ void initialize_identity_maps(void)
 	 * and we must append to the existing area instead of entirely
 	 * overwriting it.
 	 */
-	level4p = read_cr3();
+	level4p = read_cr3_pa();
 	if (level4p == (unsigned long)_pgtable) {
 		debug_putstr("booted via startup_32()\n");
 		pgt_data.pgt_buf = _pgtable + BOOT_INIT_PGT_SIZE;
