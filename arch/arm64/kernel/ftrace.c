@@ -71,12 +71,11 @@ int ftrace_update_ftrace_func(ftrace_func_t func)
 int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
 {
 	unsigned long pc = rec->ip;
+	long offset = (long)pc - (long)addr;
 	u32 old, new;
 
-#ifdef CONFIG_ARM64_MODULE_PLTS
-	long offset = (long)pc - (long)addr;
-
-	if (offset < -SZ_128M || offset >= SZ_128M) {
+	if (IS_ENABLED(CONFIG_ARM64_MODULE_PLTS) &&
+	    (offset < -SZ_128M || offset >= SZ_128M)) {
 		unsigned long *trampoline;
 		struct module *mod;
 
@@ -122,7 +121,6 @@ int ftrace_make_call(struct dyn_ftrace *rec, unsigned long addr)
 		}
 		addr = (unsigned long)&trampoline[1];
 	}
-#endif /* CONFIG_ARM64_MODULE_PLTS */
 
 	old = aarch64_insn_gen_nop();
 	new = aarch64_insn_gen_branch_imm(pc, addr, AARCH64_INSN_BRANCH_LINK);
@@ -137,13 +135,12 @@ int ftrace_make_nop(struct module *mod, struct dyn_ftrace *rec,
 		    unsigned long addr)
 {
 	unsigned long pc = rec->ip;
+	long offset = (long)pc - (long)addr;
 	bool validate = true;
 	u32 old = 0, new;
 
-#ifdef CONFIG_ARM64_MODULE_PLTS
-	long offset = (long)pc - (long)addr;
-
-	if (offset < -SZ_128M || offset >= SZ_128M) {
+	if (IS_ENABLED(CONFIG_ARM64_MODULE_PLTS) &&
+	    (offset < -SZ_128M || offset >= SZ_128M)) {
 		u32 replaced;
 
 		/*
@@ -180,7 +177,6 @@ int ftrace_make_nop(struct module *mod, struct dyn_ftrace *rec,
 		old = aarch64_insn_gen_branch_imm(pc, addr,
 						  AARCH64_INSN_BRANCH_LINK);
 	}
-#endif /* CONFIG_ARM64_MODULE_PLTS */
 
 	new = aarch64_insn_gen_nop();
 
