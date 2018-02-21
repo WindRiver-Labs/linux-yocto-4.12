@@ -80,7 +80,7 @@ pgd_t * __init efi_call_phys_prolog(void)
 	int n_pgds, i, j;
 
 	if (!efi_enabled(EFI_OLD_MEMMAP)) {
-		save_pgd = (pgd_t *)read_cr3();
+		save_pgd = (pgd_t *)__read_cr3();
 		write_cr3((unsigned long)efi_scratch.efi_pgt);
 		goto out;
 	}
@@ -194,6 +194,9 @@ static pgd_t *efi_pgd;
  * because we want to avoid inserting EFI region mappings (EFI_VA_END
  * to EFI_VA_START) into the standard kernel page tables. Everything
  * else can be shared, see efi_sync_low_kernel_mappings().
+ *
+ * We don't want the pgd on the pgd_list and cannot use pgd_alloc() for the
+ * allocation.
  */
 int __init efi_alloc_page_tables(void)
 {
@@ -206,7 +209,7 @@ int __init efi_alloc_page_tables(void)
 		return 0;
 
 	gfp_mask = GFP_KERNEL | __GFP_NOTRACK | __GFP_ZERO;
-	efi_pgd = (pgd_t *)__get_free_page(gfp_mask);
+	efi_pgd = (pgd_t *)__get_free_pages(gfp_mask, PGD_ALLOCATION_ORDER);
 	if (!efi_pgd)
 		return -ENOMEM;
 
@@ -646,7 +649,7 @@ efi_status_t efi_thunk_set_virtual_address_map(
 	efi_sync_low_kernel_mappings();
 	local_irq_save(flags);
 
-	efi_scratch.prev_cr3 = read_cr3();
+	efi_scratch.prev_cr3 = __read_cr3();
 	write_cr3((unsigned long)efi_scratch.efi_pgt);
 	__flush_tlb_all();
 

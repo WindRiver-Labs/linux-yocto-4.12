@@ -92,7 +92,7 @@ void __show_regs(struct pt_regs *regs, int all)
 
 	cr0 = read_cr0();
 	cr2 = read_cr2();
-	cr3 = read_cr3();
+	cr3 = __read_cr3();
 	cr4 = __read_cr4();
 	printk(KERN_DEFAULT "CR0: %08lx CR2: %08lx CR3: %08lx CR4: %08lx\n",
 			cr0, cr2, cr3, cr4);
@@ -234,7 +234,7 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 	struct fpu *prev_fpu = &prev->fpu;
 	struct fpu *next_fpu = &next->fpu;
 	int cpu = smp_processor_id();
-	struct tss_struct *tss = &per_cpu(cpu_tss, cpu);
+	struct tss_struct *tss = &per_cpu(cpu_tss_rw, cpu);
 
 	/* never put a printk in __switch_to... printk() calls wake_up*() indirectly */
 
@@ -284,9 +284,11 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 
 	/*
 	 * Reload esp0 and cpu_current_top_of_stack.  This changes
-	 * current_thread_info().
+	 * current_thread_info().  Refresh the SYSENTER configuration in
+	 * case prev or next is vm86.
 	 */
-	load_sp0(tss, next);
+	update_sp0(next_p);
+	refresh_sysenter_cs(next);
 	this_cpu_write(cpu_current_top_of_stack,
 		       (unsigned long)task_stack_page(next_p) +
 		       THREAD_SIZE);

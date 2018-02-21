@@ -2101,8 +2101,7 @@ static int x86_pmu_event_init(struct perf_event *event)
 
 static void refresh_pce(void *ignored)
 {
-	if (current->active_mm)
-		load_mm_cr4(current->active_mm);
+	load_mm_cr4(this_cpu_read(cpu_tlbstate.loaded_mm));
 }
 
 static void x86_pmu_event_mapped(struct perf_event *event, struct mm_struct *mm)
@@ -2331,8 +2330,8 @@ static unsigned long get_segment_base(unsigned int segment)
 			return 0;
 
 		/* IRQs are off, so this synchronizes with smp_store_release */
-		ldt = lockless_dereference(current->active_mm->context.ldt);
-		if (!ldt || idx > ldt->size)
+		ldt = READ_ONCE(current->active_mm->context.ldt);
+		if (!ldt || idx > ldt->nr_entries)
 			return 0;
 
 		desc = &ldt->entries[idx];
