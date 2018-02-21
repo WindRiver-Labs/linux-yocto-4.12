@@ -51,6 +51,7 @@ struct mm_struct;
 struct desc_struct;
 struct task_struct;
 struct cpumask;
+struct flush_tlb_info;
 
 /*
  * Wrapper type for pointers to code which uses the non-standard
@@ -135,7 +136,7 @@ struct pv_cpu_ops {
 	void (*alloc_ldt)(struct desc_struct *ldt, unsigned entries);
 	void (*free_ldt)(struct desc_struct *ldt, unsigned entries);
 
-	void (*load_sp0)(struct tss_struct *tss, struct thread_struct *t);
+	void (*load_sp0)(unsigned long sp0);
 
 	void (*set_iopl_mask)(unsigned mask);
 
@@ -195,9 +196,6 @@ struct pv_irq_ops {
 	void (*safe_halt)(void);
 	void (*halt)(void);
 
-#ifdef CONFIG_X86_64
-	void (*adjust_exception_frame)(void);
-#endif
 };
 
 struct pv_mmu_ops {
@@ -223,9 +221,7 @@ struct pv_mmu_ops {
 	void (*flush_tlb_kernel)(void);
 	void (*flush_tlb_single)(unsigned long addr);
 	void (*flush_tlb_others)(const struct cpumask *cpus,
-				 struct mm_struct *mm,
-				 unsigned long start,
-				 unsigned long end);
+				 const struct flush_tlb_info *info);
 
 	/* Hooks for allocating and freeing a pagetable top-level */
 	int  (*pgd_alloc)(struct mm_struct *mm);
