@@ -9,6 +9,11 @@ menuconfig MDIO_DEVICE
 
 if MDIO_DEVICE
 
+config XILINX_PHY
+	tristate "Drivers for xilinx PHYs"
+	help
+	  This module provides a driver for the Xilinx PCS/PMA Core.
+
 config MDIO_BCM_IPROC
 	tristate "Broadcom iProc MDIO bus controller"
 	depends on ARCH_BCM_IPROC || COMPILE_TEST
