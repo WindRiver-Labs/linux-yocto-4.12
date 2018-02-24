@@ -53,6 +53,7 @@ static const struct of_device_id axienet_of_match[] = {
 	{ .compatible = "xlnx,axi-ethernet-1.00.a", },
 	{ .compatible = "xlnx,axi-ethernet-1.01.a", },
 	{ .compatible = "xlnx,axi-ethernet-2.01.a", },
+	{ .compatible = "xlnx,ten-gig-eth-mac", },
 	{},
 };
 
@@ -303,6 +304,9 @@ static void axienet_set_mac_address(struct net_device *ndev,
 	if (!is_valid_ether_addr(ndev->dev_addr))
 		eth_hw_addr_random(ndev);
 
+	if (lp->is_10Gmac)
+		return;
+
 	/* Set up unicast MAC address filter set its mac address */
 	axienet_iow(lp, XAE_UAW0_OFFSET,
 		    (ndev->dev_addr[0]) |
@@ -350,6 +354,9 @@ static void axienet_set_multicast_list(struct net_device *ndev)
 	int i;
 	u32 reg, af0reg, af1reg;
 	struct axienet_local *lp = netdev_priv(ndev);
+
+	if (lp->is_10Gmac)
+		return;
 
 	if (ndev->flags & (IFF_ALLMULTI | IFF_PROMISC) ||
 	    netdev_mc_count(ndev) > XAE_MULTICAST_CAM_TABLE_NUM) {
@@ -494,9 +501,11 @@ static void axienet_device_reset(struct net_device *ndev)
 	axienet_status &= ~XAE_RCW1_RX_MASK;
 	axienet_iow(lp, XAE_RCW1_OFFSET, axienet_status);
 
-	axienet_status = axienet_ior(lp, XAE_IP_OFFSET);
-	if (axienet_status & XAE_INT_RXRJECT_MASK)
-		axienet_iow(lp, XAE_IS_OFFSET, XAE_INT_RXRJECT_MASK);
+	if (!lp->is_10Gmac) {
+		axienet_status = axienet_ior(lp, XAE_IP_OFFSET);
+		if (axienet_status & XAE_INT_RXRJECT_MASK)
+			axienet_iow(lp, XAE_IS_OFFSET, XAE_INT_RXRJECT_MASK);
+	}
 
 	axienet_iow(lp, XAE_FCC_OFFSET, XAE_FCC_FCRX_MASK);
 
@@ -673,7 +682,7 @@ static int axienet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 		return NETDEV_TX_BUSY;
 	}
 
-	if (skb->ip_summed == CHECKSUM_PARTIAL) {
+	if (skb->ip_summed == CHECKSUM_PARTIAL && !lp->is_10Gmac) {
 		if (lp->features & XAE_FEATURE_FULL_TX_CSUM) {
 			/* Tx Full Checksum Offload Enabled */
 			cur_p->app0 |= 2;
@@ -684,7 +693,7 @@ static int axienet_start_xmit(struct sk_buff *skb, struct net_device *ndev)
 			cur_p->app0 |= 1;
 			cur_p->app1 = (csum_start_off << 16) | csum_index_off;
 		}
-	} else if (skb->ip_summed == CHECKSUM_UNNECESSARY) {
+	} else if (skb->ip_summed == CHECKSUM_UNNECESSARY && !lp->is_10Gmac) {
 		cur_p->app0 |= 2; /* Tx Full Checksum Offload Enabled */
 	}
 
@@ -745,7 +754,11 @@ static int axienet_recv(struct net_device *ndev, int budget)
 	       (cur_p->status & XAXIDMA_BD_STS_COMPLETE_MASK)) {
 		tail_p = lp->rx_bd_p + sizeof(*lp->rx_bd_v) * lp->rx_bd_ci;
 		skb = (struct sk_buff *) (cur_p->sw_id_offset);
-		length = cur_p->app4 & 0x0000FFFF;
+
+		if (lp->is_10Gmac || lp->eth_hasnobuf)
+			length = cur_p->status & XAXIDMA_BD_STS_ACTUAL_LEN_MASK;
+		else
+			length = cur_p->app4 & 0x0000FFFF;
 
 		dma_unmap_single(ndev->dev.parent, cur_p->phys,
 				 lp->max_frm_size,
@@ -757,7 +770,7 @@ static int axienet_recv(struct net_device *ndev, int budget)
 		skb->ip_summed = CHECKSUM_NONE;
 
 		/* if we're doing Rx csum offload, set it up */
-		if (lp->features & XAE_FEATURE_FULL_RX_CSUM) {
+		if (lp->features & XAE_FEATURE_FULL_RX_CSUM && !lp->is_10Gmac) {
 			csumstatus = (cur_p->app2 &
 				      XAE_FULL_CSUM_STATUS_MASK) >> 3;
 			if ((csumstatus == XAE_IP_TCP_CSUM_VALIDATED) ||
@@ -766,7 +779,7 @@ static int axienet_recv(struct net_device *ndev, int budget)
 			}
 		} else if ((lp->features & XAE_FEATURE_PARTIAL_RX_CSUM) != 0 &&
 			   skb->protocol == htons(ETH_P_IP) &&
-			   skb->len > 64) {
+			   skb->len > 64 && !lp->is_10Gmac) {
 			skb->csum = be32_to_cpu(cur_p->app3 & 0xFFFF);
 			skb->ip_summed = CHECKSUM_COMPLETE;
 		}
@@ -986,7 +999,7 @@ static int axienet_open(struct net_device *ndev)
 	if (ret < 0)
 		return ret;
 
-	if (lp->phy_node) {
+	if (lp->phy_node && !lp->is_10Gmac) {
 		if (lp->phy_type == XAE_PHY_TYPE_GMII ||
 		    lp->phy_type == XAE_PHY_TYPE_1000BASE_X) {
 			phydev = of_phy_connect(lp->ndev, lp->phy_node,
@@ -1480,9 +1493,11 @@ static void axienet_dma_err_handler(unsigned long data)
 	axienet_status &= ~XAE_RCW1_RX_MASK;
 	axienet_iow(lp, XAE_RCW1_OFFSET, axienet_status);
 
-	axienet_status = axienet_ior(lp, XAE_IP_OFFSET);
-	if (axienet_status & XAE_INT_RXRJECT_MASK)
-		axienet_iow(lp, XAE_IS_OFFSET, XAE_INT_RXRJECT_MASK);
+	if (!lp->is_10Gmac) {
+		axienet_status = axienet_ior(lp, XAE_IP_OFFSET);
+		if (axienet_status & XAE_INT_RXRJECT_MASK)
+			axienet_iow(lp, XAE_IS_OFFSET, XAE_INT_RXRJECT_MASK);
+	}
 	axienet_iow(lp, XAE_FCC_OFFSET, XAE_FCC_FCRX_MASK);
 
 	/* Sync default options with HW but leave receiver and
@@ -1595,6 +1610,8 @@ static int axienet_probe(struct platform_device *pdev)
 	 */
 	of_property_read_u32(pdev->dev.of_node, "xlnx,rxmem", &lp->rxmem);
 	of_property_read_u32(pdev->dev.of_node, "xlnx,phy-type", &lp->phy_type);
+	if (of_device_is_compatible(pdev->dev.of_node, "xlnx,ten-gig-eth-mac"))
+		lp->is_10Gmac = 1;
 
 	/* Find the DMA node, map the DMA registers, and decode the DMA IRQs */
 	np = of_parse_phandle(pdev->dev.of_node, "axistream-connected", 0);
