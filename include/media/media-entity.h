@@ -1049,6 +1049,9 @@ void media_remove_intf_links(struct media_interface *intf);
  * it will issue a call to @operation\(@entity, @args\).
  */
 
+bool media_entity_has_route(struct media_entity *entity, unsigned int sink,
+			    unsigned int source);
+
 #define media_entity_call(entity, operation, args...)			\
 	(((entity)->ops && (entity)->ops->operation) ?			\
 	 (entity)->ops->operation((entity) , ##args) : -ENOIOCTLCMD)
