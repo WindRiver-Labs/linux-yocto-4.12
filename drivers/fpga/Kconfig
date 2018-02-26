@@ -118,6 +118,11 @@ config XILINX_PR_DECOUPLER
 	  region of the FPGA from the busses while that region is
 	  being reprogrammed during partial reconfig.
 
+config FPGA_MGR_ZYNQMP_FPGA
+	tristate "Xilinx Zynqmp FPGA"
+	help
+	  FPGA manager driver support for Xilinx ZynqMp FPGAs.
+
 endif # FPGA
 
 endmenu
