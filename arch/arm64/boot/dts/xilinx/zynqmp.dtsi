@@ -61,6 +61,8 @@
 	psci {
 		compatible = "arm,psci-0.2";
 		method = "smc";
+		interrupt-parent = <&gic>;
+		interrupts = <0 35 4>;
 	};
 
 	timer {
