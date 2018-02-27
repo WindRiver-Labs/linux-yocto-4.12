@@ -131,7 +131,7 @@ config ST_SLIM_REMOTEPROC
 	depends on REMOTEPROC
 
 config ZYNQ_REMOTEPROC
-	tristate "ZYNQ remoteproc support"
+	tristate "Support ZYNQ remoteproc"
 	depends on ARCH_ZYNQ
 	select REMOTEPROC
 	select RPMSG
