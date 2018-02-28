@@ -1378,6 +1378,7 @@ void rproc_shutdown(struct rproc *rproc)
 {
 	struct device *dev = &rproc->dev;
 	int ret;
+	int pre_rproc_state;
 
 	ret = mutex_lock_interruptible(&rproc->lock);
 	if (ret) {
@@ -1400,6 +1401,9 @@ void rproc_shutdown(struct rproc *rproc)
 		goto out;
 	}
 
+	pre_rproc_state = rproc->state;
+	rproc->state = RPROC_OFFLINE;
+
 	/* clean up all acquired resources */
 	rproc_resource_cleanup(rproc);
 
@@ -1411,10 +1415,8 @@ void rproc_shutdown(struct rproc *rproc)
 	rproc->table_ptr = NULL;
 
 	/* if in crash state, unlock crash handler */
-	if (rproc->state == RPROC_CRASHED)
+	if (pre_rproc_state == RPROC_CRASHED)
 		complete_all(&rproc->crash_comp);
-
-	rproc->state = RPROC_OFFLINE;
 
 	dev_info(dev, "stopped remote processor %s\n", rproc->name);
 
