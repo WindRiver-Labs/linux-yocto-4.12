@@ -4,6 +4,7 @@ config REMOTEPROC
 	tristate "Support for Remote Processor subsystem"
 	depends on HAS_DMA
 	select CRC32
+	select CRYPTO
 	select FW_LOADER
 	select VIRTIO
 	select VIRTUALIZATION
