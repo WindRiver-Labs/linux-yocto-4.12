@@ -4292,7 +4292,7 @@ int stmmac_suspend(struct device *dev)
 		phy_stop(ndev->phydev);
 
 	spin_lock_irqsave(&priv->lock, flags);
-
+	netif_carrier_off(ndev);
 	netif_device_detach(ndev);
 	stmmac_stop_all_queues(priv);
 
@@ -4310,7 +4310,8 @@ int stmmac_suspend(struct device *dev)
 		pinctrl_pm_select_sleep_state(priv->device);
 		/* Disable clock in case of PWM is off */
 		clk_disable(priv->plat->pclk);
-		clk_disable(priv->plat->stmmac_clk);
+		if (!of_machine_is_compatible("altr,socfpga-stratix10"))
+			clk_disable(priv->plat->stmmac_clk);
 	}
 	spin_unlock_irqrestore(&priv->lock, flags);
 
@@ -4361,6 +4362,9 @@ int stmmac_resume(struct device *dev)
 	if (!netif_running(ndev))
 		return 0;
 
+	if (ndev->phydev)
+		phy_start(ndev->phydev);
+
 	/* Power Down bit, into the PM register, is cleared
 	 * automatically as soon as a magic packet or a Wake-up frame
 	 * is received. Anyway, it's better to manually clear
@@ -4404,9 +4408,6 @@ int stmmac_resume(struct device *dev)
 	stmmac_start_all_queues(priv);
 
 	spin_unlock_irqrestore(&priv->lock, flags);
-
-	if (ndev->phydev)
-		phy_start(ndev->phydev);
 
 	return 0;
 }
