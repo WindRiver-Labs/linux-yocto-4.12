@@ -911,7 +911,7 @@ err:
 	return -ENOMEM;
 }
 
-static unsigned int caam_rsa_max_size(struct crypto_akcipher *tfm)
+static int caam_rsa_max_size(struct crypto_akcipher *tfm)
 {
 	struct caam_rsa_ctx *ctx = akcipher_tfm_ctx(tfm);
 
