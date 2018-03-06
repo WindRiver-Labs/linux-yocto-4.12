@@ -12005,6 +12005,14 @@ S:	Maintained
 F:	drivers/ssb/
 F:	include/linux/ssb/
 
+SONY IMX274 SENSOR DRIVER
+M:	Leon Luo <leonl@leopardimaging.com>
+L:	linux-media@vger.kernel.org
+T:	git git://linuxtv.org/media_tree.git
+S:	Maintained
+F:	drivers/media/i2c/imx274.c
+F:	Documentation/devicetree/bindings/media/i2c/imx274.txt
+
 SONY VAIO CONTROL DEVICE DRIVER
 M:	Mattia Dongili <malattia@linux.it>
 L:	platform-driver-x86@vger.kernel.org
