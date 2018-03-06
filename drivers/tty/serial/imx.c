@@ -2347,6 +2347,10 @@ static void serial_imx_enable_wakeup(struct imx_port *sport, bool on)
 {
 	unsigned int val;
 
+	val = readl(sport->port.membase + USR1);
+	if (val & (USR1_AWAKE | USR1_RTSD))
+		writel(USR1_AWAKE | USR1_RTSD, sport->port.membase + USR1);
+
 	val = readl(sport->port.membase + UCR3);
 	if (on)
 		val |= UCR3_AWAKEN;
@@ -2390,7 +2394,6 @@ static int imx_serial_port_resume_noirq(struct device *dev)
 {
 	struct platform_device *pdev = to_platform_device(dev);
 	struct imx_port *sport = platform_get_drvdata(pdev);
-	unsigned int val;
 	int ret;
 
 	ret = clk_enable(sport->clk_ipg);
@@ -2401,9 +2404,6 @@ static int imx_serial_port_resume_noirq(struct device *dev)
 
 	/* disable wakeup from i.MX UART */
 	serial_imx_enable_wakeup(sport, false);
-	val = readl(sport->port.membase + USR1);
-	if (val & (USR1_AWAKE | USR1_RTSD))
-		writel(USR1_AWAKE | USR1_RTSD, sport->port.membase + USR1);
 
 	clk_disable(sport->clk_ipg);
 
