@@ -136,7 +136,7 @@ xilinx_drm_fb_get_gem_obj(struct drm_framebuffer *base_fb, unsigned int plane)
 	return fb->obj[plane];
 }
 
-int xilinx_drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
+static int xilinx_drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 			      struct fb_info *info)
 {
 	struct drm_fb_helper *fb_helper = info->par;
@@ -148,6 +148,7 @@ int xilinx_drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 	if (oops_in_progress)
 		return -EBUSY;
 
+	drm_modeset_lock_all(dev);
 	for (i = 0; i < fb_helper->crtc_count; i++) {
 		modeset = &fb_helper->crtc_info[i].mode_set;
 
@@ -166,7 +167,7 @@ int xilinx_drm_fb_helper_pan_display(struct fb_var_screeninfo *var,
 	return ret;
 }
 
-int
+static int
 xilinx_drm_fb_ioctl(struct fb_info *info, unsigned int cmd, unsigned long arg)
 {
 	struct drm_fb_helper *fb_helper = info->par;
