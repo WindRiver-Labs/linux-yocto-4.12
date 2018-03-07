@@ -398,34 +398,37 @@ static int macb_mii_probe(struct net_device *dev)
 	int phy_irq;
 	int ret;
 
-	phydev = phy_find_first(bp->mii_bus);
-	if (!phydev) {
-		netdev_err(dev, "no PHY found\n");
-		return -ENXIO;
-	}
+	if (bp->phy_node) {
+		phydev = of_phy_connect(dev, bp->phy_node,
+					&macb_handle_link_change, 0,
+					bp->phy_interface);
+		if (!phydev)
+			return -ENODEV;
+	} else {
+		phydev = phy_find_first(bp->mii_bus);
+		if (!phydev) {
+			netdev_err(dev, "no PHY found\n");
+			return -ENXIO;
+		}
 
-	pdata = dev_get_platdata(&bp->pdev->dev);
-	if (pdata) {
-		if (gpio_is_valid(pdata->phy_irq_pin)) {
+		pdata = dev_get_platdata(&bp->pdev->dev);
+		if (pdata && gpio_is_valid(pdata->phy_irq_pin)) {
 			ret = devm_gpio_request(&bp->pdev->dev,
 						pdata->phy_irq_pin, "phy int");
 			if (!ret) {
 				phy_irq = gpio_to_irq(pdata->phy_irq_pin);
-				phydev->irq = (phy_irq < 0) ? PHY_POLL : phy_irq;
+				phydev->irq = (phy_irq < 0) ?
+					      PHY_POLL : phy_irq;
 			}
-		} else {
-			phydev->irq = PHY_POLL;
+		}
+		/* attach the mac to the phy */
+		ret = phy_connect_direct(dev, phydev, &macb_handle_link_change,
+					 bp->phy_interface);
+		if (ret) {
+			netdev_err(dev, "Could not attach to PHY\n");
+			return ret;
 		}
 	}
-
-	/* attach the mac to the phy */
-	ret = phy_connect_direct(dev, phydev, &macb_handle_link_change,
-				 bp->phy_interface);
-	if (ret) {
-		netdev_err(dev, "Could not attach to PHY\n");
-		return ret;
-	}
-
 	/* mask with MAC supported features */
 	if (macb_is_gem(bp) && bp->caps & MACB_CAPS_GIGABIT_MODE_AVAILABLE)
 		phydev->supported &= PHY_GBIT_FEATURES;
@@ -3750,8 +3753,16 @@ static int macb_probe(struct platform_device *pdev)
 		macb_get_hwaddr(bp);
 
 	/* Power up the PHY if there is a GPIO reset */
-	phy_node =  of_get_next_available_child(np, NULL);
-	if (phy_node) {
+	phy_node = of_parse_phandle(np, "phy-handle", 0);
+	if (!phy_node && of_phy_is_fixed_link(np)) {
+		err = of_phy_register_fixed_link(np);
+		if (err < 0) {
+			dev_err(&pdev->dev, "broken fixed-link specification");
+			goto failed_phy;
+		}
+		phy_node = of_node_get(np);
+		bp->phy_node = phy_node;
+	} else {
 		int gpio = of_get_named_gpio(phy_node, "reset-gpios", 0);
 
 		if (gpio_is_valid(gpio)) {
@@ -3759,7 +3770,6 @@ static int macb_probe(struct platform_device *pdev)
 			gpiod_direction_output(bp->reset_gpio, 1);
 		}
 	}
-	of_node_put(phy_node);
 
 	err = of_get_phy_mode(np);
 	if (err < 0) {
@@ -3816,6 +3826,9 @@ err_out_unregister_mdio:
 err_out_free_netdev:
 	free_netdev(dev);
 
+failed_phy:
+	of_node_put(phy_node);
+
 err_disable_clocks:
 	clk_disable_unprepare(tx_clk);
 	clk_disable_unprepare(hclk);
@@ -3849,6 +3862,7 @@ static int macb_remove(struct platform_device *pdev)
 		clk_disable_unprepare(bp->hclk);
 		clk_disable_unprepare(bp->pclk);
 		clk_disable_unprepare(bp->rx_clk);
+		of_node_put(bp->phy_node);
 		free_netdev(dev);
 	}
 
