@@ -26,6 +26,7 @@
 #include <linux/of_device.h>
 #include <linux/pm_runtime.h>
 #include <linux/phy/phy.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/mmc/mmc.h>
 #include <linux/regmap.h>
 #include <linux/of.h>
@@ -104,6 +105,8 @@ struct sdhci_arasan_data {
 	struct clk      *sdcardclk;
 
 	struct regmap	*soc_ctl_base;
+	struct pinctrl *pinctrl;
+	struct pinctrl_state *pins_default;
 	const struct sdhci_arasan_soc_ctl_map *soc_ctl_map;
 	unsigned int	quirks; /* Arasan deviations from spec */
 
@@ -876,6 +879,20 @@ static int sdhci_arasan_probe(struct platform_device *pdev)
 	if (ret) {
 		dev_err(&pdev->dev, "parsing dt failed (%u)\n", ret);
 		goto unreg_clk;
+	}
+
+	sdhci_arasan->pinctrl = devm_pinctrl_get(&pdev->dev);
+	if (!IS_ERR(sdhci_arasan->pinctrl)) {
+		sdhci_arasan->pins_default = pinctrl_lookup_state(
+							sdhci_arasan->pinctrl,
+							PINCTRL_STATE_DEFAULT);
+		if (IS_ERR(sdhci_arasan->pins_default)) {
+			dev_err(&pdev->dev, "Missing default pinctrl config\n");
+			return IS_ERR(sdhci_arasan->pins_default);
+		}
+
+		pinctrl_select_state(sdhci_arasan->pinctrl,
+				     sdhci_arasan->pins_default);
 	}
 
 	sdhci_arasan->phy = ERR_PTR(-ENODEV);
