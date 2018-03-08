@@ -25,8 +25,10 @@
 #include <linux/of_device.h>
 #include <linux/phy/phy.h>
 #include <linux/regmap.h>
-#include "sdhci-pltfm.h"
 #include <linux/of.h>
+#include <linux/soc/xilinx/zynqmp/tap_delays.h>
+
+#include "sdhci-pltfm.h"
 
 #define SDHCI_ARASAN_VENDOR_REGISTER	0x78
 
@@ -91,6 +93,8 @@ struct sdhci_arasan_data {
 	struct clk	*clk_ahb;
 	struct phy	*phy;
 	bool		is_phy_on;
+	u32 mio_bank;
+	u32 device_id;
 
 	struct clk_hw	sdcardclk_hw;
 	struct clk      *sdcardclk;
@@ -210,6 +214,11 @@ static void sdhci_arasan_set_clock(struct sdhci_host *host, unsigned int clock)
 		(host->version >= SDHCI_SPEC_300)) {
 		if (clock == SD_CLK_25_MHZ)
 			clock = SD_CLK_19_MHZ;
+		if ((host->timing != MMC_TIMING_LEGACY) &&
+			(host->timing != MMC_TIMING_UHS_SDR12))
+			arasan_zynqmp_set_tap_delay(sdhci_arasan->device_id,
+						    host->timing,
+						    sdhci_arasan->mio_bank);
 	}
 
 	if (ctrl_phy) {
@@ -650,6 +659,22 @@ static int sdhci_arasan_probe(struct platform_device *pdev)
 	    of_device_is_compatible(pdev->dev.of_node, "arasan,sdhci-8.9a")) {
 		host->quirks |= SDHCI_QUIRK_MULTIBLOCK_READ_ACMD12;
 		host->quirks2 |= SDHCI_QUIRK2_CLOCK_STANDARD_25_BROKEN;
+
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   "xlnx,mio_bank",
+					   &sdhci_arasan->mio_bank);
+		if (ret < 0) {
+			dev_warn(&pdev->dev, "\"xlnx,mio_bank \" property missed
+				 Tap delay programming off.\n");
+		}
+
+		ret = of_property_read_u32(pdev->dev.of_node,
+					   "xlnx,device_id",
+					   &sdhci_arasan->device_id);
+		if (ret < 0) {
+			dev_warn(&pdev->dev, "\"xlnx,mio_bank \" property missed
+				 Tap delay programming off.\n");
+		}
 	}
 
 	ret = mmc_of_parse(host->mmc);
