@@ -930,6 +930,9 @@ static void rproc_resource_cleanup(struct rproc *rproc)
 	/* clean up remote vdev entries */
 	list_for_each_entry_safe(rvdev, rvtmp, &rproc->rvdevs, node)
 		kref_put(&rvdev->refcount, rproc_vdev_release);
+
+	/* Release DMA declared memory */
+	dma_release_declared_memory(dev->parent);
 }
 
 /*
@@ -1102,7 +1105,7 @@ static int rproc_fw_boot(struct rproc *rproc, const struct firmware *fw)
 	if (ret) {
 		dev_err(dev, "Failed to declare rproc memory resource: %d\n",
 			ret);
-		goto clean_up;
+		goto clean_up_resources;
 	}
 
 	/* handle fw resources which are required to boot rproc */
