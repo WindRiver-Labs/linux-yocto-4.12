@@ -101,16 +101,27 @@ static struct drm_driver driver = {
 
 static int __init vivante_init(void)
 {
-	int retcode;
+	struct drm_device *dev;
+	int ret;
 
 	pplatformdev = platform_device_register_simple(platformdevicename,
 			-1, NULL, 0);
 	if (pplatformdev == NULL)
 		printk(KERN_ERR"Platform device is null\n");
 
-	retcode = drm_platform_init(&driver, pplatformdev);
+	dev = drm_dev_alloc(&driver, &pplatformdev->dev);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
 
-	return retcode;
+	ret = drm_dev_register(dev, 0);
+	if (ret)
+		goto err_free;
+	return 0;
+
+err_free:
+	drm_dev_unref(dev);
+
+	return ret;
 }
 
 static void __exit vivante_exit(void)
