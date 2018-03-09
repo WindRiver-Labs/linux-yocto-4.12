@@ -15,7 +15,7 @@
 #include "../include/mc.h"
 
 /* Setup the IOMMU for the DPRC container */
-static const struct iommu_ops
+const struct iommu_ops
 *fsl_mc_iommu_configure(struct fsl_mc_device *mc_dev,
 	struct device_node *fsl_mc_platform_node)
 {
@@ -66,12 +66,8 @@ static const struct iommu_ops
 
 /* Set up DMA configuration for fsl-mc devices */
 void fsl_mc_dma_configure(struct fsl_mc_device *mc_dev,
-	struct device_node *fsl_mc_platform_node, int coherent)
+	struct device_node *fsl_mc_platform_node, int coherent, const struct iommu_ops *ops)
 {
-	const struct iommu_ops *ops;
-
-	ops = fsl_mc_iommu_configure(mc_dev, fsl_mc_platform_node);
-
 	mc_dev->dev.coherent_dma_mask = DMA_BIT_MASK(48);
 	mc_dev->dev.dma_mask = &mc_dev->dev.coherent_dma_mask;
 	arch_setup_dma_ops(&mc_dev->dev, 0,

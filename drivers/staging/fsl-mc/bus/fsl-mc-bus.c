@@ -20,6 +20,7 @@
 #include <linux/bitops.h>
 #include <linux/msi.h>
 #include <linux/dma-mapping.h>
+#include <linux/iommu.h>
 #include "../include/mc-bus.h"
 #include "../include/dpmng.h"
 #include "../include/mc-sys.h"
@@ -574,6 +575,7 @@ int fsl_mc_device_add(struct dprc_obj_desc *obj_desc,
 	struct fsl_mc_device *parent_mc_dev;
 	struct device *fsl_mc_platform_dev;
 	struct device_node *fsl_mc_platform_node;
+	const struct iommu_ops *ops;
 
 	if (dev_is_fsl_mc(parent_dev))
 		parent_mc_dev = to_fsl_mc_device(parent_dev);
@@ -685,8 +687,9 @@ int fsl_mc_device_add(struct dprc_obj_desc *obj_desc,
 	fsl_mc_platform_node = fsl_mc_platform_dev->of_node;
 
 	/* Set up the iommu configuration for the devices. */
-	fsl_mc_dma_configure(mc_dev, fsl_mc_platform_node,
-		!(obj_desc->flags & DPRC_OBJ_FLAG_NO_MEM_SHAREABILITY));
+	ops = fsl_mc_iommu_configure(mc_dev, fsl_mc_platform_node);
+	if (!ops)
+		goto error_cleanup_dev;
 
 	/*
 	 * The device-specific probe callback will get invoked by device_add()
@@ -698,6 +701,10 @@ int fsl_mc_device_add(struct dprc_obj_desc *obj_desc,
 			dev_name(&mc_dev->dev), error);
 		goto error_cleanup_dev;
 	}
+
+	/* Set up the dma configuration for the devices. */
+	fsl_mc_dma_configure(mc_dev, fsl_mc_platform_node,
+		!(obj_desc->flags & DPRC_OBJ_FLAG_NO_MEM_SHAREABILITY), ops);
 
 	dev_dbg(parent_dev, "added %s\n", dev_name(&mc_dev->dev));
 
@@ -972,21 +979,28 @@ static int __init fsl_mc_bus_driver_init(void)
 {
 	int error;
 
+	error = platform_driver_register(&fsl_mc_bus_driver);
+	if (error < 0) {
+		pr_err("platform_driver_register() failed: %d\n", error);
+	}
+
+	return error;
+}
+module_init(fsl_mc_bus_driver_init);
+
+static int __init fsl_mc_bus_register(void)
+{
+	int error;
+
 	error = bus_register(&fsl_mc_bus_type);
 	if (error < 0) {
 		pr_err("bus type registration failed: %d\n", error);
 		goto error_cleanup_cache;
 	}
 
-	error = platform_driver_register(&fsl_mc_bus_driver);
-	if (error < 0) {
-		pr_err("platform_driver_register() failed: %d\n", error);
-		goto error_cleanup_bus;
-	}
-
 	error = dprc_driver_init();
 	if (error < 0)
-		goto error_cleanup_driver;
+		goto error_cleanup_bus;
 
 	error = fsl_mc_allocator_driver_init();
 	if (error < 0)
@@ -1004,13 +1018,10 @@ error_cleanup_mc_allocator:
 error_cleanup_dprc_driver:
 	dprc_driver_exit();
 
-error_cleanup_driver:
-	platform_driver_unregister(&fsl_mc_bus_driver);
-
 error_cleanup_bus:
 	bus_unregister(&fsl_mc_bus_type);
 
 error_cleanup_cache:
 	return error;
 }
-postcore_initcall(fsl_mc_bus_driver_init);
+postcore_initcall(fsl_mc_bus_register);
