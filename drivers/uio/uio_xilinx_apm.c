@@ -68,8 +68,8 @@ struct xapm_param {
 	u32 globalcntwidth;
 	u32 scalefactor;
 	u32 isr;
-	struct clk *clk;
 	bool is_32bit_filter;
+	struct clk *clk;
 };
 
 /**
