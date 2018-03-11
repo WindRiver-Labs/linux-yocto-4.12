@@ -1486,6 +1486,10 @@ static int xhci_urb_dequeue(struct usb_hcd *hcd, struct urb *urb, int status)
 	if (!ep || !ep_ring)
 		goto err_giveback;
 
+	/* Delete the stream timer */
+	if ((xhci->quirks & XHCI_STREAM_QUIRK) && (urb->stream_id > 0))
+		del_timer(&ep_ring->stream_timer);
+
 	/* If xHC is dead take it down and return ALL URBs in xhci_hc_died() */
 	temp = readl(&xhci->op_regs->status);
 	if (temp == ~(u32)0 || xhci->xhc_state & XHCI_STATE_DYING) {
