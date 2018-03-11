@@ -2307,6 +2307,9 @@ static int dwc3_cleanup_done_reqs(struct dwc3 *dwc, struct dwc3_ep *dep,
 					event, status, chain);
 		}
 
+		if (ret && chain && req->num_pending_sgs)
+			return __dwc3_gadget_kick_transfer(dep, 0);
+
 		if (req->unaligned || req->zero) {
 			trb = &dep->trb_pool[dep->trb_dequeue];
 			ret = __dwc3_cleanup_done_trbs(dwc, dep, req, trb,
@@ -2316,9 +2319,6 @@ static int dwc3_cleanup_done_reqs(struct dwc3 *dwc, struct dwc3_ep *dep,
 		}
 
 		req->request.actual = length - req->remaining;
-
-		if ((req->request.actual < length) && req->num_pending_sgs)
-			return __dwc3_gadget_kick_transfer(dep, 0);
 
 		dwc3_gadget_giveback(dep, req, status);
 
