@@ -134,7 +134,7 @@ config ST_SLIM_REMOTEPROC
 config ZYNQ_REMOTEPROC
 	tristate "Support ZYNQ remoteproc"
 	depends on ARCH_ZYNQ && SMP && !DEBUG_SG
-	select REMOTEPROC
+	depends on REMOTEPROC
 	select RPMSG_VIRTIO
 	select HOTPLUG_CPU
 	select SRAM
@@ -145,7 +145,7 @@ config ZYNQ_REMOTEPROC
 config ZYNQMP_R5_REMOTEPROC
 	tristate "ZynqMP_r5 remoteproc support"
 	depends on ARM64 && PM
-	select REMOTEPROC
+	depends on REMOTEPROC
 	select RPMSG_VIRTIO
 	select SRAM
 	help
