@@ -24,7 +24,7 @@ enum vid_frmwork_type {
 	XDMA_V4L2,
 };
 
-#if IS_ENABLED(CONFIG_XILINX_FRMBUF)
+#ifdef CONFIG_XILINX_FRMBUF
 /**
  * xilinx_xdma_drm_config - configure video format in video aware DMA
  * @chan: dma channel instance
@@ -81,13 +81,13 @@ static inline void xilinx_xdma_v4l2_config(struct dma_chan *chan,
 { }
 
 int xilinx_xdma_get_drm_vid_fmts(struct dma_chan *chan, u32 *fmt_cnt,
-				 u32 **fmts);
+				 u32 **fmts)
 {
 	return -ENODEV;
 }
 
 int xilinx_xdma_get_v4l2_vid_fmts(struct dma_chan *chan, u32 *fmt_cnt,
-				  u32 **fmts);
+				  u32 **fmts)
 {
 	return -ENODEV;
 }
