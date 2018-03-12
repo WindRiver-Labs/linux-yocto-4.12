@@ -257,13 +257,13 @@ static int arasan_zynqmp_execute_tuning(struct sdhci_host *host, u32 opcode)
 		cmd.flags = MMC_RSP_R1 | MMC_CMD_ADTC;
 		cmd.retries = 0;
 		cmd.data = NULL;
+		cmd.mrq = &mrq;
 		cmd.error = 0;
 
 		if (tuning_loop_counter-- == 0)
 			break;
 
 		mrq.cmd = &cmd;
-		host->mrq = &mrq;
 
 		/*
 		 * In response to CMD19, the card sends 64 bytes of tuning
@@ -294,7 +294,6 @@ static int arasan_zynqmp_execute_tuning(struct sdhci_host *host, u32 opcode)
 		sdhci_send_command(host, &cmd);
 
 		host->cmd = NULL;
-		host->mrq = NULL;
 
 		spin_unlock_irqrestore(&host->lock, flags);
 		/* Wait for Buffer Read Ready interrupt */
@@ -887,16 +886,16 @@ static int sdhci_arasan_probe(struct platform_device *pdev)
 					   "xlnx,mio_bank",
 					   &sdhci_arasan->mio_bank);
 		if (ret < 0) {
-			dev_warn(&pdev->dev, "\"xlnx,mio_bank \" property missed
-				 Tap delay programming off.\n");
+			dev_warn(&pdev->dev,
+				"\"xlnx,mio_bank \" property missed");
 		}
 
 		ret = of_property_read_u32(pdev->dev.of_node,
 					   "xlnx,device_id",
 					   &sdhci_arasan->device_id);
 		if (ret < 0) {
-			dev_warn(&pdev->dev, "\"xlnx,mio_bank \" property missed
-				 Tap delay programming off.\n");
+			dev_warn(&pdev->dev,
+				"\"xlnx,mio_bank \" property missed");
 		}
 		sdhci_arasan_ops.platform_execute_tuning =
 						arasan_zynqmp_execute_tuning;
