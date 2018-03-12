@@ -2083,11 +2083,7 @@ static int macb_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 
 	if (delta > 0x3FFFFFFF) {
 		macb_ptp_read(bp, &now);
-
-		if (sign)
-			now = timespec_sub(now, then);
-		else
-			now = timespec_add(now, then);
+		now = timespec_add(now, then);
 
 		macb_ptp_write(bp, (const struct timespec *)&now);
 	} else {
