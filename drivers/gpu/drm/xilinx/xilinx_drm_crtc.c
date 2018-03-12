@@ -275,7 +275,7 @@ static struct drm_crtc_helper_funcs xilinx_drm_crtc_helper_funcs = {
 };
 
 /* destroy crtc */
-void xilinx_drm_crtc_destroy(struct drm_crtc *base_crtc)
+static void xilinx_drm_crtc_destroy(struct drm_crtc *base_crtc)
 {
 	struct xilinx_drm_crtc *crtc = to_xilinx_crtc(base_crtc);
 
@@ -308,7 +308,7 @@ void xilinx_drm_crtc_cancel_page_flip(struct drm_crtc *base_crtc,
 	event = crtc->event;
 	if (event && (event->base.file_priv == file)) {
 		crtc->event = NULL;
-		event->base.destroy(&event->base);
+		kfree(&event->base);
 		drm_crtc_vblank_put(base_crtc);
 	}
 	spin_unlock_irqrestore(&drm->event_lock, flags);
