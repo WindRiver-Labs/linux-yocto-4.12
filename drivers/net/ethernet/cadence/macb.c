@@ -2015,7 +2015,7 @@ static u32 macb_dbw(struct macb *bp)
 	}
 }
 
-static inline void macb_ptp_read(struct macb *bp, struct timespec *ts)
+static inline void macb_ptp_read(struct macb *bp, struct timespec64 *ts)
 {
 	ts->tv_sec = gem_readl(bp, 1588S);
 	ts->tv_nsec = gem_readl(bp, 1588NS);
@@ -2024,7 +2024,7 @@ static inline void macb_ptp_read(struct macb *bp, struct timespec *ts)
 		ts->tv_nsec = gem_readl(bp, 1588NS);
 }
 
-static inline void macb_ptp_write(struct macb *bp, const struct timespec *ts)
+static inline void macb_ptp_write(struct macb *bp, const struct timespec64 *ts)
 {
 	gem_writel(bp, 1588S, ts->tv_sec);
 	gem_writel(bp, 1588NS, ts->tv_nsec);
@@ -2051,7 +2051,7 @@ static void macb_ptp_close(struct macb *bp)
 	ptp_clock_unregister(bp->ptp_clock);
 }
 
-static int macb_ptp_gettime(struct ptp_clock_info *ptp, struct timespec *ts)
+static int macb_ptp_gettime(struct ptp_clock_info *ptp, struct timespec64 *ts)
 {
 	struct macb *bp = container_of(ptp, struct macb, ptp_caps);
 
@@ -2061,7 +2061,7 @@ static int macb_ptp_gettime(struct ptp_clock_info *ptp, struct timespec *ts)
 }
 
 static int macb_ptp_settime(struct ptp_clock_info *ptp,
-			    const struct timespec *ts)
+			    const struct timespec64 *ts)
 {
 	struct macb *bp = container_of(ptp, struct macb, ptp_caps);
 
@@ -2082,10 +2082,10 @@ static int macb_ptp_adjtime(struct ptp_clock_info *ptp, s64 delta)
 	}
 
 	if (delta > 0x3FFFFFFF) {
-		macb_ptp_read(bp, &now);
+		macb_ptp_read(bp, (struct timespec64 *)&now);
 		now = timespec_add(now, then);
 
-		macb_ptp_write(bp, (const struct timespec *)&now);
+		macb_ptp_write(bp, (const struct timespec64 *)&now);
 	} else {
 		adj = delta;
 		if (sign)
@@ -2163,8 +2163,8 @@ static void macb_ptp_init(struct macb *bp)
 	bp->ptp_caps.n_per_out = 0;
 	bp->ptp_caps.pps = 0;
 	bp->ptp_caps.adjtime = macb_ptp_adjtime;
-	bp->ptp_caps.gettime = macb_ptp_gettime;
-	bp->ptp_caps.settime = macb_ptp_settime;
+	bp->ptp_caps.gettime64 = macb_ptp_gettime;
+	bp->ptp_caps.settime64 = macb_ptp_settime;
 	bp->ptp_caps.enable = macb_ptp_enable;
 	bp->ptp_caps.adjfreq = macb_ptp_adjfreq;
 
@@ -2172,7 +2172,7 @@ static void macb_ptp_init(struct macb *bp)
 
 	getnstimeofday(&now);
 	gem_writel(bp, 1588SMSB, 0);
-	macb_ptp_write(bp, (const struct timespec *)&now);
+	macb_ptp_write(bp, (const struct timespec64 *)&now);
 
 	bp->ns_incr = div_u64_rem(NS_PER_SEC, rate, &rem);
 	if (rem) {
