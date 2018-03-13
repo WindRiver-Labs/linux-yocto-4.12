@@ -1267,6 +1267,9 @@ static int dwc3_probe(struct platform_device *pdev)
 
 	dwc3_get_properties(dwc);
 
+	/* Check if extra quirks to be added */
+	dwc3_simple_check_quirks(dwc);
+
 	platform_set_drvdata(pdev, dwc);
 	dwc3_cache_hwparams(dwc);
 
