@@ -322,7 +322,7 @@ static struct drm_fb_helper_funcs xilinx_drm_fb_helper_funcs = {
  */
 struct drm_fb_helper *
 xilinx_drm_fb_init(struct drm_device *drm, int preferred_bpp,
-		   unsigned int num_crtc, unsigned int max_conn_count,
+		   unsigned int max_conn_count,
 		   unsigned int align, unsigned int vres_mult)
 {
 	struct xilinx_drm_fbdev *fbdev;
@@ -341,7 +341,7 @@ xilinx_drm_fb_init(struct drm_device *drm, int preferred_bpp,
 	fb_helper = &fbdev->fb_helper;
 	drm_fb_helper_prepare(drm, fb_helper, &xilinx_drm_fb_helper_funcs);
 
-	ret = drm_fb_helper_init(drm, fb_helper, num_crtc, max_conn_count);
+	ret = drm_fb_helper_init(drm, fb_helper, max_conn_count);
 	if (ret < 0) {
 		DRM_ERROR("Failed to initialize drm fb helper.\n");
 		goto err_free;

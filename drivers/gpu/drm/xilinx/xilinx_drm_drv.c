@@ -24,6 +24,7 @@
 #include <linux/module.h>
 #include <linux/of_graph.h>
 #include <linux/platform_device.h>
+#include <uapi/drm/drm_fourcc.h>
 
 #include "xilinx_drm_connector.h"
 #include "xilinx_drm_crtc.h"
@@ -185,6 +186,7 @@ static void xilinx_drm_mode_config_init(struct drm_device *drm)
 
 	drm->mode_config.min_width = 0;
 	drm->mode_config.min_height = 0;
+	drm->mode_config.num_crtc = 1;
 
 	drm->mode_config.max_width =
 		xilinx_drm_crtc_get_max_width(private->crtc);
@@ -286,6 +288,81 @@ static int compare_of(struct device *dev, void *data)
 	return dev->of_node == np;
 }
 
+/**
+ * xilinx_fb_get_bpp_depth - get the bpp/depth values for format
+ * @format: pixel format (DRM_FORMAT_*)
+ * @depth: storage for the depth value
+ * @bpp: storage for the bpp value
+ *
+ * This only supports RGB formats here for compat with code that doesn't use
+ * pixel formats directly yet.
+ */
+void xilinx_fb_get_bpp_depth(uint32_t format, unsigned int *depth, int *bpp)
+{
+	struct drm_format_name_buf format_name;
+
+	switch (format) {
+	case DRM_FORMAT_C8:
+	case DRM_FORMAT_RGB332:
+	case DRM_FORMAT_BGR233:
+		*depth = 8;
+		*bpp = 8;
+		break;
+	case DRM_FORMAT_XRGB1555:
+	case DRM_FORMAT_XBGR1555:
+	case DRM_FORMAT_RGBX5551:
+	case DRM_FORMAT_BGRX5551:
+	case DRM_FORMAT_ARGB1555:
+	case DRM_FORMAT_ABGR1555:
+	case DRM_FORMAT_RGBA5551:
+	case DRM_FORMAT_BGRA5551:
+		*depth = 15;
+		*bpp = 16;
+		break;
+	case DRM_FORMAT_RGB565:
+	case DRM_FORMAT_BGR565:
+		*depth = 16;
+		*bpp = 16;
+		break;
+	case DRM_FORMAT_RGB888:
+	case DRM_FORMAT_BGR888:
+		*depth = 24;
+		*bpp = 24;
+		break;
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_RGBX8888:
+	case DRM_FORMAT_BGRX8888:
+		*depth = 24;
+		*bpp = 32;
+		break;
+	case DRM_FORMAT_XRGB2101010:
+	case DRM_FORMAT_XBGR2101010:
+	case DRM_FORMAT_RGBX1010102:
+	case DRM_FORMAT_BGRX1010102:
+	case DRM_FORMAT_ARGB2101010:
+	case DRM_FORMAT_ABGR2101010:
+	case DRM_FORMAT_RGBA1010102:
+	case DRM_FORMAT_BGRA1010102:
+		*depth = 30;
+		*bpp = 32;
+		break;
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_ABGR8888:
+	case DRM_FORMAT_RGBA8888:
+	case DRM_FORMAT_BGRA8888:
+		*depth = 32;
+		*bpp = 32;
+		break;
+	default:
+		DRM_DEBUG_KMS("unsupported pixel format %s\n",
+				drm_get_format_name(format, &format_name));
+		*depth = 0;
+		*bpp = 0;
+		break;
+	}
+}
+
 /* load xilinx drm */
 static int xilinx_drm_load(struct drm_device *drm, unsigned long flags)
 {
@@ -369,12 +446,15 @@ static int xilinx_drm_load(struct drm_device *drm, unsigned long flags)
 	drm->dev_private = private;
 	private->drm = drm;
 
+	/* set up mode config for xilinx */
+	xilinx_drm_mode_config_init(drm);
+
 	/* initialize xilinx framebuffer */
-	drm_fb_get_bpp_depth(xilinx_drm_crtc_get_format(private->crtc),
+	xilinx_fb_get_bpp_depth(xilinx_drm_crtc_get_format(private->crtc),
 			     &depth, &bpp);
 	if (bpp) {
 		align = xilinx_drm_crtc_get_align(private->crtc);
-		private->fb = xilinx_drm_fb_init(drm, bpp, 1, 1, align,
+		private->fb = xilinx_drm_fb_init(drm, bpp, 1, align,
 						 xilinx_drm_fbdev_vres);
 		if (IS_ERR(private->fb)) {
 			DRM_ERROR("failed to initialize drm fb\n");
@@ -385,9 +465,6 @@ static int xilinx_drm_load(struct drm_device *drm, unsigned long flags)
 		dev_info(&pdev->dev, "fbdev is not initialized\n");
 
 	drm_kms_helper_poll_init(drm);
-
-	/* set up mode config for xilinx */
-	xilinx_drm_mode_config_init(drm);
 
 	drm_helper_disable_unused_functions(drm);
 

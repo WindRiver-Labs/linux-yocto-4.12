@@ -33,6 +33,7 @@ int xilinx_drm_format_by_name(const char *name, u32 *drm_format);
 
 unsigned int xilinx_drm_format_bpp(u32 drm_format);
 unsigned int xilinx_drm_format_depth(u32 drm_format);
+void xilinx_fb_get_bpp_depth(uint32_t format, unsigned int *depth, int *bpp);
 
 /* io write operations */
 static inline void xilinx_drm_writel(void __iomem *base, int offset, u32 val)
