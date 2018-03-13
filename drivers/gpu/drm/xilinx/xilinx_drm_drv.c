@@ -491,7 +491,7 @@ err_out:
 }
 
 /* unload xilinx drm */
-static int xilinx_drm_unload(struct drm_device *drm)
+static void xilinx_drm_unload(struct drm_device *drm)
 {
 	struct xilinx_drm_private *private = drm->dev_private;
 
@@ -500,8 +500,6 @@ static int xilinx_drm_unload(struct drm_device *drm)
 	drm_kms_helper_poll_fini(drm);
 	xilinx_drm_fb_fini(private->fb);
 	drm_mode_config_cleanup(drm);
-
-	return 0;
 }
 
 static int xilinx_drm_open(struct drm_device *dev, struct drm_file *file)
