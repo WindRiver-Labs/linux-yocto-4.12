@@ -370,7 +370,7 @@ static int xilinx_drm_load(struct drm_device *drm, unsigned long flags)
 	struct drm_encoder *encoder;
 	struct drm_connector *connector;
 	struct device_node *encoder_node, *ep = NULL, *remote;
-	struct platform_device *pdev = drm->platformdev;
+	struct platform_device *pdev = to_platform_device(drm->dev);
 	struct component_match *match = NULL;
 	unsigned int align, depth, i = 0;
 	int bpp, ret;
