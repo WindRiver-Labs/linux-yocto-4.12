@@ -539,6 +539,16 @@ static void xilinx_drm_lastclose(struct drm_device *drm)
 	xilinx_drm_fb_restore_mode(private->fb);
 }
 
+/*
+ * "No hw counter" fallback implementation of .get_vblank_counter() hook,
+ * if there is no useable hardware frame counter available.
+ */
+static u32 xilinx_vblank_no_hw_counter(struct drm_device *dev, unsigned int pipe)
+{
+	WARN_ON_ONCE(dev->max_vblank_count != 0);
+	return 0;
+}
+
 static const struct file_operations xilinx_drm_fops = {
 	.owner		= THIS_MODULE,
 	.open		= drm_open,
@@ -562,7 +572,7 @@ static struct drm_driver xilinx_drm_driver = {
 	.preclose			= xilinx_drm_preclose,
 	.lastclose			= xilinx_drm_lastclose,
 
-	.get_vblank_counter		= drm_vblank_no_hw_counter,
+	.get_vblank_counter		= xilinx_vblank_no_hw_counter,
 	.enable_vblank			= xilinx_drm_enable_vblank,
 	.disable_vblank			= xilinx_drm_disable_vblank,
 
