@@ -54,7 +54,7 @@ out:
 
 int dwc3_host_init(struct dwc3 *dwc)
 {
-	struct property_entry	props[3];
+	struct property_entry	props[4];
 	struct platform_device	*xhci;
 	int			ret, irq;
 	struct resource		*res;
@@ -113,6 +113,10 @@ int dwc3_host_init(struct dwc3 *dwc)
 	 */
 	if (dwc->revision <= DWC3_REVISION_300A)
 		props[prop_idx++].name = "quirk-broken-port-ped";
+
+	if (device_property_read_bool(&dwc3_pdev->dev,
+					"snps,xhci-stream-quirk"))
+		props[prop_idx++].name = "xhci-stream-quirk";
 
 	if (prop_idx) {
 		ret = platform_device_add_properties(xhci, props);
