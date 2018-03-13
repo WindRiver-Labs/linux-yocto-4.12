@@ -3806,7 +3806,6 @@ static int macb_probe(struct platform_device *pdev)
 	unsigned int queue_mask, num_queues;
 	struct macb_platform_data *pdata;
 	bool native_io;
-	struct phy_device *phydev;
 	struct net_device *dev;
 	struct resource *regs;
 	void __iomem *mem;
@@ -3954,8 +3953,6 @@ static int macb_probe(struct platform_device *pdev)
 	if (err)
 		goto err_out_free_netdev;
 
-	phydev = dev->phydev;
-
 	netif_carrier_off(dev);
 
 	err = register_netdev(dev);
@@ -3964,7 +3961,7 @@ static int macb_probe(struct platform_device *pdev)
 		goto err_out_unregister_mdio;
 	}
 
-	phy_attached_info(phydev);
+	phy_attached_info(dev->phydev);
 	pm_runtime_mark_last_busy(&bp->pdev->dev);
 	pm_runtime_put_autosuspend(&bp->pdev->dev);
 
@@ -4052,7 +4049,7 @@ static int __maybe_unused macb_suspend(struct device *dev)
 
 	netif_device_detach(netdev);
 	napi_disable(&bp->napi);
-	phy_stop(bp->phy_dev);
+	phy_stop(netdev->phydev);
 	spin_lock_irqsave(&bp->lock, flags);
 	macb_reset_hw(bp);
 	netif_carrier_off(netdev);
@@ -4085,7 +4082,7 @@ static int __maybe_unused macb_resume(struct device *dev)
 	macb_writel(bp, NCR, MACB_BIT(MPE));
 	napi_enable(&bp->napi);
 	netif_carrier_on(netdev);
-	phy_start(bp->phy_dev);
+	phy_start(netdev->phydev);
 	bp->macbgem_ops.mog_init_rings(bp);
 	macb_init_hw(bp);
 
