@@ -133,6 +133,7 @@ static int dwc3_of_simple_remove(struct platform_device *pdev)
 		clk_disable_unprepare(simple->clks[i]);
 		clk_put(simple->clks[i]);
 	}
+	simple->num_clocks = 0;
 
 	pm_runtime_put_sync(dev);
 	pm_runtime_disable(dev);
