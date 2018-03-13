@@ -252,6 +252,9 @@ static int xhci_plat_probe(struct platform_device *pdev)
 	pm_runtime_enable(&pdev->dev);
 	pm_runtime_get_noresume(&pdev->dev);
 
+	/* Set the controller as wakeup capable */
+	device_set_wakeup_capable(&pdev->dev, true);
+
 	hcd = __usb_create_hcd(driver, sysdev, &pdev->dev,
 			       dev_name(&pdev->dev), NULL);
 	if (!hcd) {
@@ -412,10 +415,12 @@ static int __maybe_unused xhci_plat_suspend(struct device *dev)
 
 #if IS_ENABLED(CONFIG_USB_DWC3_OF_SIMPLE)
 	/* Inform dwc3 driver about the device wakeup capability */
-	if (device_may_wakeup(dev))
+	if (device_may_wakeup(&hcd->self.root_hub->dev)) {
+		enable_irq_wake(hcd->irq);
 		dwc3_host_wakeup_capable(dev, true);
-	else
+	} else {
 		dwc3_host_wakeup_capable(dev, false);
+	}
 #endif
 	/*
 	 * xhci_suspend() needs `do_wakeup` to know whether host is allowed
@@ -445,6 +450,9 @@ static int __maybe_unused xhci_plat_resume(struct device *dev)
 	ret = xhci_priv_resume_quirk(hcd);
 	if (ret)
 		return ret;
+
+	if (device_may_wakeup(&hcd->self.root_hub->dev))
+		disable_irq_wake(hcd->irq);
 
 	return xhci_resume(xhci, 0);
 }
