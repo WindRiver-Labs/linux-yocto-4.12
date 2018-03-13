@@ -41,6 +41,7 @@ struct dwc3_of_simple {
 	struct device		*dev;
 	struct clk		**clks;
 	int			num_clocks;
+	void __iomem		*regs;
 };
 
 int dwc3_enable_hw_coherency(struct device *dev)
@@ -49,30 +50,17 @@ int dwc3_enable_hw_coherency(struct device *dev)
 
 	if (of_device_is_compatible(node, "xlnx,zynqmp-dwc3")) {
 		struct platform_device *pdev_parent;
-		struct resource *res;
+		struct dwc3_of_simple *simple;
 		void __iomem *regs;
 		u32 reg;
-		int ret;
 
 		pdev_parent = of_find_device_by_node(node);
-		res = platform_get_resource(pdev_parent,
-					    IORESOURCE_MEM, 0);
-		if (!res) {
-			dev_err(dev, "missing memory resource\n");
-			return -ENODEV;
-		}
-
-		regs = devm_ioremap_resource(&pdev_parent->dev, res);
-		if (IS_ERR(regs)) {
-			ret = PTR_ERR(regs);
-			return ret;
-		}
+		simple = platform_get_drvdata(pdev_parent);
+		regs = simple->regs;
 
 		reg = readl(regs + XLNX_USB_COHERENCY);
 		reg |= XLNX_USB_COHERENCY_ENABLE;
 		writel(reg, regs + XLNX_USB_COHERENCY);
-
-		devm_ioremap_release(&pdev_parent->dev, res);
 	}
 
 	return 0;
@@ -139,6 +127,22 @@ static int dwc3_of_simple_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, simple);
 	simple->dev = dev;
+
+	if (of_device_is_compatible(pdev->dev.of_node,
+				    "xlnx,zynqmp-dwc3")) {
+		struct resource		*res;
+		void __iomem		*regs;
+
+		res = platform_get_resource(pdev,
+					    IORESOURCE_MEM, 0);
+
+		regs = devm_ioremap_resource(&pdev->dev, res);
+		if (IS_ERR(regs))
+			return PTR_ERR(regs);
+
+		/* Store the usb control regs into simple for further usage */
+		simple->regs = regs;
+	}
 
 	ret = dwc3_of_simple_clk_init(simple, of_count_phandle_with_args(np,
 						"clocks", "#clock-cells"));
