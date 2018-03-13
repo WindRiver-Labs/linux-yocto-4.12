@@ -656,10 +656,49 @@ static const struct dev_pm_ops xilinx_drm_pm_ops = {
 	SET_SYSTEM_SLEEP_PM_OPS(xilinx_drm_pm_suspend, xilinx_drm_pm_resume)
 };
 
+/*
+ * Register.
+ *
+ * \param platdev - Platform device struture
+ * \return zero on success or a negative number on failure.
+ *
+ * Attempt to gets inter module "drm" information. If we are first
+ * then register the character device and inter module information.
+ * Try and register, if we fail to register, backout previous work.
+ */
+
+static int xilinx_get_platform_dev(struct platform_device *platdev,
+				struct drm_driver *driver)
+{
+	struct drm_device *dev;
+	int ret;
+
+	DRM_DEBUG("\n");
+
+	dev = drm_dev_alloc(driver, &platdev->dev);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
+
+	ret = drm_dev_register(dev, 0);
+	if (ret)
+		goto err_free;
+
+	DRM_INFO("Initialized %s %d.%d.%d %s on minor %d\n",
+		 driver->name, driver->major, driver->minor, driver->patchlevel,
+		 driver->date, dev->primary->index);
+
+	return 0;
+
+err_free:
+	drm_dev_unref(dev);
+	return ret;
+}
+
 /* init xilinx drm platform */
 static int xilinx_drm_platform_probe(struct platform_device *pdev)
 {
-	return drm_platform_init(&xilinx_drm_driver, pdev);
+	DRM_DEBUG("\n");
+	return xilinx_get_platform_dev(pdev, &xilinx_drm_driver);
 }
 
 /* exit xilinx drm platform */
