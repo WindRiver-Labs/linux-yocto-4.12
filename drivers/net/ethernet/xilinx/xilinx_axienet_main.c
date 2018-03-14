@@ -2297,7 +2297,9 @@ err_ptp_rx_irq:
 #endif
 	if (phydev)
 		phy_disconnect(phydev);
-	tasklet_kill(&lp->dma_err_tasklet);
+	phydev = NULL;
+	for_each_dma_queue(lp, i)
+		tasklet_kill(&lp->dma_err_tasklet[i]);
 	dev_err(lp->dev, "request_irq() failed\n");
 	return ret;
 }
