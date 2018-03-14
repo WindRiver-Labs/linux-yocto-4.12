@@ -342,7 +342,8 @@ static int xilinx_drm_plane_update(struct drm_plane *base_plane,
 				   int crtc_x, int crtc_y,
 				   unsigned int crtc_w, unsigned int crtc_h,
 				   u32 src_x, u32 src_y,
-				   u32 src_w, u32 src_h)
+				   u32 src_w, u32 src_h,
+				   struct drm_modeset_acquire_ctx *ctx)
 {
 	struct xilinx_drm_plane *plane = to_xilinx_plane(base_plane);
 	int ret;
@@ -366,7 +367,8 @@ static int xilinx_drm_plane_update(struct drm_plane *base_plane,
 }
 
 /* disable a plane */
-static int xilinx_drm_plane_disable(struct drm_plane *base_plane)
+static int xilinx_drm_plane_disable(struct drm_plane *base_plane,
+				   struct drm_modeset_acquire_ctx *ctx)
 {
 	xilinx_drm_plane_dpms(base_plane, DRM_MODE_DPMS_OFF);
 
