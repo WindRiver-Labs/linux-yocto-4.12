@@ -268,18 +268,18 @@ int xilinx_drm_plane_mode_set(struct drm_plane *base_plane,
 
 	DRM_DEBUG_KMS("h: %d(%d), v: %d(%d)\n",
 		      src_w, crtc_x, src_h, crtc_y);
-	DRM_DEBUG_KMS("bpp: %d\n", fb->bits_per_pixel / 8);
+	DRM_DEBUG_KMS("bpp: %d\n", fb->format->cpp[0]);
 
-	hsub = drm_format_horz_chroma_subsampling(fb->pixel_format);
-	vsub = drm_format_vert_chroma_subsampling(fb->pixel_format);
+	hsub = drm_format_horz_chroma_subsampling(fb->format->format);
+	vsub = drm_format_vert_chroma_subsampling(fb->format->format);
 
-	for (i = 0; i < drm_format_num_planes(fb->pixel_format); i++) {
+	for (i = 0; i < drm_format_num_planes(fb->format->format); i++) {
 		unsigned int width = src_w / (i ? hsub : 1);
 		unsigned int height = src_h / (i ? vsub : 1);
-		unsigned int cpp = drm_format_plane_cpp(fb->pixel_format, i);
+		unsigned int cpp = drm_format_plane_cpp(fb->format->format, i);
 
 		if (!cpp)
-			cpp = xilinx_drm_format_bpp(fb->pixel_format) >> 3;
+			cpp = xilinx_drm_format_bpp(fb->format->format) >> 3;
 
 		obj = xilinx_drm_fb_get_gem_obj(fb, i);
 		if (!obj) {
@@ -325,7 +325,7 @@ int xilinx_drm_plane_mode_set(struct drm_plane *base_plane,
 
 		ret = xilinx_drm_dp_sub_layer_set_fmt(plane->manager->dp_sub,
 						      plane->dp_layer,
-						      fb->pixel_format);
+						      fb->format->format);
 		if (ret) {
 			DRM_ERROR("failed to set dp_sub layer fmt\n");
 			return ret;
