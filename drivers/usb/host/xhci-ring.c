@@ -959,8 +959,8 @@ void xhci_stream_timeout(unsigned long arg)
 		/* Delete the stream ring timer */
 		del_timer(&ep_ring->stream_timer);
 
-		for (i = 0; i < urb_priv->length; i++) {
-			td = urb_priv->td[i];
+		for (i = 0; i < urb_priv->num_tds; i++) {
+			td = &urb_priv->td[i];
 			list_add_tail(&td->cancelled_td_list,
 					&ep->cancelled_td_list);
 		}
