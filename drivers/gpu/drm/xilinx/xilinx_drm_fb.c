@@ -278,7 +278,7 @@ static int xilinx_drm_fbdev_create(struct drm_fb_helper *fb_helper,
 		goto err_xilinx_drm_fb_destroy;
 	}
 
-	drm_fb_helper_fill_fix(fbi, base_fb->pitches[0], base_fb->depth);
+	drm_fb_helper_fill_fix(fbi, base_fb->pitches[0], base_fb->format->depth);
 	drm_fb_helper_fill_var(fbi, fb_helper, base_fb->width, base_fb->height);
 	fbi->var.yres = base_fb->height / fbdev->vres_mult;
 
@@ -444,7 +444,7 @@ xilinx_drm_fb_create(struct drm_device *drm, struct drm_file *file_priv,
 	unsigned int hsub;
 	unsigned int vsub;
 	int ret;
-	int i;
+	int i, bpp = 0, depth = 0;
 
 	hsub = drm_format_horz_chroma_subsampling(mode_cmd->pixel_format);
 	vsub = drm_format_vert_chroma_subsampling(mode_cmd->pixel_format);
@@ -480,11 +480,13 @@ xilinx_drm_fb_create(struct drm_device *drm, struct drm_file *file_priv,
 		goto err_gem_object_unreference;
 	}
 
-	drm_fb_get_bpp_depth(mode_cmd->pixel_format, &fb->base.depth,
-			     &fb->base.bits_per_pixel);
-	if (!fb->base.bits_per_pixel)
-		fb->base.bits_per_pixel =
-			xilinx_drm_format_bpp(mode_cmd->pixel_format);
+	xilinx_fb_get_bpp_depth(mode_cmd->pixel_format, &depth, &bpp);
+	((struct drm_format_info *)(fb->base.format))->depth = (u8)depth,
+	((struct drm_format_info *)(fb->base.format))->cpp[0] = bpp / 8;
+
+	if (!fb->base.format->cpp[0])
+		((struct drm_format_info *)(fb->base.format))->cpp[0] =
+			xilinx_drm_format_bpp(mode_cmd->pixel_format) / 8;
 
 	return &fb->base;
 
