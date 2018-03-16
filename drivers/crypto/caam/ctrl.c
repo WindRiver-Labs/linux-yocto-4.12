@@ -581,7 +581,8 @@ static int caam_probe(struct platform_device *pdev)
 
 	if (!of_machine_is_compatible("fsl,imx8mq") &&
 	     !of_machine_is_compatible("fsl,imx8qm") &&
-	     !of_machine_is_compatible("fsl,imx8qxp")) {
+	     !of_machine_is_compatible("fsl,imx8qxp") &&
+	     !of_machine_is_compatible("fsl,imx7ulp")) {
 		ret = init_clocks(ctrlpriv);
 		if (ret)
 			goto disable_clocks;
@@ -727,8 +728,9 @@ iounmap_ctrl:
 	iounmap(ctrl);
 disable_clocks:
 	if (!of_machine_is_compatible("fsl,imx8mq") &&
-	    !of_machine_is_compatible("fsl,imx8qm") &&
-	    !of_machine_is_compatible("fsl,imx8qxp")) {
+	     !of_machine_is_compatible("fsl,imx8qm") &&
+	     !of_machine_is_compatible("fsl,imx8qxp") &&
+	     !of_machine_is_compatible("fsl,imx7ulp")) {
 		if (ctrlpriv->caam_emi_slow)
 			clk_disable_unprepare(ctrlpriv->caam_emi_slow);
 		clk_disable_unprepare(ctrlpriv->caam_aclk);
