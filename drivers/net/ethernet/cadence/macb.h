@@ -75,6 +75,7 @@
 #define GEM_NCFGR		0x0004 /* Network Config */
 #define GEM_USRIO		0x000c /* User IO */
 #define GEM_DMACFG		0x0010 /* DMA Configuration */
+#define GEM_PBUFRXCUT		0x0044 /* RX Partial Store and Forward */
 #define GEM_JML			0x0048 /* Jumbo Max Length */
 #define GEM_HRB			0x0080 /* Hash Bottom */
 #define GEM_HRT			0x0084 /* Hash Top */
@@ -283,6 +284,12 @@
 #define GEM_TXBDEXT_SIZE	1
 
 
+/* Bitfields in PBUFRXCUT */
+#define GEM_WTRMRK_OFFSET	0 /* Watermark value offset */
+#define GEM_WTRMRK_SIZE		12
+#define GEM_ENCUTTHRU_OFFSET	31 /* Enable RX partial store and forward */
+#define GEM_ENCUTTHRU_SIZE	1
+
 /* Bitfields in NSR */
 #define MACB_NSR_LINK_OFFSET	0 /* pcs_link_state */
 #define MACB_NSR_LINK_SIZE	1
@@ -474,6 +481,7 @@
 #define MACB_CAPS_JUMBO				0x00000020
 #define MACB_CAPS_PCS				0x00000040
 #define MACB_CAPS_TSU				0x00000080
+#define MACB_CAPS_PARTIAL_STORE_FORWARD		0x00000100
 #define MACB_CAPS_FIFO_MODE			0x10000000
 #define MACB_CAPS_GIGABIT_MODE_AVAILABLE	0x20000000
 #define MACB_CAPS_SG_DISABLED			0x40000000
@@ -959,6 +967,8 @@ struct macb {
 	unsigned int		ns_incr;
 	unsigned int		subns_incr;
 	struct tasklet_struct   hresp_err_tasklet;
+	/* holds value of rx watermark value for pbuf_rxcutthru register */
+	u16			rx_watermark;
 };
 
 static inline bool macb_is_gem(struct macb *bp)
