@@ -387,8 +387,6 @@
 /* Bitfields in DCFG6. */
 #define GEM_PBUF_LSO_OFFSET			27
 #define GEM_PBUF_LSO_SIZE			1
-#define GEM_DAW64_OFFSET			23
-#define GEM_DAW64_SIZE				1
 
 /* Constants for CLK */
 #define MACB_CLK_DIV8				0
@@ -491,19 +489,11 @@
 struct macb_dma_desc {
 	u32	addr;
 	u32	ctrl;
-};
-
 #ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-enum macb_hw_dma_cap {
-	HW_DMA_CAP_32B,
-	HW_DMA_CAP_64B,
-};
-
-struct macb_dma_desc_64 {
-	u32 addrh;
-	u32 resvd;
-};
+	u32     addrh;
+	u32     resvd;
 #endif
+};
 
 /* DMA descriptor bitfields */
 #define MACB_RX_USED_OFFSET			0
@@ -885,10 +875,6 @@ struct macb {
 	unsigned int		jumbo_max_len;
 
 	u32			wol;
-
-#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
-	enum macb_hw_dma_cap hw_dma_cap;
-#endif
 };
 
 static inline bool macb_is_gem(struct macb *bp)
