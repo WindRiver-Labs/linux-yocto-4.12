@@ -1864,6 +1864,11 @@ static void macb_configure_dma(struct macb *bp)
 		else
 			dmacfg &= ~GEM_BIT(TXCOEN);
 
+#ifdef CONFIG_MACB_EXT_BD
+		dmacfg |= GEM_BIT(RXBDEXT);
+		dmacfg |= GEM_BIT(TXBDEXT);
+#endif
+
 #ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
 		dmacfg |= GEM_BIT(ADDR64);
 #endif
