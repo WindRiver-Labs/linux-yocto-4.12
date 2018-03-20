@@ -32,7 +32,7 @@ config MACB
 	  will be called macb.
 
 config MACB_EXT_BD
-	tristate "Cadence MACB/GEM extended buffer descriptor"
+	bool "Cadence MACB/GEM extended buffer descriptor"
 	depends on HAS_DMA && MACB
 	---help---
 	  The Cadence MACB host supports use of extended buffer descriptor.
