@@ -1338,9 +1338,15 @@ static void macb_hresp_error_task(unsigned long data)
 
 	bp->macbgem_ops.mog_init_rings(bp);
 
-	macb_writel(bp, RBQP, bp->rx_ring_dma);
+	macb_writel(bp, RBQP, (u32)(bp->rx_ring_dma));
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+	macb_writel(bp, RBQPH, (u32)(bp->rx_ring_dma >> 32));
+#endif
 	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
-		queue_writel(queue, TBQP, queue->tx_ring_dma);
+		queue_writel(queue, TBQP, (u32)(queue->tx_ring_dma));
+#ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
+		queue_writel(queue, TBQPH, (u32)(queue->tx_ring_dma >> 32));
+#endif
 		/* We only use the first queue at the moment. Remaining
 		 * queues must be tied-off before we enable the receiver.
 		 *
@@ -2000,7 +2006,7 @@ static void gem_init_rings(struct macb *bp)
 
 	for (q = 0, queue = bp->queues; q < bp->num_queues; ++q, ++queue) {
 		for (i = 0; i < bp->tx_ring_size; i++) {
-			queue->tx_ring[i].addr = 0;
+			macb_set_addr(&(queue->tx_ring[i]), 0);
 			queue->tx_ring[i].ctrl = MACB_BIT(TX_USED);
 		}
 		queue->tx_ring[bp->tx_ring_size - 1].ctrl |= MACB_BIT(TX_WRAP);
@@ -3281,10 +3287,10 @@ static int macb_init(struct platform_device *pdev)
 			queue->IDR  = GEM_IDR(hw_q - 1);
 			queue->IMR  = GEM_IMR(hw_q - 1);
 			queue->TBQP = GEM_TBQP(hw_q - 1);
-			queue->RBQP = GEM_RBQP(hw_q - 1);
 #ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
 			queue->TBQPH = GEM_TBQPH(hw_q -1);
 #endif
+			queue->RBQP = GEM_RBQP(hw_q - 1);
 		} else {
 			/* queue0 uses legacy registers */
 			queue->ISR  = MACB_ISR;
@@ -3292,10 +3298,10 @@ static int macb_init(struct platform_device *pdev)
 			queue->IDR  = MACB_IDR;
 			queue->IMR  = MACB_IMR;
 			queue->TBQP = MACB_TBQP;
-			queue->RBQP = MACB_RBQP;
 #ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
 			queue->TBQPH = MACB_TBQPH;
 #endif
+			queue->RBQP = MACB_RBQP;
 		}
 
 		/* get irq: here we use the linux queue index, not the hardware
@@ -3874,17 +3880,12 @@ static int macb_probe(struct platform_device *pdev)
 	if (macb_config)
 		bp->jumbo_max_len = macb_config->jumbo_max_len;
 
-	bp->wol = 0;
-	if (of_get_property(np, "magic-packet", NULL))
-		bp->wol |= MACB_WOL_HAS_MAGIC_PACKET;
-	device_init_wakeup(&pdev->dev, bp->wol & MACB_WOL_HAS_MAGIC_PACKET);
+	of_property_read_u32(pdev->dev.of_node, "tsu-clk", &bp->tsu_clk);
 
 #ifdef CONFIG_ARCH_DMA_ADDR_T_64BIT
 	if (GEM_BFEXT(DBWDEF, gem_readl(bp, DCFG1)) > GEM_DBW32)
 		dma_set_mask(&pdev->dev, DMA_BIT_MASK(44));
 #endif
-
-	of_property_read_u32(pdev->dev.of_node, "tsu-clk", &bp->tsu_clk);
 
 	spin_lock_init(&bp->lock);
 
@@ -3960,6 +3961,11 @@ static int macb_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "Cannot register net device, aborting.\n");
 		goto err_out_unregister_mdio;
 	}
+
+	bp->wol = 0;
+	if (of_get_property(np, "magic-packet", NULL))
+		bp->wol |= MACB_WOL_HAS_MAGIC_PACKET;
+	device_init_wakeup(&pdev->dev, bp->wol & MACB_WOL_HAS_MAGIC_PACKET);
 
 	phy_attached_info(dev->phydev);
 	pm_runtime_mark_last_busy(&bp->pdev->dev);
