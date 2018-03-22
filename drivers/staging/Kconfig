@@ -21,6 +21,7 @@ menuconfig STAGING
 
 	  If in doubt, say N here.
 
+source "drivers/staging/apf/Kconfig"
 
 if STAGING
 
