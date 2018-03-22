@@ -112,4 +112,6 @@ source "drivers/staging/typec/Kconfig"
 
 source "drivers/staging/netatop/Kconfig"
 
+source "drivers/staging/apf/Kconfig"
+
 endif # STAGING
