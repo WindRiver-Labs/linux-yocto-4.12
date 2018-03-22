@@ -25,6 +25,8 @@ source "drivers/staging/apf/Kconfig"
 
 source "drivers/staging/fclk/Kconfig"
 
+source "drivers/staging/xilinx/Kconfig"
+
 if STAGING
 
 source "drivers/staging/wlan-ng/Kconfig"
