@@ -440,9 +440,6 @@ static int xilinx_drm_load(struct drm_device *drm, unsigned long flags)
 	/* enable irq to enable vblank feature */
 	drm->irq_enabled = 1;
 
-	/* allow disable vblank */
-	drm->vblank[0].enabled = 1;
-
 	drm->dev_private = private;
 	private->drm = drm;
 
