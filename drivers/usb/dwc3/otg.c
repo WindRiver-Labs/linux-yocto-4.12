@@ -20,7 +20,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
-#include <linux/sched.h>
+#include <linux/sched/signal.h>
 #include <linux/freezer.h>
 #include <linux/kthread.h>
 #include <linux/version.h>
@@ -528,14 +528,12 @@ static void start_peripheral(struct dwc3_otg *otg)
 
 		spin_lock(&otg->lock);
 		dep = dwc->eps[0];
-		ret = __dwc3_gadget_ep_enable(dep, dep->endpoint.desc, NULL,
-				false, false);
+		ret = __dwc3_gadget_ep_enable(dep, false, false);
 		if (ret)
 			goto err0;
 
 		dep = dwc->eps[1];
-		ret = __dwc3_gadget_ep_enable(dep, dep->endpoint.desc, NULL,
-				false, false);
+		ret = __dwc3_gadget_ep_enable(dep, false, false);
 		if (ret)
 			goto err1;
 
