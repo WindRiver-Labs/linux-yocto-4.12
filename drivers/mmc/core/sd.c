@@ -1015,7 +1015,7 @@ static int mmc_sd_init_card(struct mmc_host *host, u32 ocr,
 	if (mmc_host_uhs(host) && card->scr.sda_spec3 &&
 	    card->sw_caps.sd3_bus_mode >= SD_MODE_UHS_SDR50) {
 		rocr |= SD_ROCR_S18A;
-		err = __mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_180);
+		err = mmc_set_signal_voltage(host, MMC_SIGNAL_VOLTAGE_180);
 		if (err)
 			goto free_card;
 	}
