@@ -93,7 +93,7 @@ static struct clk_ops clk_pll_ops = {
 static struct clk * __init __socfpga_pll_init(struct device_node *node,
 					      const struct clk_ops *ops)
 {
-	u32 reg, reg2;
+	u32 reg;
 	struct clk *clk;
 	struct socfpga_pll *pll_clk;
 	const char *clk_name = node->name;
