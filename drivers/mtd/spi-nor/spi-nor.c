@@ -76,7 +76,6 @@ struct flash_info {
 					 * bit. Must be used with
 					 * SPI_NOR_HAS_LOCK.
 					 */
-#define	SPI_NOR_DDR_QUAD_READ	BIT(10)  /* Flash supports DDR Quad Read */
 #define	SPI_S3AN		BIT(10)	/*
 					 * Xilinx Spartan 3AN In-System Flash
 					 * (MFR cannot be used for probing
@@ -88,6 +87,7 @@ struct flash_info {
 					 * to support memory size above 128Mib.
 					 */
 #define NO_CHIP_ERASE		BIT(12) /* Chip does not support chip erase */
+#define	SPI_NOR_DDR_QUAD_READ	BIT(13)  /* Flash supports DDR Quad Read */
 };
 
 #define JEDEC_MFR(info)	((info)->id[0])
