@@ -444,7 +444,7 @@ xilinx_drm_fb_create(struct drm_device *drm, struct drm_file *file_priv,
 	unsigned int hsub;
 	unsigned int vsub;
 	int ret;
-	int i, bpp = 0, depth = 0;
+	int i;
 
 	hsub = drm_format_horz_chroma_subsampling(mode_cmd->pixel_format);
 	vsub = drm_format_vert_chroma_subsampling(mode_cmd->pixel_format);
@@ -480,9 +480,7 @@ xilinx_drm_fb_create(struct drm_device *drm, struct drm_file *file_priv,
 		goto err_gem_object_unreference;
 	}
 
-	xilinx_fb_get_bpp_depth(mode_cmd->pixel_format, &depth, &bpp);
-	((struct drm_format_info *)(fb->base.format))->depth = (u8)depth,
-	((struct drm_format_info *)(fb->base.format))->cpp[0] = bpp / 8;
+	fb->base.format = drm_format_info(mode_cmd->pixel_format);
 
 	if (!fb->base.format->cpp[0])
 		((struct drm_format_info *)(fb->base.format))->cpp[0] =

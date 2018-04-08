@@ -456,7 +456,8 @@ static int xilinx_drm_load(struct drm_device *drm, unsigned long flags)
 		if (IS_ERR(private->fb)) {
 			DRM_ERROR("failed to initialize drm fb\n");
 			private->fb = NULL;
-		}
+		} else
+			DRM_INFO("Initialize drm fb Passed\n");
 	}
 	if (!private->fb)
 		dev_info(&pdev->dev, "fbdev is not initialized\n");
