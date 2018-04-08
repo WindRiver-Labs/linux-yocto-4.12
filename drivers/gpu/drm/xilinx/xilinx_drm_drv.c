@@ -492,11 +492,18 @@ err_out:
 static void xilinx_drm_unload(struct drm_device *drm)
 {
 	struct xilinx_drm_private *private = drm->dev_private;
+	struct drm_connector *connector, *ot;
 
 	drm_vblank_cleanup(drm);
 	component_master_del(drm->dev, &xilinx_drm_ops);
 	drm_kms_helper_poll_fini(drm);
 	xilinx_drm_fb_fini(private->fb);
+
+	list_for_each_entry_safe(connector, ot,
+		&drm->mode_config.connector_list, head) {
+		connector->funcs->destroy(connector);
+	}
+
 	drm_mode_config_cleanup(drm);
 }
 
