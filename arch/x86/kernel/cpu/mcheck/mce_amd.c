@@ -810,24 +810,12 @@ __log_error(unsigned int bank, bool deferred_err, bool threshold_err, u64 misc)
 	wrmsrl(msr_status, 0);
 }
 
-static inline void __smp_deferred_error_interrupt(void)
-{
-	inc_irq_stat(irq_deferred_error_count);
-	deferred_error_int_vector();
-}
-
 asmlinkage __visible void __irq_entry smp_deferred_error_interrupt(void)
 {
 	entering_irq();
-	__smp_deferred_error_interrupt();
-	exiting_ack_irq();
-}
-
-asmlinkage __visible void __irq_entry smp_trace_deferred_error_interrupt(void)
-{
-	entering_irq();
 	trace_deferred_error_apic_entry(DEFERRED_ERROR_VECTOR);
-	__smp_deferred_error_interrupt();
+	inc_irq_stat(irq_deferred_error_count);
+	deferred_error_int_vector();
 	trace_deferred_error_apic_exit(DEFERRED_ERROR_VECTOR);
 	exiting_ack_irq();
 }
