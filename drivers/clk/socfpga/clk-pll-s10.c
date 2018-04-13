@@ -136,8 +136,19 @@ static struct clk * __init __socfpga_pll_init(struct device_node *node,
 		kfree(pll_clk);
 		return NULL;
 	}
+
 	rc = of_clk_add_provider(node, of_clk_src_simple_get, clk);
+	if (rc < 0) {
+		pr_err("Could not register clock provider for node:%s\n",
+			clk_name);
+		goto err_clk;
+	}
 	return clk;
+
+err_clk:
+	clk_unregister(clk);
+	kfree(pll_clk);
+	return NULL;
 }
 
 void __init socfpga_s10_pll_init(struct device_node *node)

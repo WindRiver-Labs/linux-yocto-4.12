@@ -1050,10 +1050,10 @@ void f2fs_wait_discard_bio(struct f2fs_sb_info *sbi, block_t blkaddr)
 }
 
 /* This comes from f2fs_put_super */
-void f2fs_wait_discard_bios(struct f2fs_sb_info *sbi)
+void f2fs_wait_discard_bios(struct f2fs_sb_info *sbi, bool umount)
 {
 	__issue_discard_cmd(sbi, false);
-	__wait_discard_cmd(sbi, false);
+	__wait_discard_cmd(sbi, !umount);
 }
 
 static int issue_discard_thread(void *data)
