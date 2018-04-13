@@ -261,14 +261,14 @@ static int xts_encrypt(struct skcipher_request *req)
 
 	err = skcipher_walk_virt(&walk, req, true);
 
-	kernel_neon_begin();
 	for (first = 1; (blocks = (walk.nbytes / AES_BLOCK_SIZE)); first = 0) {
+		kernel_neon_begin();
 		aes_xts_encrypt(walk.dst.virt.addr, walk.src.virt.addr,
 				(u8 *)ctx->key1.key_enc, rounds, blocks,
 				(u8 *)ctx->key2.key_enc, walk.iv, first);
+		kernel_neon_end();
 		err = skcipher_walk_done(&walk, walk.nbytes % AES_BLOCK_SIZE);
 	}
-	kernel_neon_end();
 
 	return err;
 }
@@ -283,14 +283,14 @@ static int xts_decrypt(struct skcipher_request *req)
 
 	err = skcipher_walk_virt(&walk, req, true);
 
-	kernel_neon_begin();
 	for (first = 1; (blocks = (walk.nbytes / AES_BLOCK_SIZE)); first = 0) {
+		kernel_neon_begin();
 		aes_xts_decrypt(walk.dst.virt.addr, walk.src.virt.addr,
 				(u8 *)ctx->key1.key_dec, rounds, blocks,
 				(u8 *)ctx->key2.key_enc, walk.iv, first);
+		kernel_neon_end();
 		err = skcipher_walk_done(&walk, walk.nbytes % AES_BLOCK_SIZE);
 	}
-	kernel_neon_end();
 
 	return err;
 }
