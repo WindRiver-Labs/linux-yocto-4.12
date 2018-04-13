@@ -24,6 +24,19 @@
 	#address-cells = <2>;
 	#size-cells = <2>;
 
+	reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+		service_reserved: svcbuffer@0 {
+                       compatible = "shared-dma-pool";
+                       reg = <0x0 0x0 0x0 0x1000000>;
+                       alignment = <0x1000>;
+                       no-map;
+               };
+	};
+
 	cpus {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -31,28 +44,28 @@
 		cpu0: cpu@0 {
 			compatible = "arm,cortex-a53", "arm,armv8";
 			device_type = "cpu";
-			enable-method = "spin-table";
+			enable-method = "psci";
 			reg = <0x0>;
 		};
 
 		cpu1: cpu@1 {
 			compatible = "arm,cortex-a53", "arm,armv8";
 			device_type = "cpu";
-			enable-method = "spin-table";
+			enable-method = "psci";
 			reg = <0x1>;
 		};
 
 		cpu2: cpu@2 {
 			compatible = "arm,cortex-a53", "arm,armv8";
 			device_type = "cpu";
-			enable-method = "spin-table";
+			enable-method = "psci";
 			reg = <0x2>;
 		};
 
 		cpu3: cpu@3 {
 			compatible = "arm,cortex-a53", "arm,armv8";
 			device_type = "cpu";
-			enable-method = "spin-table";
+			enable-method = "psci";
 			reg = <0x3>;
 		};
 	};
@@ -67,6 +80,11 @@
 				     <&cpu1>,
 				     <&cpu2>,
 				     <&cpu3>;
+	};
+
+	psci {
+		compatible = "arm,psci-0.2";
+		method = "smc";
 	};
 
 	intc: intc@fffc1000 {
@@ -86,6 +104,14 @@
 		device_type = "soc";
 		interrupt-parent = <&intc>;
 		ranges = <0 0 0 0xffffffff>;
+
+		base_fpga_region {
+			#address-cells = <0x1>;
+			#size-cells = <0x1>;
+
+			compatible = "fpga-region";
+			fpga-mgr = <&fpga_mgr>;
+		};
 
 		clkmgr@ffd10000 {
 			compatible = "altr,clk-mgr";
@@ -538,7 +564,7 @@
 				spi_m_clk: spi_m_clk {
 					#clock-cells = <0>;
 					compatible = "altr,socfpga-s10-gate-clk";
-					clocks = <&l4_mp_clk>;
+					clocks = <&l4_main_clk>;
 					clk-gate = <0xa4 9>;
 				};
 
@@ -555,6 +581,10 @@
 					clock-frequency = <400000000>;
 				};
 			};
+		};
+
+		fpga_mgr: fpga-mgr@0 {
+			compatible = "intel,stratix10-soc-fpga-mgr";
 		};
 
 		gmac0: ethernet@ff800000 {
@@ -734,7 +764,10 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0xffda4000 0x1000>;
-			interrupts = <0 101 4>;
+			interrupts = <0 99 4>;
+			clocks = <&spi_m_clk>;
+			resets = <&rst SPIM0_RESET>;
+			reg-io-width = <4>;
 			num-chipselect = <4>;
 			bus-num = <0>;
 			status = "disabled";
@@ -745,7 +778,10 @@
 			#address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0xffda5000 0x1000>;
-			interrupts = <0 102 4>;
+			interrupts = <0 100 4>;
+			clocks = <&spi_m_clk>;
+			resets = <&rst SPIM1_RESET>;
+			reg-io-width = <4>;
 			num-chipselect = <4>;
 			bus-num = <0>;
 			status = "disabled";
@@ -846,6 +882,7 @@
 			reg = <0xffd00200 0x100>;
 			interrupts = <0 117 4>;
 			resets = <&rst WATCHDOG0_RESET>;
+			clocks = <&l4_sys_free_clk>;
 			status = "disabled";
 		};
 
@@ -854,6 +891,7 @@
 			reg = <0xffd00300 0x100>;
 			interrupts = <0 118 4>;
 			resets = <&rst WATCHDOG1_RESET>;
+			clocks = <&l4_sys_free_clk>;
 			status = "disabled";
 		};
 
@@ -862,6 +900,7 @@
 			reg = <0xffd00400 0x100>;
 			interrupts = <0 125 4>;
 			resets = <&rst WATCHDOG2_RESET>;
+			clocks = <&l4_sys_free_clk>;
 			status = "disabled";
 		};
 
@@ -870,6 +909,7 @@
 			reg = <0xffd00500 0x100>;
 			interrupts = <0 126 4>;
 			resets = <&rst WATCHDOG3_RESET>;
+			clocks = <&l4_sys_free_clk>;
 			status = "disabled";
 		};
 
@@ -887,6 +927,14 @@
 			bus-num = <1>;
 
 			status = "disabled";
+		};
+
+		firmware {
+			svc {
+				compatible = "intel,stratix10-svc";
+				method = "smc";
+				memory-region = <&service_reserved>;
+			};
 		};
 	};
 };
