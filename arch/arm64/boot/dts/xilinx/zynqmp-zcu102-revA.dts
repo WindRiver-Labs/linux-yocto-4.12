@@ -866,9 +866,13 @@ drivers/hwmon/pmbus/Makefile:11:obj-$(CONFIG_SENSORS_MAX20751)  += max20751.o
 			label = "qspi-device-tree";
 			reg = <0x600000 0x20000>;
 		};
+		partition@qspi-bitstream { /* for testing purpose */
+			label = "qspi-bitstream";
+			reg = <0x620000 0x2000000>;
+		};
 		partition@qspi-rootfs { /* for testing purpose */
 			label = "qspi-rootfs";
-			reg = <0x620000 0x5E0000>;
+			reg = <0x2620000 0x59E0000>;
 		};
 	};
 };
