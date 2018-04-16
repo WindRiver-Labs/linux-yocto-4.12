@@ -6042,7 +6042,7 @@ gckOS_WaitSignal(
             : msecs_to_jiffies(Wait);
 
 #ifdef gcdRT_KERNEL
-        DEFINE_SWAITER(wait);
+        DECLARE_SWAITQUEUE(wait);
 #else
         DECLARE_WAITQUEUE(wait, current);
         wait.flags |= WQ_FLAG_EXCLUSIVE;
