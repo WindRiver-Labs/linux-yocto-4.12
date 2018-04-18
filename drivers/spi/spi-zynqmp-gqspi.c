@@ -177,6 +177,7 @@ enum mode_type {GQSPI_MODE_IO, GQSPI_MODE_DMA};
  * @dma_addr:		DMA address after mapping the kernel buffer
  * @rx_bus_width:	Used to represent number of data wires
  * @genfifoentry:	Used for storing the genfifoentry instruction.
+ * @isinstr:		To determine whether the transfer is instruction
  * @mode:		Defines the mode in which QSPI is operating
  * @speed_hz:		Current SPI bus clock speed in hz
  * @io_mode:		Defines the operating mode, either IO or dma
@@ -197,6 +198,7 @@ struct zynqmp_qspi {
 	dma_addr_t dma_addr;
 	u32 rx_bus_width;
 	u32 genfifoentry;
+	bool isinstr;
 	enum mode_type mode;
 	u32 speed_hz;
 	bool io_mode;
@@ -461,11 +463,27 @@ static void zynqmp_qspi_chipselect(struct spi_device *qspi, bool is_high)
 	u32 genfifoentry = 0x0, statusreg;
 
 	genfifoentry |= GQSPI_GENFIFO_MODE_SPI;
+
+	if (qspi->master->flags & SPI_MASTER_BOTH_CS) {
+		zynqmp_gqspi_selectslave(xqspi,
+			GQSPI_SELECT_FLASH_CS_BOTH,
+			GQSPI_SELECT_FLASH_BUS_BOTH);
+	} else if (qspi->master->flags & SPI_MASTER_U_PAGE) {
+		zynqmp_gqspi_selectslave(xqspi,
+			GQSPI_SELECT_FLASH_CS_UPPER,
+			GQSPI_SELECT_FLASH_BUS_LOWER);
+	} else {
+		zynqmp_gqspi_selectslave(xqspi,
+			GQSPI_SELECT_FLASH_CS_LOWER,
+			GQSPI_SELECT_FLASH_BUS_LOWER);
+	}
+
 	genfifoentry |= xqspi->genfifobus;
 
 	if (!is_high) {
 		genfifoentry |= xqspi->genfifocs;
 		genfifoentry |= GQSPI_GENFIFO_CS_SETUP;
+		xqspi->isinstr = true;
 	} else {
 		genfifoentry |= GQSPI_GENFIFO_CS_HOLD;
 	}
@@ -617,7 +635,7 @@ static void zynqmp_qspi_readrxfifo(struct zynqmp_qspi *xqspi, u32 size)
 	while ((count < size) && (xqspi->bytes_to_receive > 0)) {
 		if (xqspi->bytes_to_receive >= 4) {
 			(*(u32 *) xqspi->rxbuf) =
-			zynqmp_gqspi_read(xqspi, GQSPI_RXD_OFST);
+				zynqmp_gqspi_read(xqspi, GQSPI_RXD_OFST);
 			xqspi->rxbuf += 4;
 			xqspi->bytes_to_receive -= 4;
 			count += 4;
@@ -760,6 +778,7 @@ static irqreturn_t zynqmp_qspi_irq(int irq, void *dev_id)
 	if ((xqspi->bytes_to_receive == 0) && (xqspi->bytes_to_transfer == 0)
 			&& ((status & GQSPI_IRQ_MASK) == GQSPI_IRQ_MASK)) {
 		zynqmp_gqspi_write(xqspi, GQSPI_IDR_OFST, GQSPI_ISR_IDR_MASK);
+		xqspi->isinstr = false;
 		spi_finalize_current_transfer(master);
 		ret = IRQ_HANDLED;
 	}
@@ -922,6 +941,10 @@ static int zynqmp_qspi_start_transfer(struct spi_master *master,
 
 	genfifoentry |= xqspi->genfifocs;
 	genfifoentry |= xqspi->genfifobus;
+
+	if ((!xqspi->isinstr) &&
+		(master->flags & SPI_MASTER_DATA_STRIPE))
+		genfifoentry |= GQSPI_GENFIFO_STRIPE;
 
 	zynqmp_qspi_txrxsetup(xqspi, transfer, &genfifoentry);
 
