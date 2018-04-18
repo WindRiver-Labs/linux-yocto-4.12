@@ -1056,7 +1056,7 @@ static inline void xemacps_ptp_read(struct net_local *lp,
  * @cc: Cyclecounter structure
  * Return: Hw time stamp
  */
-static cycle_t xemacps_read_clock(const struct cyclecounter *cc)
+static u64 xemacps_read_clock(const struct cyclecounter *cc)
 {
 	struct net_local *lp = container_of(cc, struct net_local, cc);
 	u64 stamp;
