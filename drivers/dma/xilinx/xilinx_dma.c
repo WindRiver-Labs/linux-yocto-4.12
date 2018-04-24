@@ -750,6 +750,11 @@ static void xilinx_dma_free_chan_resources(struct dma_chan *dchan)
 		INIT_LIST_HEAD(&chan->free_seg_list);
 		spin_unlock_irqrestore(&chan->lock, flags);
 
+		/* Free memory that is allocated for BD */
+		dma_free_coherent(chan->dev, sizeof(*chan->seg_v) *
+				  XILINX_DMA_NUM_DESCS, chan->seg_v,
+				  chan->seg_p);
+
 		/* Free Memory that is allocated for cyclic DMA Mode */
 		dma_free_coherent(chan->dev, sizeof(*chan->cyclic_seg_v),
 				  chan->cyclic_seg_v, chan->cyclic_seg_p);
@@ -1269,10 +1274,10 @@ static void xilinx_dma_start_transfer(struct xilinx_dma_chan *chan)
 	if (chan->err)
 		return;
 
-	if (!chan->idle)
+	if (list_empty(&chan->pending_list))
 		return;
 
-	if (list_empty(&chan->pending_list))
+	if (!chan->idle)
 		return;
 
 	head_desc = list_first_entry(&chan->pending_list,
@@ -1709,7 +1714,7 @@ xilinx_cdma_prep_memcpy(struct dma_chan *dchan, dma_addr_t dma_dst,
 {
 	struct xilinx_dma_chan *chan = to_xilinx_chan(dchan);
 	struct xilinx_dma_tx_descriptor *desc;
-	struct xilinx_cdma_tx_segment *segment, *prev;
+	struct xilinx_cdma_tx_segment *segment;
 	struct xilinx_cdma_desc_hw *hw;
 
 	if (!len || len > XILINX_DMA_MAX_TRANS_LEN)
@@ -1736,21 +1741,11 @@ xilinx_cdma_prep_memcpy(struct dma_chan *dchan, dma_addr_t dma_dst,
 		hw->dest_addr_msb = upper_32_bits(dma_dst);
 	}
 
-	/* Fill the previous next descriptor with current */
-	prev = list_last_entry(&desc->segments,
-			       struct xilinx_cdma_tx_segment, node);
-	prev->hw.next_desc = segment->phys;
-
 	/* Insert the segment into the descriptor segments list. */
 	list_add_tail(&segment->node, &desc->segments);
 
-	prev = segment;
-
-	/* Link the last hardware descriptor with the first. */
-	segment = list_first_entry(&desc->segments,
-				struct xilinx_cdma_tx_segment, node);
 	desc->async_tx.phys = segment->phys;
-	prev->hw.next_desc = segment->phys;
+	hw->next_desc = segment->phys;
 
 	return &desc->async_tx;
 
@@ -2183,6 +2178,7 @@ static int xilinx_dma_terminate_all(struct dma_chan *dchan)
 
 	/* Remove and free all of the descriptors in the lists */
 	xilinx_dma_free_descriptors(chan);
+	chan->idle = true;
 
 	if (chan->cyclic) {
 		reg = dma_ctrl_read(chan, XILINX_DMA_REG_DMACR);
@@ -2547,6 +2543,7 @@ static int xilinx_dma_chan_probe(struct xilinx_dma_device *xdev,
 		if (xdev->dma_config->dmatype == XDMA_TYPE_VDMA) {
 			chan->config.park = 1;
 			chan->desc_offset = XILINX_VDMA_MM2S_DESC_OFFSET;
+			chan->config.park = 1;
 
 			if (xdev->flush_on_fsync == XILINX_DMA_FLUSH_BOTH ||
 			    xdev->flush_on_fsync == XILINX_DMA_FLUSH_MM2S)
@@ -2565,6 +2562,7 @@ static int xilinx_dma_chan_probe(struct xilinx_dma_device *xdev,
 		if (xdev->dma_config->dmatype == XDMA_TYPE_VDMA) {
 			chan->config.park = 1;
 			chan->desc_offset = XILINX_VDMA_S2MM_DESC_OFFSET;
+			chan->config.park = 1;
 
 			if (xdev->flush_on_fsync == XILINX_DMA_FLUSH_BOTH ||
 			    xdev->flush_on_fsync == XILINX_DMA_FLUSH_S2MM)
