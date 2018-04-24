@@ -110,8 +110,6 @@ source "drivers/staging/ccree/Kconfig"
 
 source "drivers/staging/typec/Kconfig"
 
-source "drivers/staging/netatop/Kconfig"
-
 source "drivers/staging/apf/Kconfig"
 
 source "drivers/staging/fclk/Kconfig"
