@@ -104,6 +104,7 @@
 #include <linux/of_net.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
+#include <linux/sys_soc.h>
 
 #include "gianfar.h"
 
@@ -1121,6 +1122,11 @@ static void __gfar_detect_errata_85xx(struct gfar_private *priv)
 }
 #endif
 
+static struct soc_device_attribute soc_ls1021a_rev_matches[] = {
+	{ .machine = "LS1021A IOT Board", .family = "Freescale LS 1021A", .revision = "1.0", },
+	{ },
+};
+
 static void gfar_detect_errata(struct gfar_private *priv)
 {
 	struct device *dev = &priv->ofdev->dev;
@@ -1250,6 +1256,9 @@ static void gfar_hw_init(struct gfar_private *priv)
 	 * depending on driver parameters
 	 */
 	attrs = ATTR_INIT_SETTINGS;
+
+	if (soc_device_match(soc_ls1021a_rev_matches))
+		attrs &= ~ATTR_SNOOPING;
 
 	if (priv->bd_stash_en)
 		attrs |= ATTR_BDSTASH;
@@ -1590,6 +1599,8 @@ static void gfar_start_wol_filer(struct gfar_private *priv)
 	/* Initialize DMACTRL to have WWR and WOP */
 	tempval = gfar_read(&regs->dmactrl);
 	tempval |= DMACTRL_INIT_SETTINGS;
+	if (soc_device_match(soc_ls1021a_rev_matches))
+		tempval &= ~ATTR_SNOOPING;
 	gfar_write(&regs->dmactrl, tempval);
 
 	/* Make sure we aren't stopped */
@@ -2059,6 +2070,8 @@ void gfar_start(struct gfar_private *priv)
 	/* Initialize DMACTRL to have WWR and WOP */
 	tempval = gfar_read(&regs->dmactrl);
 	tempval |= DMACTRL_INIT_SETTINGS;
+	if (soc_device_match(soc_ls1021a_rev_matches))
+		tempval &= ~ATTR_SNOOPING;
 	if (priv->dma_endian_le)
 		tempval |= DMACTRL_LE;
 	gfar_write(&regs->dmactrl, tempval);
