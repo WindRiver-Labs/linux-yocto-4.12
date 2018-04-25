@@ -630,7 +630,6 @@
 			model = "eTSEC";
 			fsl,magic-packet;
 			ranges;
-			dma-coherent;
 
 			queue-group@2d10000 {
 				#address-cells = <2>;
@@ -659,7 +658,6 @@
 			interrupt-parent = <&gic>;
 			model = "eTSEC";
 			ranges;
-			dma-coherent;
 
 			queue-group@2d50000  {
 				#address-cells = <2>;
@@ -688,7 +686,6 @@
 			interrupt-parent = <&gic>;
 			model = "eTSEC";
 			ranges;
-			dma-coherent;
 
 			queue-group@2d90000  {
 				#address-cells = <2>;

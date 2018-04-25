@@ -159,6 +159,7 @@
 	tbi-handle = <&tbi1>;
 	phy-handle = <&sgmii_phy2>;
 	phy-connection-type = "sgmii";
+	dma-coherent;
 	status = "okay";
 };
 
@@ -166,12 +167,14 @@
 	tbi-handle = <&tbi1>;
 	phy-handle = <&sgmii_phy0>;
 	phy-connection-type = "sgmii";
+	dma-coherent;
 	status = "okay";
 };
 
 &enet2 {
 	phy-handle = <&rgmii_phy1>;
 	phy-connection-type = "rgmii-id";
+	dma-coherent;
 	status = "okay";
 };
 
