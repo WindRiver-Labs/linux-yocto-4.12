@@ -39,9 +39,6 @@
 
 u32 g_diag_reg;
 static void __iomem *scu_base;
-static void __iomem *dcfg_base;
-static void __iomem *scfg_base;
-static u32 secondary_pre_boot_entry;
  
 static struct map_desc scu_io_desc __initdata = {
 	/* .virtual and .pfn are run-time assigned */
