@@ -3,7 +3,7 @@ CFLAGS_trace.o				:= -I$(src)
 
 obj-$(CONFIG_USB_DWC3)			+= dwc3.o
 
-dwc3-y					:= core.o
+dwc3-y                          := core.o debug.o trace.o
 
 ifneq ($(CONFIG_FTRACE),)
 	dwc3-y				+= trace.o
@@ -47,3 +47,4 @@ obj-$(CONFIG_USB_DWC3_PCI)		+= dwc3-pci.o
 obj-$(CONFIG_USB_DWC3_KEYSTONE)		+= dwc3-keystone.o
 obj-$(CONFIG_USB_DWC3_OF_SIMPLE)	+= dwc3-of-simple.o
 obj-$(CONFIG_USB_DWC3_ST)		+= dwc3-st.o
+obj-$(CONFIG_USB_DWC3_AXXIA)		+= dwc3-axxia.o

@@ -19,6 +19,7 @@ dts-dirs += rockchip
 dts-dirs += socionext
 dts-dirs += sprd
 dts-dirs += xilinx
+dts-dirs += intel
 dts-dirs += lg
 dts-dirs += zte
 

@@ -2222,7 +2222,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
 {
 	struct uart_amba_port *uap = amba_ports[co->index];
 	unsigned int old_cr = 0, new_cr;
-	unsigned long flags;
+	unsigned long flags = 0;
 	int locked = 1;
 
 	clk_enable(uap->clk);
@@ -2295,7 +2295,8 @@ pl011_console_get_options(struct uart_amba_port *uap, int *baud,
 		ibrd = pl011_read(uap, REG_IBRD);
 		fbrd = pl011_read(uap, REG_FBRD);
 
-		*baud = uap->port.uartclk * 4 / (64 * ibrd + fbrd);
+		*baud =	DIV_ROUND_CLOSEST(uap->port.uartclk * 4,
+					  64 * ibrd + fbrd);
 
 		if (uap->vendor->oversampling) {
 			if (pl011_read(uap, REG_CR)

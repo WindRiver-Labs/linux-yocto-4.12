@@ -904,6 +904,7 @@ int perf_event__process_auxtrace_info(struct perf_tool *tool __maybe_unused,
 	case PERF_AUXTRACE_INTEL_BTS:
 		return intel_bts_process_auxtrace_info(event, session);
 	case PERF_AUXTRACE_CS_ETM:
+		return cs_etm__process_auxtrace_info(event, session);
 	case PERF_AUXTRACE_UNKNOWN:
 	default:
 		return -EINVAL;
@@ -1828,7 +1829,7 @@ static int addr_filter__resolve_kernel_syms(struct addr_filter *filt)
 		filt->addr = start;
 		if (filt->range && !filt->size && !filt->sym_to) {
 			filt->size = size;
-			no_size = !size;
+			no_size = !!size;
 		}
 	}
 
@@ -1842,7 +1843,7 @@ static int addr_filter__resolve_kernel_syms(struct addr_filter *filt)
 		if (err)
 			return err;
 		filt->size = start + size - filt->addr;
-		no_size = !size;
+		no_size = !!size;
 	}
 
 	/* The very last symbol in kallsyms does not imply a particular size */

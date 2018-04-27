@@ -14,6 +14,12 @@ LDFLAGS_vmlinux	:=-p --no-undefined -X
 CPPFLAGS_vmlinux.lds = -DTEXT_OFFSET=$(TEXT_OFFSET)
 GZFLAGS		:=-9
 
+ifdef SYSROOT
+LIBGCC		:= $(shell $(CC) $(KBUILD_CFLAGS) --sysroot=$(SYSROOT) -print-libgcc-file-name)
+else
+LIBGCC		:= $(shell $(CC) $(KBUILD_CFLAGS) -print-libgcc-file-name)
+endif
+
 ifeq ($(CONFIG_RELOCATABLE), y)
 # Pass --no-apply-dynamic-relocs to restore pre-binutils-2.27 behaviour
 # for relative relocs, since this leads to better Image compression

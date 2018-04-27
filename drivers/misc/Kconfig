@@ -148,6 +148,19 @@ config INTEL_MID_PTI
 	  an Intel Atom (non-netbook) mobile device containing a MIPI
 	  P1149.7 standard implementation.
 
+config INTEL_SERVICE
+	tristate "Intel Service Layer"
+	depends on ARCH_STRATIX10
+	default n
+	help
+	  Intel service layer runs at privileged exception level, interfaces with
+	  the service providers (FPGA manager is one of them) and manages secure
+	  monitor call to communicate with secure monitor software at secure monitor
+	  exception level.
+
+	  Say Y here if you want Intel service layer support.
+
+
 config SGI_IOC4
 	tristate "SGI IOC4 Base IO support"
 	depends on PCI
@@ -481,6 +494,60 @@ config SRAM
 
 config SRAM_EXEC
 	bool
+
+config AXXIA_MTC
+	tristate "INTEL Axxia Master Test Controller driver"
+	depends on ARCH_AXXIA
+	help
+	  The Master Test Controller (MTC) is a test generator that is fully
+	  compliant with IEEE 1149.1 and can run JTAG test sequences on
+	  external devices.
+	  Say N if you are unsure
+
+config AXXIA_NCR
+	bool "AXXIA NCR Access"
+	depends on ARCH_AXXIA || ACP
+	help
+	  Provides access to the INTEL Axxia NCR bus.
+
+config ARCH_AXXIA_NCR_RESET_CHECK
+	bool "Axxia NCR driver reset checking"
+	depends on AXXIA_NCR
+	help
+	  Enabling this option will allow the Axxia NCA Config Ring driver
+	  to coordinate with the RTE ncp driver to detect when NCA hardware
+	  is being held in reset.
+
+config AXXIA_SMMON
+	tristate "INTEL Axxia System Memory Monitor"
+	depends on ARCH_AXXIA || ACP
+	depends on !EDAC_AXXIA
+	help
+	  Monitor the system memory controllers for errors.
+
+config AXXIA_OEM
+       bool "Axxia OEM Calls"
+       depends on ARCH_AXXIA
+       help
+	 OEM calls to the secure monitor for Axxia.
+
+config AXXIA_FAULT
+       bool "Axxia Fault Handlers"
+       depends on ARCH_AXXIA
+       help
+	 Add fault handlers for system aborts.
+
+config AXXIA_PEI
+       bool "Axxia PEI Controller Setup"
+       depends on ARCH_AXXIA
+       help
+	 Set up the PEI controllers in Linux instead of the boot loader.
+
+config AXXIA_MDIO
+       bool "Axxia MDIO Driver"
+       depends on ARCH_AXXIA
+       help
+	 Provide access to the Axxia MDIO bus.
 
 config VEXPRESS_SYSCFG
 	bool "Versatile Express System Configuration driver"
