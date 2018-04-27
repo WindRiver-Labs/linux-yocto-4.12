@@ -113,6 +113,7 @@
 
 &usb0 {
 	status = "okay";
+	disable-over-current;
 };
 
 &i2c1 {
@@ -172,4 +173,8 @@
 			reg = <0x4000000 0x4000000>;
 		};
 	};
+};
+
+&watchdog0 {
+	status = "okay";
 };
