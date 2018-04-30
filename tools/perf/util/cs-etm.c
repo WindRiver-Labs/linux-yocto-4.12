@@ -37,6 +37,7 @@
 #include "debug.h"
 
 #include <stdlib.h>
+#include <inttypes.h>
 
 #define KiB(x) ((x) * 1024)
 #define MiB(x) ((x) * 1024 * 1024)
