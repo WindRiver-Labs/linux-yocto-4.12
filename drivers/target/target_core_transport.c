@@ -1673,9 +1673,6 @@ void transport_generic_request_failure(struct se_cmd *cmd,
 {
 	int ret = 0, post_ret = 0;
 
-	if (transport_check_aborted_status(cmd, 1))
-		return;
-
 	pr_debug("-----[ Storage Engine Exception for cmd: %p ITT: 0x%08llx"
 		" CDB: 0x%02x\n", cmd, cmd->tag, cmd->t_task_cdb[0]);
 	pr_debug("-----[ i_state: %d t_state: %d sense_reason: %d\n",
@@ -1690,6 +1687,7 @@ void transport_generic_request_failure(struct se_cmd *cmd,
 	 * For SAM Task Attribute emulation for failed struct se_cmd
 	 */
 	transport_complete_task_attr(cmd);
+
 	/*
 	 * Handle special case for COMPARE_AND_WRITE failure, where the
 	 * callback is expected to drop the per device ->caw_sem.
@@ -1697,6 +1695,9 @@ void transport_generic_request_failure(struct se_cmd *cmd,
 	if ((cmd->se_cmd_flags & SCF_COMPARE_AND_WRITE) &&
 	     cmd->transport_complete_callback)
 		cmd->transport_complete_callback(cmd, false, &post_ret);
+
+	if (transport_check_aborted_status(cmd, 1))
+		return;
 
 	switch (sense_reason) {
 	case TCM_NON_EXISTENT_LUN:
@@ -1922,6 +1923,7 @@ void target_execute_cmd(struct se_cmd *cmd)
 	}
 
 	cmd->t_state = TRANSPORT_PROCESSING;
+	cmd->transport_state &= ~CMD_T_PRE_EXECUTE;
 	cmd->transport_state |= CMD_T_ACTIVE | CMD_T_SENT;
 	spin_unlock_irq(&cmd->t_state_lock);
 
@@ -1959,6 +1961,8 @@ static void target_restart_delayed_cmds(struct se_device *dev)
 		list_del(&cmd->se_delayed_node);
 		spin_unlock(&dev->delayed_cmd_lock);
 
+		cmd->transport_state |= CMD_T_SENT;
+
 		__target_execute_cmd(cmd, true);
 
 		if (cmd->sam_task_attr == TCM_ORDERED_TAG)
@@ -1994,6 +1998,8 @@ static void transport_complete_task_attr(struct se_cmd *cmd)
 		pr_debug("Incremented dev_cur_ordered_id: %u for ORDERED\n",
 			 dev->dev_cur_ordered_id);
 	}
+	cmd->se_cmd_flags &= ~SCF_TASK_ATTR_SET;
+
 restart:
 	target_restart_delayed_cmds(dev);
 }
@@ -2519,7 +2525,20 @@ EXPORT_SYMBOL(transport_generic_new_cmd);
 
 static void transport_write_pending_qf(struct se_cmd *cmd)
 {
+	unsigned long flags;
 	int ret;
+	bool stop;
+
+	spin_lock_irqsave(&cmd->t_state_lock, flags);
+	stop = (cmd->transport_state & (CMD_T_STOP | CMD_T_ABORTED));
+	spin_unlock_irqrestore(&cmd->t_state_lock, flags);
+
+	if (stop) {
+		pr_debug("%s:%d CMD_T_STOP|CMD_T_ABORTED for ITT: 0x%08llx\n",
+			__func__, __LINE__, cmd->tag);
+		complete_all(&cmd->t_transport_stop_comp);
+		return;
+	}
 
 	ret = cmd->se_tfo->write_pending(cmd);
 	if (ret) {
@@ -2613,6 +2632,7 @@ int target_get_sess_cmd(struct se_cmd *se_cmd, bool ack_kref)
 		ret = -ESHUTDOWN;
 		goto out;
 	}
+	se_cmd->transport_state |= CMD_T_PRE_EXECUTE;
 	list_add_tail(&se_cmd->se_cmd_list, &se_sess->sess_cmd_list);
 out:
 	spin_unlock_irqrestore(&se_sess->sess_cmd_lock, flags);
