@@ -755,20 +755,16 @@ dpa_bp_alloc(struct dpa_bp *dpa_bp)
 		err = PTR_ERR(pdev);
 		goto pdev_register_failed;
 	}
-	{
-		struct dma_map_ops *ops = get_dma_ops(&pdev->dev);
-		ops->dma_supported = NULL;
-	}
-	err = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(40));
-	if (err) {
-		pr_err("dma_coerce_mask_and_coherent() failed\n");
-		goto pdev_mask_failed;
-	}
 #ifdef CONFIG_FMAN_ARM
 	/* force coherency */
 	pdev->dev.archdata.dma_coherent = true;
 	arch_setup_dma_ops(&pdev->dev, 0, 0, NULL, true);
 #endif
+	err = dma_coerce_mask_and_coherent(&pdev->dev, DMA_BIT_MASK(40));
+	if (err) {
+		pr_err("dma_coerce_mask_and_coherent() failed\n");
+		goto pdev_mask_failed;
+	}
 
 	dpa_bp->dev = &pdev->dev;
 
