@@ -92,7 +92,7 @@
 	rxd2-skew-ps = <420>; /* 0ps */
 	rxd3-skew-ps = <420>; /* 0ps */
 	txen-skew-ps = <0>; /* -420ps */
-	txc-skew-ps = <1860>; /* 960ps */
+	txc-skew-ps = <900>; /* 0ps */
 	rxdv-skew-ps = <420>; /* 0ps */
 	rxc-skew-ps = <1680>; /* 780ps */
 	max-frame-size = <3800>;
@@ -155,7 +155,7 @@
 		m25p,fast-read;
 		cdns,page-size = <256>;
 		cdns,block-size = <16>;
-		cdns,read-delay = <3>;
+		cdns,read-delay = <1>;
 		cdns,tshsl-ns = <50>;
 		cdns,tsd2d-ns = <50>;
 		cdns,tchsh-ns = <4>;
@@ -164,7 +164,7 @@
 		partition@qspi-boot {
 			label = "Boot and fpga data";
 			/* 64MB for boot and FPGA data */
-			reg = <0x0 0x4000000>;
+			reg = <0x00910000 0x036F0000>;
 		};
 
 		partition@qspi-rootfs {
