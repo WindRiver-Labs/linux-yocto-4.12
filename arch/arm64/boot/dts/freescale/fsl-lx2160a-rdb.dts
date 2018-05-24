@@ -187,7 +187,6 @@
 		#size-cells = <1>;
 		compatible = "micron,m25p80";
 		m25p,fast-read;
-		use_fsr;
 		spi-max-frequency = <20000000>;
 		reg = <0>;
 	};
@@ -197,7 +196,6 @@
 		#size-cells = <1>;
 		compatible = "micron,m25p80";
 		m25p,fast-read;
-		use_fsr;
 		spi-max-frequency = <20000000>;
 		reg = <1>;
 	};
