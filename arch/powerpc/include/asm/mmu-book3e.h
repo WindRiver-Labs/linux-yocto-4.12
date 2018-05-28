@@ -319,10 +319,9 @@ static inline void book3e_tlb_lock(void)
 
 static inline void book3e_tlb_unlock(void)
 {}
+#endif
 
 int book3e_tlb_exists(unsigned long ea, unsigned long pid);
-
-#endif
 
 #endif /* !__ASSEMBLY__ */
 
