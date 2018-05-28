@@ -253,7 +253,7 @@ EXPORT_SYMBOL(dpa_timeout);
  * Calculates the statistics for the given device by adding the statistics
  * collected by each CPU.
  */
-struct rtnl_link_stats64 * __cold
+void __cold
 dpa_get_stats64(struct net_device *net_dev,
 		struct rtnl_link_stats64 *stats)
 {
@@ -272,8 +272,6 @@ dpa_get_stats64(struct net_device *net_dev,
 		for (j = 0; j < numstats; j++)
 			netstats[j] += cpustats[j];
 	}
-
-	return stats;
 }
 EXPORT_SYMBOL(dpa_get_stats64);
 
