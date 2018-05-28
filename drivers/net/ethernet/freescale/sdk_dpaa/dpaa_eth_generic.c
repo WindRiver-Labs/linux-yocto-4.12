@@ -61,7 +61,7 @@ static uint16_t tx_timeout = 1000;
 module_param(tx_timeout, ushort, S_IRUGO);
 MODULE_PARM_DESC(tx_timeout, "The Tx timeout in ms");
 
-struct rtnl_link_stats64 *__cold
+void __cold
 dpa_generic_get_stats64(struct net_device *netdev,
 			struct rtnl_link_stats64 *stats);
 static int dpa_generic_set_mac_address(struct net_device *net_dev,
@@ -103,7 +103,7 @@ static void dpa_generic_draining_timer(unsigned long arg)
 		mod_timer(&(priv->timer), jiffies + 1);
 }
 
-struct rtnl_link_stats64 *__cold
+void __cold
 dpa_generic_get_stats64(struct net_device *netdev,
 			struct rtnl_link_stats64 *stats)
 {
@@ -122,8 +122,6 @@ dpa_generic_get_stats64(struct net_device *netdev,
 		for (j = 0; j < numstats; j++)
 			netstats[j] += cpustats[j];
 	}
-
-	return stats;
 }
 
 static int dpa_generic_set_mac_address(struct net_device *net_dev,
