@@ -20,7 +20,7 @@ obj-$(CONFIG_PCIE_ALTERA_MSI) += pcie-altera-msi.o
 obj-$(CONFIG_PCIE_ROCKCHIP) += pcie-rockchip.o
 obj-$(CONFIG_PCIE_MOBIVEIL) += pcie-mobiveil.o
 obj-$(CONFIG_PCIE_MOBIVEIL_HOST) += pcie-mobiveil-host.o
-obj-$(CONFIG_PCI_LX) += pci-lx.o
+obj-$(CONFIG_PCI_LX) += pci-lx.o pci-lx-ep.o pci-lx-ep-debugfs.o
 obj-$(CONFIG_VMD) += vmd.o
 
 # The following drivers are for devices that use the generic ACPI
