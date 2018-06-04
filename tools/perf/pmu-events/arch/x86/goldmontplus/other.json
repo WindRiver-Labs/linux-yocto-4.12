@@ -5,7 +5,9 @@
         "EventCode": "0x86",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "FETCH_STALL.ALL",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Cycles code-fetch stalled due to any reason."
     },
@@ -15,9 +17,11 @@
         "EventCode": "0x86",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "FETCH_STALL.ITLB_FILL_PENDING_CYCLES",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
-        "BriefDescription": "Cycles code-fetch stalled due to an outstanding ITLB miss."
+        "BriefDescription": "Cycles the code-fetch stalls and an ITLB miss is outstanding."
     },
     {
         "CollectPEBSRecord": "1",
@@ -25,7 +29,9 @@
         "EventCode": "0xCA",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "ISSUE_SLOTS_NOT_CONSUMED.ANY",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Unfilled issue slots per cycle"
     },
@@ -35,7 +41,9 @@
         "EventCode": "0xCA",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "ISSUE_SLOTS_NOT_CONSUMED.RESOURCE_FULL",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Unfilled issue slots per cycle because of a full resource in the backend"
     },
@@ -45,7 +53,9 @@
         "EventCode": "0xCA",
         "Counter": "0,1,2,3",
         "UMask": "0x2",
+        "PEBScounters": "0,1,2,3",
         "EventName": "ISSUE_SLOTS_NOT_CONSUMED.RECOVERY",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Unfilled issue slots per cycle to recover"
     },
@@ -55,7 +65,9 @@
         "EventCode": "0xCB",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "HW_INTERRUPTS.RECEIVED",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "203",
         "BriefDescription": "Hardware interrupts received"
     },
@@ -65,7 +77,9 @@
         "EventCode": "0xCB",
         "Counter": "0,1,2,3",
         "UMask": "0x2",
+        "PEBScounters": "0,1,2,3",
         "EventName": "HW_INTERRUPTS.MASKED",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Cycles hardware interrupts are masked"
     },
@@ -75,7 +89,9 @@
         "EventCode": "0xCB",
         "Counter": "0,1,2,3",
         "UMask": "0x4",
+        "PEBScounters": "0,1,2,3",
         "EventName": "HW_INTERRUPTS.PENDING_AND_MASKED",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Cycles pending interrupts are masked"
     }

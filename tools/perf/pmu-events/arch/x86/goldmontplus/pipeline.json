@@ -1,28 +1,38 @@
 [
     {
+        "PEBS": "2",
+        "CollectPEBSRecord": "1",
         "PublicDescription": "Counts the number of instructions that retire execution. For instructions that consist of multiple uops, this event counts the retirement of the last uop of the instruction. The counter continues counting during hardware interrupts, traps, and inside interrupt handlers.  This event uses fixed counter 0.  You cannot collect a PEBs record for this event.",
         "EventCode": "0x00",
         "Counter": "Fixed counter 0",
         "UMask": "0x1",
+        "PEBScounters": "32",
         "EventName": "INST_RETIRED.ANY",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Instructions retired (Fixed event)"
     },
     {
+        "CollectPEBSRecord": "1",
         "PublicDescription": "Counts the number of core cycles while the core is not in a halt state.  The core enters the halt state when it is running the HLT instruction. In mobile systems the core frequency may change from time to time. For this reason this event may have a changing ratio with regards to time.  This event uses fixed counter 1.  You cannot collect a PEBs record for this event.",
         "EventCode": "0x00",
         "Counter": "Fixed counter 1",
         "UMask": "0x2",
+        "PEBScounters": "33",
         "EventName": "CPU_CLK_UNHALTED.CORE",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Core cycles when core is not halted  (Fixed event)"
     },
     {
+        "CollectPEBSRecord": "1",
         "PublicDescription": "Counts the number of reference cycles that the core is not in a halt state. The core enters the halt state when it is running the HLT instruction.  In mobile systems the core frequency may change from time.  This event is not affected by core frequency changes but counts as if the core is running at the maximum frequency all the time.  This event uses fixed counter 2.  You cannot collect a PEBs record for this event.",
         "EventCode": "0x00",
         "Counter": "Fixed counter 2",
         "UMask": "0x3",
+        "PEBScounters": "34",
         "EventName": "CPU_CLK_UNHALTED.REF_TSC",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Reference cycles when core is not halted  (Fixed event)"
     },
@@ -33,6 +43,7 @@
         "EventCode": "0x03",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "LD_BLOCKS.DATA_UNKNOWN",
         "SampleAfterValue": "200003",
         "BriefDescription": "Loads blocked due to store data not ready (Precise event capable)"
@@ -44,6 +55,7 @@
         "EventCode": "0x03",
         "Counter": "0,1,2,3",
         "UMask": "0x2",
+        "PEBScounters": "0,1,2,3",
         "EventName": "LD_BLOCKS.STORE_FORWARD",
         "SampleAfterValue": "200003",
         "BriefDescription": "Loads blocked due to store forward restriction (Precise event capable)"
@@ -55,6 +67,7 @@
         "EventCode": "0x03",
         "Counter": "0,1,2,3",
         "UMask": "0x4",
+        "PEBScounters": "0,1,2,3",
         "EventName": "LD_BLOCKS.4K_ALIAS",
         "SampleAfterValue": "200003",
         "BriefDescription": "Loads blocked because address has 4k partial address false dependence (Precise event capable)"
@@ -66,6 +79,7 @@
         "EventCode": "0x03",
         "Counter": "0,1,2,3",
         "UMask": "0x8",
+        "PEBScounters": "0,1,2,3",
         "EventName": "LD_BLOCKS.UTLB_MISS",
         "SampleAfterValue": "200003",
         "BriefDescription": "Loads blocked because address in not in the UTLB (Precise event capable)"
@@ -77,6 +91,7 @@
         "EventCode": "0x03",
         "Counter": "0,1,2,3",
         "UMask": "0x10",
+        "PEBScounters": "0,1,2,3",
         "EventName": "LD_BLOCKS.ALL_BLOCK",
         "SampleAfterValue": "200003",
         "BriefDescription": "Loads blocked (Precise event capable)"
@@ -87,7 +102,9 @@
         "EventCode": "0x0E",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "UOPS_ISSUED.ANY",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Uops issued to the back end per cycle"
     },
@@ -97,17 +114,21 @@
         "EventCode": "0x3C",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "CPU_CLK_UNHALTED.CORE_P",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Core cycles when core is not halted"
     },
     {
         "CollectPEBSRecord": "1",
-        "PublicDescription": "Reference cycles when core is not halted.  This event uses a programmable general purpose performance counter.",
+        "PublicDescription": "Reference cycles when core is not halted.  This event uses a (_P)rogrammable general purpose performance counter.",
         "EventCode": "0x3C",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "CPU_CLK_UNHALTED.REF",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Reference cycles when core is not halted"
     },
@@ -117,7 +138,9 @@
         "EventCode": "0x9C",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "UOPS_NOT_DELIVERED.ANY",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Uops requested but not-delivered to the back-end per cycle"
     },
@@ -128,9 +151,21 @@
         "EventCode": "0xC0",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "INST_RETIRED.ANY_P",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Instructions retired (Precise event capable)"
+    },
+    {
+        "PEBS": "2",
+        "CollectPEBSRecord": "2",
+        "PublicDescription": "Counts INST_RETIRED.ANY using the Reduced Skid PEBS feature that reduces the shadow in which events aren't counted allowing for a more unbiased distribution of samples across instructions retired.",
+        "EventCode": "0xC0",
+        "Counter": "0,1,2,3",
+        "UMask": "0x0",
+        "EventName": "INST_RETIRED.PREC_DIST",
+        "SampleAfterValue": "2000003",
+        "BriefDescription": "Instructions retired - using Reduced Skid PEBS feature"
     },
     {
         "PEBS": "2",
@@ -139,7 +174,9 @@
         "EventCode": "0xC2",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "UOPS_RETIRED.ANY",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Uops retired (Precise event capable)"
     },
@@ -150,7 +187,9 @@
         "EventCode": "0xC2",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "UOPS_RETIRED.MS",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "MS uops retired (Precise event capable)"
     },
@@ -161,9 +200,10 @@
         "EventCode": "0xC2",
         "Counter": "0,1,2,3",
         "UMask": "0x8",
+        "PEBScounters": "0,1,2,3",
         "EventName": "UOPS_RETIRED.FPDIV",
         "SampleAfterValue": "2000003",
-        "BriefDescription": "Floating point divide uops retired. (Precise Event Capable)"
+        "BriefDescription": "Floating point divide uops retired (Precise Event Capable)"
     },
     {
         "PEBS": "2",
@@ -172,9 +212,10 @@
         "EventCode": "0xC2",
         "Counter": "0,1,2,3",
         "UMask": "0x10",
+        "PEBScounters": "0,1,2,3",
         "EventName": "UOPS_RETIRED.IDIV",
         "SampleAfterValue": "2000003",
-        "BriefDescription": "Integer divide uops retired. (Precise Event Capable)"
+        "BriefDescription": "Integer divide uops retired (Precise Event Capable)"
     },
     {
         "CollectPEBSRecord": "1",
@@ -182,8 +223,10 @@
         "EventCode": "0xC3",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "MACHINE_CLEARS.ALL",
-        "SampleAfterValue": "200003",
+        "PDIR_COUNTER": "na",
+        "SampleAfterValue": "20003",
         "BriefDescription": "All machine clears"
     },
     {
@@ -192,8 +235,10 @@
         "EventCode": "0xC3",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "MACHINE_CLEARS.SMC",
-        "SampleAfterValue": "200003",
+        "PDIR_COUNTER": "na",
+        "SampleAfterValue": "20003",
         "BriefDescription": "Self-Modifying Code detected"
     },
     {
@@ -202,8 +247,10 @@
         "EventCode": "0xC3",
         "Counter": "0,1,2,3",
         "UMask": "0x4",
+        "PEBScounters": "0,1,2,3",
         "EventName": "MACHINE_CLEARS.FP_ASSIST",
-        "SampleAfterValue": "200003",
+        "PDIR_COUNTER": "na",
+        "SampleAfterValue": "20003",
         "BriefDescription": "Machine clears due to FP assists"
     },
     {
@@ -212,9 +259,23 @@
         "EventCode": "0xC3",
         "Counter": "0,1,2,3",
         "UMask": "0x8",
+        "PEBScounters": "0,1,2,3",
         "EventName": "MACHINE_CLEARS.DISAMBIGUATION",
-        "SampleAfterValue": "200003",
+        "PDIR_COUNTER": "na",
+        "SampleAfterValue": "20003",
         "BriefDescription": "Machine clears due to memory disambiguation"
+    },
+    {
+        "CollectPEBSRecord": "1",
+        "PublicDescription": "Counts the number of times that the machines clears due to a page fault. Covers both I-side and D-side(Loads/Stores) page faults. A page fault occurs when either page is not present, or an access violation",
+        "EventCode": "0xC3",
+        "Counter": "0,1,2,3",
+        "UMask": "0x20",
+        "PEBScounters": "0,1,2,3",
+        "EventName": "MACHINE_CLEARS.PAGE_FAULT",
+        "PDIR_COUNTER": "na",
+        "SampleAfterValue": "20003",
+        "BriefDescription": "Machines clear due to a page fault"
     },
     {
         "PEBS": "2",
@@ -223,6 +284,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.ALL_BRANCHES",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired branch instructions (Precise event capable)"
@@ -234,17 +296,19 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0x7e",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.JCC",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired conditional branch instructions (Precise event capable)"
     },
     {
         "PEBS": "2",
-        "CollectPEBSRecord": "1",
+        "CollectPEBSRecord": "2",
         "PublicDescription": "Counts the number of taken branch instructions retired.",
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0x80",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.ALL_TAKEN_BRANCHES",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired taken branch instructions (Precise event capable)"
@@ -256,6 +320,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0xbf",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.FAR_BRANCH",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired far branch instructions (Precise event capable)"
@@ -267,6 +332,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0xeb",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.NON_RETURN_IND",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired instructions of near indirect Jmp or call (Precise event capable)"
@@ -278,6 +344,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0xf7",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.RETURN",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired near return instructions (Precise event capable)"
@@ -289,6 +356,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0xf9",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.CALL",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired near call instructions (Precise event capable)"
@@ -300,6 +368,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0xfb",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.IND_CALL",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired near indirect call instructions (Precise event capable)"
@@ -311,6 +380,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0xfd",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.REL_CALL",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired near relative call instructions (Precise event capable)"
@@ -322,6 +392,7 @@
         "EventCode": "0xC4",
         "Counter": "0,1,2,3",
         "UMask": "0xfe",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_INST_RETIRED.TAKEN_JCC",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired conditional branch instructions that were taken (Precise event capable)"
@@ -333,6 +404,7 @@
         "EventCode": "0xC5",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_MISP_RETIRED.ALL_BRANCHES",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired mispredicted branch instructions (Precise event capable)"
@@ -344,6 +416,7 @@
         "EventCode": "0xC5",
         "Counter": "0,1,2,3",
         "UMask": "0x7e",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_MISP_RETIRED.JCC",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired mispredicted conditional branch instructions (Precise event capable)"
@@ -355,9 +428,10 @@
         "EventCode": "0xC5",
         "Counter": "0,1,2,3",
         "UMask": "0xeb",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_MISP_RETIRED.NON_RETURN_IND",
         "SampleAfterValue": "200003",
-        "BriefDescription": "Retired mispredicted instructions of near indirect Jmp or near indirect call. (Precise event capable)"
+        "BriefDescription": "Retired mispredicted instructions of near indirect Jmp or near indirect call (Precise event capable)"
     },
     {
         "PEBS": "2",
@@ -366,6 +440,7 @@
         "EventCode": "0xC5",
         "Counter": "0,1,2,3",
         "UMask": "0xf7",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_MISP_RETIRED.RETURN",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired mispredicted near return instructions (Precise event capable)"
@@ -377,6 +452,7 @@
         "EventCode": "0xC5",
         "Counter": "0,1,2,3",
         "UMask": "0xfb",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_MISP_RETIRED.IND_CALL",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired mispredicted near indirect call instructions (Precise event capable)"
@@ -388,6 +464,7 @@
         "EventCode": "0xC5",
         "Counter": "0,1,2,3",
         "UMask": "0xfe",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BR_MISP_RETIRED.TAKEN_JCC",
         "SampleAfterValue": "200003",
         "BriefDescription": "Retired mispredicted conditional branch instructions that were taken (Precise event capable)"
@@ -398,7 +475,9 @@
         "EventCode": "0xCD",
         "Counter": "0,1,2,3",
         "UMask": "0x0",
+        "PEBScounters": "0,1,2,3",
         "EventName": "CYCLES_DIV_BUSY.ALL",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "2000003",
         "BriefDescription": "Cycles a divider is busy"
     },
@@ -408,7 +487,9 @@
         "EventCode": "0xCD",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "CYCLES_DIV_BUSY.IDIV",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Cycles the integer divide unit is busy"
     },
@@ -418,7 +499,9 @@
         "EventCode": "0xCD",
         "Counter": "0,1,2,3",
         "UMask": "0x2",
+        "PEBScounters": "0,1,2,3",
         "EventName": "CYCLES_DIV_BUSY.FPDIV",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "Cycles the FP divide unit is busy"
     },
@@ -428,7 +511,9 @@
         "EventCode": "0xE6",
         "Counter": "0,1,2,3",
         "UMask": "0x1",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BACLEARS.ALL",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "BACLEARs asserted for any branch type"
     },
@@ -438,7 +523,9 @@
         "EventCode": "0xE6",
         "Counter": "0,1,2,3",
         "UMask": "0x8",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BACLEARS.RETURN",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "BACLEARs asserted for return branch"
     },
@@ -448,7 +535,9 @@
         "EventCode": "0xE6",
         "Counter": "0,1,2,3",
         "UMask": "0x10",
+        "PEBScounters": "0,1,2,3",
         "EventName": "BACLEARS.COND",
+        "PDIR_COUNTER": "na",
         "SampleAfterValue": "200003",
         "BriefDescription": "BACLEARs asserted for conditional branch"
     }
