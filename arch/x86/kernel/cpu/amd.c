@@ -297,6 +297,17 @@ static int nearby_node(int apicid)
 }
 #endif
 
+
+static void amd_get_topology_early(struct cpuinfo_x86 *c)
+{
+	if (boot_cpu_has(X86_FEATURE_TOPOEXT)) {
+		u32 eax, ebx, ecx, edx;
+
+		cpuid(0x8000001e, &eax, &ebx, &ecx, &edx);
+		smp_num_siblings = ((ebx >> 8) & 0xff) + 1;
+	}
+}
+
 /*
  * Fixup core topology information for
  * (1) AMD multi-node processors
@@ -564,6 +575,8 @@ static void bsp_init_amd(struct cpuinfo_x86 *c)
 			x86_amd_ls_cfg_ssbd_mask = 1ULL << bit;
 		}
 	}
+
+	amd_get_topology_early(c);
 }
 
 static void early_init_amd(struct cpuinfo_x86 *c)
