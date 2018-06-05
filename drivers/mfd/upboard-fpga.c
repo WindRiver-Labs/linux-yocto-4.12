@@ -331,6 +331,8 @@ static const struct dmi_system_id upboard_dmi_table[] __initconst = {
 
 #define UPFPGA_PROTOCOL_V2_HRV 2
 
+extern bool is_up_board;
+
 static int __init upboard_fpga_probe(struct platform_device *pdev)
 {
 	struct upboard_fpga *fpga;
@@ -383,6 +385,8 @@ static int __init upboard_fpga_probe(struct platform_device *pdev)
 					fpga_data->regmapconf);
 	if (IS_ERR(fpga->regmap))
 		return PTR_ERR(fpga->regmap);
+
+	is_up_board = true;
 
 	ret = upboard_fpga_gpio_init(fpga);
 	if (ret) {
