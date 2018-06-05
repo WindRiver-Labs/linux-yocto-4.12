@@ -37,6 +37,9 @@
 #include "pinmux.h"
 #include "pinconf.h"
 
+bool is_up_board = false;
+
+EXPORT_SYMBOL_GPL(is_up_board);
 
 static bool pinctrl_dummy_state;
 
@@ -732,6 +735,76 @@ int pinctrl_get_group_selector(struct pinctrl_dev *pctldev,
 	return -EINVAL;
 }
 
+void pinctrl_free_gpio_locked(unsigned int gpio)
+{
+	struct pinctrl_dev *pctldev;
+
+	list_for_each_entry(pctldev, &pinctrldev_list, node) {
+		struct pinctrl_gpio_range *range =
+			pinctrl_match_gpio_range(pctldev, gpio);
+		if (range != NULL) {
+			int pin;
+
+			mutex_lock(&pctldev->mutex);
+			pin = gpio_to_pin(range, gpio);
+			pinmux_free_gpio(pctldev, pin, range);
+			mutex_unlock(&pctldev->mutex);
+		}
+	}
+}
+
+static int pinctrl_request_if_match(struct pinctrl_dev *pctldev,
+				    unsigned int gpio, int dir)
+{
+	struct pinctrl_gpio_range *range =
+		pinctrl_match_gpio_range(pctldev, gpio);
+	int ret;
+
+	if (range != NULL) {
+		int pin;
+
+		mutex_lock(&pctldev->mutex);
+		pin = gpio_to_pin(range, gpio);
+
+		ret = pinmux_request_gpio(pctldev, range, pin, gpio);
+		if (ret) {
+			mutex_unlock(&pctldev->mutex);
+			return ret;
+		}
+
+		if (dir >= 0) {
+			ret = pinmux_gpio_direction(pctldev, range, pin, dir);
+			if (ret) {
+				mutex_unlock(&pctldev->mutex);
+				return ret;
+			}
+		}
+		mutex_unlock(&pctldev->mutex);
+
+	}
+
+	return 0;
+}
+
+static int pinctrl_set_dir_if_match_UP2(struct pinctrl_dev *pctldev,
+                                    unsigned int gpio, bool input)
+{
+	struct pinctrl_gpio_range *range =
+		pinctrl_match_gpio_range(pctldev, gpio);
+	int ret = 0;
+
+	if (range != NULL) {
+		int pin;
+
+		mutex_lock(&pctldev->mutex);
+		pin = gpio_to_pin(range, gpio);
+		ret = pinmux_gpio_direction(pctldev, range, pin, input);
+		mutex_unlock(&pctldev->mutex);
+	}
+
+	return ret;
+}
+
 /**
  * pinctrl_request_gpio() - request a single pin to be used as GPIO
  * @gpio: the GPIO pin number from the GPIO subsystem number space
@@ -740,28 +813,73 @@ int pinctrl_get_group_selector(struct pinctrl_dev *pctldev,
  * as part of their gpio_request() semantics, platforms and individual drivers
  * shall *NOT* request GPIO pins to be muxed in.
  */
-int pinctrl_request_gpio(unsigned gpio)
+int pinctrl_request_gpio(unsigned int gpio)
 {
 	struct pinctrl_dev *pctldev;
-	struct pinctrl_gpio_range *range;
 	int ret;
-	int pin;
 
-	ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
-	if (ret) {
-		if (pinctrl_ready_for_gpio_range(gpio))
-			ret = 0;
-		return ret;
+	if (is_up_board) {
+		struct gpio_desc *desc;
+		int dir;
+		ret = -EPROBE_DEFER;
+
+		desc = gpio_to_desc(gpio);
+		if (!desc) {
+			pr_err("gpio_to_desc(%d) returned NULL", gpio);
+			return -ENODEV;
+		}
+
+		dir = gpiod_get_direction(desc);
+
+		mutex_lock(&pinctrldev_list_mutex);
+
+		/*
+		 * FIXME UP-specific
+		 * The two pin controllers (SoC, FPGA) share the GPIO line. Avoid
+		 * getting into a situation where both are momentarily trying to drive
+		 * the line (i.e. SoC as output and FPGA as HAT-to-SoC input) by walking
+		 * the list in opposite directions for the input and output cases.
+		 */
+		if (dir == 1) {
+			list_for_each_entry(pctldev, &pinctrldev_list, node) {
+				ret = pinctrl_request_if_match(pctldev, gpio, dir);
+				if (ret) {
+					pinctrl_free_gpio_locked(gpio);
+					break;
+				}
+			}
+		} else {
+			list_for_each_entry_reverse(pctldev, &pinctrldev_list, node) {
+				ret = pinctrl_request_if_match(pctldev, gpio, dir);
+				if (ret) {
+					pinctrl_free_gpio_locked(gpio);
+					break;
+				}
+			}
+		}
+
+		mutex_unlock(&pinctrldev_list_mutex);
+	} else {
+		struct pinctrl_dev *pctldev;
+		struct pinctrl_gpio_range *range;
+		int pin;
+
+		ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
+		if (ret) {
+			if (pinctrl_ready_for_gpio_range(gpio))
+				ret = 0;
+			return ret;
+		}
+
+		mutex_lock(&pctldev->mutex);
+
+		/* Convert to the pin controllers number space */
+		pin = gpio_to_pin(range, gpio);
+
+		ret = pinmux_request_gpio(pctldev, range, pin, gpio);
+
+		mutex_unlock(&pctldev->mutex);
 	}
-
-	mutex_lock(&pctldev->mutex);
-
-	/* Convert to the pin controllers number space */
-	pin = gpio_to_pin(range, gpio);
-
-	ret = pinmux_request_gpio(pctldev, range, pin, gpio);
-
-	mutex_unlock(&pctldev->mutex);
 
 	return ret;
 }
@@ -775,47 +893,89 @@ EXPORT_SYMBOL_GPL(pinctrl_request_gpio);
  * as part of their gpio_free() semantics, platforms and individual drivers
  * shall *NOT* request GPIO pins to be muxed out.
  */
-void pinctrl_free_gpio(unsigned gpio)
+void pinctrl_free_gpio(unsigned int gpio)
 {
-	struct pinctrl_dev *pctldev;
-	struct pinctrl_gpio_range *range;
-	int ret;
-	int pin;
 
-	ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
-	if (ret) {
-		return;
+	if (is_up_board) {
+
+		mutex_lock(&pinctrldev_list_mutex);
+
+		pinctrl_free_gpio_locked(gpio);
+
+		mutex_unlock(&pinctrldev_list_mutex);
+	} else {
+		struct pinctrl_dev *pctldev;
+		struct pinctrl_gpio_range *range;
+		int ret;
+		int pin;
+
+		ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
+		if (ret) {
+			return;
+		}
+		mutex_lock(&pctldev->mutex);
+
+		/* Convert to the pin controllers number space */
+		pin = gpio_to_pin(range, gpio);
+
+		pinmux_free_gpio(pctldev, pin, range);
+
+		mutex_unlock(&pctldev->mutex);
 	}
-	mutex_lock(&pctldev->mutex);
-
-	/* Convert to the pin controllers number space */
-	pin = gpio_to_pin(range, gpio);
-
-	pinmux_free_gpio(pctldev, pin, range);
-
-	mutex_unlock(&pctldev->mutex);
 }
 EXPORT_SYMBOL_GPL(pinctrl_free_gpio);
 
 static int pinctrl_gpio_direction(unsigned gpio, bool input)
 {
 	struct pinctrl_dev *pctldev;
-	struct pinctrl_gpio_range *range;
 	int ret;
-	int pin;
 
-	ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
-	if (ret) {
-		return ret;
+	if (is_up_board) {
+
+		ret = -EPROBE_DEFER;
+
+		mutex_lock(&pinctrldev_list_mutex);
+
+		/*
+		 * FIXME UP-specific
+		 * The two pin controllers (SoC, FPGA) share the GPIO line. Avoid
+		 * getting into a situation where both are momentarily trying to drive
+		 * the line (i.e. SoC as output and FPGA as HAT-to-SoC input) by walking
+		 * the list in opposite directions for the input and output cases.
+		 */
+		if (input) {
+			list_for_each_entry(pctldev, &pinctrldev_list, node) {
+				ret = pinctrl_set_dir_if_match_UP2(pctldev, gpio, input);
+				if (ret)
+					break;
+			}
+		} else {
+			list_for_each_entry_reverse(pctldev, &pinctrldev_list, node) {
+				ret = pinctrl_set_dir_if_match_UP2(pctldev, gpio, input);
+				if (ret)
+					break;
+			}
+		}
+
+		mutex_unlock(&pinctrldev_list_mutex);
+	} else {
+		struct pinctrl_gpio_range *range;
+		int pin;
+
+		ret = pinctrl_get_device_gpio_range(gpio, &pctldev, &range);
+		if (ret) {
+			return ret;
+		}
+
+		mutex_lock(&pctldev->mutex);
+
+		/* Convert to the pin controllers number space */
+		pin = gpio_to_pin(range, gpio);
+		ret = pinmux_gpio_direction(pctldev, range, pin, input);
+
+		mutex_unlock(&pctldev->mutex);
+
 	}
-
-	mutex_lock(&pctldev->mutex);
-
-	/* Convert to the pin controllers number space */
-	pin = gpio_to_pin(range, gpio);
-	ret = pinmux_gpio_direction(pctldev, range, pin, input);
-
-	mutex_unlock(&pctldev->mutex);
 
 	return ret;
 }
