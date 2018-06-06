@@ -19,7 +19,7 @@
  * License.
  *
  */
-
+#include <linux/dmi.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
 #include <linux/mutex.h>
@@ -175,6 +175,22 @@ static int tpm_class_shutdown(struct device *dev)
 	return 0;
 }
 
+static const struct dmi_system_id __initdata up2_board_dmi_table[] = {
+	{
+		.matches = {
+			DMI_MATCH(DMI_BIOS_VENDOR, "American Megatrends Inc."),
+			DMI_MATCH(DMI_BIOS_VERSION, "UPA1AM21"),
+		},
+	},
+	{
+		.matches = {
+			DMI_MATCH(DMI_BIOS_VENDOR, "American Megatrends Inc."),
+			DMI_MATCH(DMI_BIOS_VERSION, "UPA1AM33"),
+		},
+	},
+	{ },
+};
+
 /**
  * tpm_chip_alloc() - allocate a new struct tpm_chip instance
  * @pdev: device to which the chip is associated
@@ -190,6 +206,7 @@ struct tpm_chip *tpm_chip_alloc(struct device *pdev,
 {
 	struct tpm_chip *chip;
 	int rc;
+	const struct dmi_system_id *system_id;
 
 	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
 	if (chip == NULL)
@@ -264,7 +281,17 @@ struct tpm_chip *tpm_chip_alloc(struct device *pdev,
 		goto out;
 	}
 
-	chip->locality = -1;
+	/* fTPM in BIOS version 2.1 or 3.3 of UP Squared board doesn't
+	 * response to locality related operations correctly.
+	 * tpm_relinquish_locality() will cause the device to malfunction.
+	 * Disable all TPM locality operations here temporarily as a workaround.
+	 */
+	system_id = dmi_first_match(up2_board_dmi_table);
+	if (system_id)
+		chip->locality = 0;
+	else
+		chip->locality = -1;
+
 	return chip;
 
 out:
