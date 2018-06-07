@@ -671,7 +671,11 @@ static int compression_stateless_truncation_deflate_compoundframes_init(void)
 {
 	int ret, i;
 	struct dce_test_ctx *test_ctx;
+#ifdef CONFIG_PREEMPT_RT_FULL
+	struct cpumask backup_mask = current->cpus_mask;
+#else
 	struct cpumask backup_mask = current->cpus_allowed;
+#endif
 	struct cpumask new_mask = *qman_affine_cpus();
 
 	struct test_meta_info_t test_meta_info_array[] = {
