@@ -196,6 +196,7 @@
 	status = "okay";
 
 	sysfpga@40 {
+		compatible = "sysfpga";
 		reg = <0x40>;
 	};
 };
