@@ -97,7 +97,7 @@ static void freeze_enter(void)
 
  out:
 	suspend_freeze_state = FREEZE_STATE_NONE;
-	rawspin_unlock_irq(&suspend_freeze_lock);
+	raw_spin_unlock_irq(&suspend_freeze_lock);
 }
 
 void freeze_wake(void)
