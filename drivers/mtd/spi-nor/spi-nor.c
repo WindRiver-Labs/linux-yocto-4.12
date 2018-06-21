@@ -284,6 +284,10 @@ static inline u8 spi_nor_convert_3to4_erase(u8 opcode)
 				      ARRAY_SIZE(spi_nor_3to4_erase));
 }
 
+/*
+ *The ZYNQ AND ZYNQMP do not use spi_nor_set_4byte_opcodes any more.
+ * */
+#if !defined(CONFIG_ARCH_ZYNQMP) && !defined(CONFIG_ARCH_ZYNQ)
 static void spi_nor_set_4byte_opcodes(struct spi_nor *nor,
 				      const struct flash_info *info)
 {
@@ -303,6 +307,7 @@ static void spi_nor_set_4byte_opcodes(struct spi_nor *nor,
 	nor->program_opcode = spi_nor_convert_3to4_program(nor->program_opcode);
 	nor->erase_opcode = spi_nor_convert_3to4_erase(nor->erase_opcode);
 }
+#endif
 
 /* Enable/disable 4-byte addressing mode. */
 static inline int set_4byte(struct spi_nor *nor, const struct flash_info *info,
