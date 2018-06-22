@@ -382,6 +382,47 @@ xfs_log_dinode_to_disk(
 }
 
 static bool
+xfs_dinode_verify_fork(
+	struct xfs_dinode	*dip,
+	struct xfs_mount	*mp,
+	int			whichfork)
+{
+	uint32_t		di_nextents = XFS_DFORK_NEXTENTS(dip, whichfork);
+
+	switch (XFS_DFORK_FORMAT(dip, whichfork)) {
+	case XFS_DINODE_FMT_LOCAL:
+		/*
+		 * no local regular files yet
+		 */
+		if (whichfork == XFS_DATA_FORK) {
+			if (S_ISREG(be16_to_cpu(dip->di_mode)))
+				return false;
+			if (be64_to_cpu(dip->di_size) >
+					XFS_DFORK_SIZE(dip, mp, whichfork))
+				return false;
+		}
+		if (di_nextents)
+			return false;
+		break;
+	case XFS_DINODE_FMT_EXTENTS:
+		if (di_nextents > XFS_DFORK_MAXEXT(dip, mp, whichfork))
+			return false;
+		break;
+	case XFS_DINODE_FMT_BTREE:
+		if (whichfork == XFS_ATTR_FORK) {
+			if (di_nextents > MAXAEXTNUM)
+				return false;
+		} else if (di_nextents > MAXEXTNUM) {
+			return false;
+		}
+		break;
+	default:
+		return false;
+	}
+	return NULL;
+}
+
+static bool
 xfs_dinode_verify(
 	struct xfs_mount	*mp,
 	xfs_ino_t		ino,
@@ -434,24 +475,8 @@ xfs_dinode_verify(
 	case S_IFREG:
 	case S_IFLNK:
 	case S_IFDIR:
-		switch (dip->di_format) {
-		case XFS_DINODE_FMT_LOCAL:
-			/*
-			 * no local regular files yet
-			 */
-			if (S_ISREG(mode))
-				return false;
-			if (di_size > XFS_DFORK_DSIZE(dip, mp))
-				return false;
-			if (dip->di_nextents)
-				return false;
-			/* fall through */
-		case XFS_DINODE_FMT_EXTENTS:
-		case XFS_DINODE_FMT_BTREE:
-			break;
-		default:
+		if(!xfs_dinode_verify_fork(dip, mp, XFS_DATA_FORK))
 			return false;
-		}
 		break;
 	case 0:
 		/* Uninitialized inode ok. */
@@ -461,17 +486,8 @@ xfs_dinode_verify(
 	}
 
 	if (XFS_DFORK_Q(dip)) {
-		switch (dip->di_aformat) {
-		case XFS_DINODE_FMT_LOCAL:
-			if (dip->di_anextents)
-				return false;
-		/* fall through */
-		case XFS_DINODE_FMT_EXTENTS:
-		case XFS_DINODE_FMT_BTREE:
-			break;
-		default:
+		if(!xfs_dinode_verify_fork(dip, mp, XFS_ATTR_FORK))
 			return false;
-		}
 	} else {
 		/*
 		 * If there is no fork offset, this may be a freshly-made inode
