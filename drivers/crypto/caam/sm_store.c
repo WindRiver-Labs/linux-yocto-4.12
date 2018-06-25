@@ -912,6 +912,7 @@ out:
 			 DMA_FROM_DEVICE);
 	dma_unmap_single(dev, keymod_dma, SECMEM_KEYMOD_LEN, DMA_TO_DEVICE);
 	kfree(encapdesc);
+	kfree(lkeymod);
 
 	return retval;
 }
@@ -971,6 +972,7 @@ out:
 			 DMA_TO_DEVICE);
 	dma_unmap_single(dev, keymod_dma, SECMEM_KEYMOD_LEN, DMA_TO_DEVICE);
 	kfree(decapdesc);
+	kfree(lkeymod);
 
 	return retval;
 }
