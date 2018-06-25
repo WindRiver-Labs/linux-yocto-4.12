@@ -3479,6 +3479,8 @@ static int mxcfb_probe(struct platform_device *pdev)
 		goto init_fbinfo_failed;
 	}
 
+	INIT_LIST_HEAD(&fbi->modelist);
+
 	ret = mxcfb_option_setup(pdev, fbi);
 	if (ret)
 		goto get_fb_option_failed;
@@ -3593,6 +3595,7 @@ get_ipu_failed:
 	ipu_clear_usage(mxcfbi->ipu_id, mxcfbi->ipu_di);
 ipu_in_busy:
 init_dispdrv_failed:
+	fb_destroy_modelist(&fbi->modelist);
 	fb_dealloc_cmap(&fbi->cmap);
 	framebuffer_release(fbi);
 get_fb_option_failed:
