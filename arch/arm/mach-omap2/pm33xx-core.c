@@ -81,12 +81,13 @@ static void amx3_post_suspend_common(void)
 		pr_err("PM: GFX domain did not transition: %x\n", status);
 }
 
-static int am33xx_suspend(unsigned int state, int (*fn)(unsigned long))
+static int am33xx_suspend(unsigned int state, int (*fn)(unsigned long),
+			  unsigned long args)
 {
 	int ret = 0;
 
 	amx3_pre_suspend_common();
-	ret = cpu_suspend(0, fn);
+	ret = cpu_suspend(args, fn);
 	amx3_post_suspend_common();
 
 	/*
