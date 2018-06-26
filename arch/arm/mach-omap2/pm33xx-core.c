@@ -114,6 +114,18 @@ static int am33xx_suspend(unsigned int state, int (*fn)(unsigned long),
 	return ret;
 }
 
+static int am33xx_cpu_suspend(int (*fn)(unsigned long), unsigned long args)
+{
+	int ret = 0;
+
+	if (omap_irq_pending() || need_resched())
+		return ret;
+
+	ret = cpu_suspend(args, fn);
+
+	return ret;
+}
+
 static struct am33xx_pm_sram_addr *amx3_get_sram_addrs(void)
 {
 	if (soc_is_am33xx())
@@ -125,6 +137,7 @@ static struct am33xx_pm_sram_addr *amx3_get_sram_addrs(void)
 static struct am33xx_pm_platform_data am33xx_ops = {
 	.init = am33xx_suspend_init,
 	.soc_suspend = am33xx_suspend,
+	.cpu_suspend = am33xx_cpu_suspend,
 	.get_sram_addrs = amx3_get_sram_addrs,
 };
 
