@@ -820,6 +820,7 @@ err_reset_phy:
 	imx6_pcie_reset_phy(imx6_pcie);
 
 	if (!IS_ENABLED(CONFIG_PCI_IMX6_COMPLIANCE_TEST)) {
+		imx6_pcie_assert_core_reset(imx6_pcie);
 		clk_disable_unprepare(imx6_pcie->pcie);
 		if (!imx6_pcie->ext_osc)
 			clk_disable_unprepare(imx6_pcie->pcie_bus);
