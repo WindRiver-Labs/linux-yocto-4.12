@@ -396,6 +396,46 @@
 				nand-ecc-step-size = <512>;
 				status = "disabled";
 			};
+
+			serial@702000 {
+				compatible = "snps,dw-apb-uart";
+				reg = <0x702000 0x100>;
+				reg-shift = <2>;
+				interrupts = <ICU_GRP_NSR 122 IRQ_TYPE_LEVEL_HIGH>;
+				reg-io-width = <1>;
+				clocks = <&cpm_syscon0 0  3>;
+				status = "disabled";
+			};
+
+			serial@702100 {
+				compatible = "snps,dw-apb-uart";
+				reg = <0x702100 0x100>;
+				reg-shift = <2>;
+				interrupts = <ICU_GRP_NSR 123 IRQ_TYPE_LEVEL_HIGH>;
+				reg-io-width = <1>;
+				clocks = <&cpm_syscon0 0  3>;
+				status = "disabled";
+			};
+
+			serial@702200 {
+				compatible = "snps,dw-apb-uart";
+				reg = <0x702200 0x100>;
+				reg-shift = <2>;
+				interrupts = <ICU_GRP_NSR 124 IRQ_TYPE_LEVEL_HIGH>;
+				reg-io-width = <1>;
+				clocks = <&cpm_syscon0 0  3>;
+				status = "disabled";
+			};
+
+			serial@702300 {
+				compatible = "snps,dw-apb-uart";
+				reg = <0x702300 0x100>;
+				reg-shift = <2>;
+				interrupts = <ICU_GRP_NSR 125 IRQ_TYPE_LEVEL_HIGH>;
+				reg-io-width = <1>;
+				clocks = <&cpm_syscon0 0  3>;
+				status = "disabled";
+			};
 		};
 
 		cpm_pcie0: pcie@f2600000 {
