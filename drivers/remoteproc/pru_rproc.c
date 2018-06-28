@@ -92,6 +92,7 @@ struct pru_match_private_data {
  * @irq_kick: IRQ number to use to perform virtio kick
  * @mem_regions: data for each of the PRU memory regions
  * @intc_config: PRU INTC configuration data
+ * @rmw_lock: lock for read, modify, write operations on registers
  * @iram_da: device address of Instruction RAM for this PRU
  * @pdram_da: device address of primary Data RAM for this PRU
  * @sdram_da: device address of secondary Data RAM for this PRU
@@ -110,6 +111,7 @@ struct pru_rproc {
 	int irq_kick;
 	struct pruss_mem_region mem_regions[PRU_MEM_MAX];
 	struct pruss_intc_config intc_config;
+	spinlock_t rmw_lock; /* register access lock */
 	u32 iram_da;
 	u32 pdram_da;
 	u32 sdram_da;
@@ -129,6 +131,54 @@ void pru_control_write_reg(struct pru_rproc *pru, unsigned int reg, u32 val)
 {
 	writel_relaxed(val, pru->mem_regions[PRU_MEM_CTRL].va + reg);
 }
+
+static inline
+void pru_control_set_reg(struct pru_rproc *pru, unsigned int reg,
+			 u32 mask, u32 set)
+{
+	u32 val;
+	unsigned long flags;
+
+	spin_lock_irqsave(&pru->rmw_lock, flags);
+
+	val = pru_control_read_reg(pru, reg);
+	val &= ~mask;
+	val |= (set & mask);
+	pru_control_write_reg(pru, reg, val);
+
+	spin_unlock_irqrestore(&pru->rmw_lock, flags);
+}
+
+/**
+ * pru_rproc_set_ctable() - set the constant table index for the PRU
+ * @rproc: the rproc instance of the PRU
+ * @c: constant table index to set
+ * @addr: physical address to set it to
+ */
+int pru_rproc_set_ctable(struct rproc *rproc, enum pru_ctable_idx c, u32 addr)
+{
+	struct pru_rproc *pru = rproc->priv;
+	unsigned int reg;
+	u32 mask, set;
+	u16 idx;
+	u16 idx_mask;
+
+	/* pointer is 16 bit and index is 8-bit so mask out the rest */
+	idx_mask = (c >= PRU_C28) ? 0xFFFF : 0xFF;
+
+	/* ctable uses bit 8 and upwards only */
+	idx = (addr >> 8) & idx_mask;
+
+	/* configurable ctable (i.e. C24) starts at PRU_CTRL_CTBIR0 */
+	reg = PRU_CTRL_CTBIR0 + 4 * (c >> 1);
+	mask = idx_mask << (16 * (c & 1));
+	set = idx << (16 * (c & 1));
+
+	pru_control_set_reg(pru, reg, mask, set);
+
+	return 0;
+}
+EXPORT_SYMBOL_GPL(pru_rproc_set_ctable);
 
 static inline u32 pru_debug_read_reg(struct pru_rproc *pru, unsigned int reg)
 {
@@ -642,6 +692,7 @@ static int pru_rproc_probe(struct platform_device *pdev)
 	struct resource *res;
 	int i, ret;
 	const char *mem_names[PRU_MEM_MAX] = { "iram", "control", "debug" };
+	u32 mux_sel;
 
 	if (!np) {
 		dev_err(dev, "Non-DT platform device not supported\n");
@@ -663,11 +714,21 @@ static int pru_rproc_probe(struct platform_device *pdev)
 	/* error recovery is not supported for PRUs */
 	rproc->recovery_disabled = true;
 
+	/*
+	 * rproc_add will auto-boot the processor normally, but this is
+	 * not desired with PRU client driven boot-flow methodoly. A PRU
+	 * application/client driver will boot the corresponding PRU
+	 * remote-processor as part of its state machine either through
+	 * the remoteproc sysfs interface or through the equivalent kernel API
+	 */
+	rproc->auto_boot = false;
+
 	pru = rproc->priv;
 	pru->id = pdata->id;
 	pru->pruss = platform_get_drvdata(ppdev);
 	pru->rproc = rproc;
 	pru->fw_name = pdata->fw_name;
+	spin_lock_init(&pru->rmw_lock);
 
 	/* XXX: get this from match data if different in the future */
 	pru->iram_da = 0;
@@ -735,12 +796,29 @@ static int pru_rproc_probe(struct platform_device *pdev)
 		goto put_mbox;
 	}
 
+	if ((of_machine_is_compatible("ti,am5718-idk") ||
+	     of_machine_is_compatible("ti,k2g-ice")) &&
+	    !of_property_read_u32(np, "ti,pruss-gp-mux-sel", &mux_sel)) {
+		if (mux_sel < PRUSS_GP_MUX_SEL_GP ||
+		    mux_sel >= PRUSS_GP_MUX_MAX) {
+			dev_err(dev, "invalid gp_mux_sel %d\n", mux_sel);
+			ret = -EINVAL;
+			goto del_rproc;
+		}
+
+		ret = pruss_cfg_set_gpmux(pru->pruss, pru->id, mux_sel);
+		if (ret)
+			goto del_rproc;
+	}
+
 	pru_rproc_create_debug_entries(rproc);
 
 	dev_info(dev, "PRU rproc node %s probed successfully\n", np->full_name);
 
 	return 0;
 
+del_rproc:
+	rproc_del(rproc);
 put_mbox:
 	mbox_free_channel(pru->mbox);
 free_rproc:
@@ -757,6 +835,10 @@ static int pru_rproc_remove(struct platform_device *pdev)
 	dev_info(dev, "%s: removing rproc %s\n", __func__, rproc->name);
 
 	mbox_free_channel(pru->mbox);
+
+	if ((of_machine_is_compatible("ti,am5718-idk") ||
+	     of_machine_is_compatible("ti,k2g-ice")))
+		pruss_cfg_set_gpmux(pru->pruss, pru->id, PRUSS_GP_MUX_SEL_GP);
 
 	rproc_del(rproc);
 	rproc_free(rproc);
@@ -937,6 +1019,7 @@ static struct platform_driver pru_rproc_driver = {
 	.driver = {
 		.name   = "pru-rproc",
 		.of_match_table = pru_rproc_match,
+		.suppress_bind_attrs = true,
 	},
 	.probe  = pru_rproc_probe,
 	.remove = pru_rproc_remove,
