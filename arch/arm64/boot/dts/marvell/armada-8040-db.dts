@@ -120,12 +120,6 @@
 				 */
 			};
 		};
-		pcie@0x600000 {
-			status = "okay";
-		};
-		pcie@0x640000 {
-			status = "okay";
-		};
 
 		cpm_usb3h0_phy: cpm_usb3_phy0 {
 			compatible = "usb-nop-xceiv";
@@ -271,6 +265,10 @@
 
 /* Accessible over the mini-USB CON9 connector on the main board */
 &uart0 {
+	status = "okay";
+};
+
+&cpm_pcie0 {
 	status = "okay";
 };
 
@@ -486,8 +484,5 @@
 	status = "okay";
 };
 &cps_pcie1 {
-	status = "okay";
-};
-&cps_pcie2 {
 	status = "okay";
 };

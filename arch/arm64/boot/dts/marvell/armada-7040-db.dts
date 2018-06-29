@@ -173,10 +173,6 @@
 				};
 			};
 		};
-
-		pcie@0x640000 {
-			status = "okay";
-		};
 	};
 
 	usb3h0_phy: usb3-h0-phy {
