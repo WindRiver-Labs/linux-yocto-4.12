@@ -62,7 +62,7 @@
 	};
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			sdhci@6e0000 {
 				status = "okay";
 			};
@@ -76,8 +76,8 @@
 		};
 	};
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			pinctrl@440000 {
 			compatible = "marvell,a70x0-pinctrl";
 				pca0_pins: pca0_pins {

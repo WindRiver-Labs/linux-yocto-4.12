@@ -64,7 +64,7 @@
 	};
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			serial@512000 {
 				status = "okay";
 			};
@@ -87,8 +87,8 @@
 		};
 	};
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			/delete-node/ppv22@000000;
 			pinctrl@440000 {
 				xhci0_vbus_pins: xhci0-vbus-pins {
@@ -229,8 +229,8 @@
 		};
 	};
 
-	cpn-110-slave {
-		config-space {
+	cp110-slave {
+		config-space@f4000000 {
 			/delete-node/ppv22@000000;
 			comphy1: comphy {
 				status = "disabled";

@@ -59,7 +59,7 @@
 	};
 
 	soc {
-		internal-regs {
+		internal-regs@d0000000 {
 			uart0: serial@12000 {
 				status = "okay";
 			};
@@ -192,36 +192,36 @@
 		#size-cells = <0>;
 
 		switch@0 {
-				#address-cells = <1>;
-				#size-cells = <0>;
-				reg = <1 0>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <1 0>;
 
-				port@0 {
-						reg = <0>;
-						label = "cpu";
-						fixed-link {
-							speed = <1000>;
-							full-duplex;
-						};
-				};
+			port@0 {
+					reg = <0>;
+					label = "cpu";
+					fixed-link {
+						speed = <1000>;
+						full-duplex;
+					};
+			};
 
-				port@1 {
-						reg = <1>;
-						label = "wan";
-						phy-handle = <&phy1>;
-				};
+			port@1 {
+					reg = <1>;
+					label = "wan";
+					phy-handle = <&phy1>;
+			};
 
-				port@2 {
-						reg = <2>;
-						label = "lan0";
-						phy-handle = <&phy2>;
-				};
+			port@2 {
+					reg = <2>;
+					label = "lan0";
+					phy-handle = <&phy2>;
+			};
 
-				port@3 {
-						reg = <3>;
-						label = "lan1";
-						phy-handle = <&phy3>;
-				};
+			port@3 {
+					reg = <3>;
+					label = "lan1";
+					phy-handle = <&phy3>;
+			};
 		};
 	};
 };

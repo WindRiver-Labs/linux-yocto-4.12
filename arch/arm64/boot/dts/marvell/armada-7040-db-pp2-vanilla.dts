@@ -63,7 +63,7 @@
 	};
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			sdhci@6e0000 {
 				status = "okay";
 			};
@@ -77,8 +77,8 @@
 		};
 	};
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			/delete-node/ppv22@000000;
 			serial@702000 {
 				status = "disabled";

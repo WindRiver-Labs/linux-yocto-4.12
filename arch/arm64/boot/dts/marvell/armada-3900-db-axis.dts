@@ -47,8 +47,8 @@
 	compatible = "marvell,armada3900-db-axis", "marvell,armada7040",
 		     "marvell,armada-ap806-quad", "marvell,armada-ap806";
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			pinctrl@440000 {
 				cpm_xhci0_vbus_pins: cpm-xhci0-vbus-pins {
 					marvell,pins = "mpp7";

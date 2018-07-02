@@ -64,7 +64,7 @@
 	};
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			serial@512000 {
 				status = "okay";
 			};
@@ -80,8 +80,8 @@
 		};
 	};
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			sata@540000 {
 				status = "okay";
 				sata-port@0 {
@@ -170,8 +170,8 @@
 			status = "okay";
 		};
 	};
-	cpn-110-slave {
-		config-space {
+	cp110-slave {
+		config-space@f4000000 {
 			/* usb3h0_1 is USB2 only (UTMI) */
 			usb3h0_1: usb3@500000 {
 				status = "okay";

@@ -61,7 +61,7 @@
 	chosen { };
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			spi0: spi@510600 {
 				status = "disabled";
 			};
@@ -89,8 +89,8 @@
 		};
 	};
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			comphy0: comphy {
 				skip_pcie_power_off;
 				status = "okay";

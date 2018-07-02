@@ -69,6 +69,13 @@
 
 	cp110-master {
 		config-space@f2000000 {
+			mdio@12a200 {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				mdio0_phy1: ethernet-phy@1 {
+					reg = <1>;
+				};
+			};
 			gop {
 				emac0: mac0 {
 					phy-mode = "sfi"; /* lane-2 */

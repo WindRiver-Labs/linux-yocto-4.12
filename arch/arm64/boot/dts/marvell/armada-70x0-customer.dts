@@ -83,7 +83,7 @@
 	};
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			sdhci@6e0000 {
 				status = "disabled";
 			};
@@ -112,8 +112,8 @@
 		};
 	};
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			pinctrl@440000 {
 				u3d_vbus_pins: pca0_pins {
 					marvell,pins = "mpp62";

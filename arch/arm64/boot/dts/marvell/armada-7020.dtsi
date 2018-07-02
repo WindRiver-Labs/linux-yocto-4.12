@@ -63,7 +63,7 @@
 	};
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			smmu: iommu@5000000 {
 				mmu-masters = <&usb3h0 0x483>,
 					      <&usb3h1 0x484>,
@@ -82,7 +82,7 @@
 	};
 
 	cp110-master {
-		config-space {
+		config-space@f2000000 {
 			pinctrl@440000 {
 			compatible = "marvell,a70x0-pinctrl";
 				cpm_tdm_pins: tdm-pins {

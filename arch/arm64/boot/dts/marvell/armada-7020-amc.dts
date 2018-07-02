@@ -58,7 +58,7 @@
 	chosen { };
 
 	ap806 {
-		config-space {
+		config-space@f0000000 {
 			spi0: spi@510600 {
 				status = "okay";
 			};
@@ -74,8 +74,8 @@
 		};
 	};
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 			pinctrl@440000 {
 				i2c1_pins: i2c-pins-1 {
 					marvell,pins = "mpp50", "mpp51";

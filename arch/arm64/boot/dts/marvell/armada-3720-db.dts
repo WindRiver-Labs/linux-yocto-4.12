@@ -75,7 +75,7 @@
 		internal-regs@d0000000 {
 			sd_pwrseq: sd-pwrseq {
 				compatible = "mmc-pwrseq-a3700-sd";
-				pwren-gpios = <&expander0 4 GPIO_ACTIVE_HIGH>;
+				pwren-gpios = <&gpio_exp 4 GPIO_ACTIVE_HIGH>;
 			};
 
 			vcc_sd_reg1: regulator@0 {
@@ -211,9 +211,6 @@
 		spi-max-frequency = <108000000>;
 		spi-rx-bus-width = <4>;
 		spi-tx-bus-width = <4>;
-
-		pinctrl-names = "default";
-		pinctrl-0 = <&spi0_pins>;
 
 		partitions {
 			compatible = "fixed-partitions";

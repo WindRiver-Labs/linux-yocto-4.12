@@ -50,7 +50,7 @@
  */
 / {
 	soc {
-		internal-regs {
+		internal-regs@d0000000 {
 			eth1: ethernet@40000 {
 				phy-mode = "sgmii";
 				phy = <&phy1>;

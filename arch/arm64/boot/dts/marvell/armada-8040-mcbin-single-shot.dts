@@ -54,8 +54,8 @@
 		     "marvell,armada8040", "marvell,armada-ap806-quad",
 		     "marvell,armada-ap806";
 
-	cpn-110-master {
-		config-space {
+	cp110-master {
+		config-space@f2000000 {
 		/delete-node/mdio@15b000;
 			gop {
 				emac0_0: mac0 {
@@ -64,8 +64,8 @@
 			};
 		};
 	};
-	cpn-110-slave {
-		config-space {
+	cp110-slave {
+		config-space@f4000000 {
 			gop {
 				emac0_1: mac0 {
 					/delete-property/phy;

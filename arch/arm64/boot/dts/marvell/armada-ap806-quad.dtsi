@@ -127,7 +127,7 @@
 				reg = <0xc40000 0x1000>;
 
 				cpu = <&cpu0>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 				port {
 					etm0_out: endpoint {
@@ -141,7 +141,7 @@
 				reg = <0xd40000 0x1000>;
 
 				cpu = <&cpu1>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 				port {
 					etm1_out: endpoint {
@@ -155,7 +155,7 @@
 				reg = <0xe40000 0x1000>;
 
 				cpu = <&cpu2>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 				port {
 					etm2_out: endpoint {
@@ -169,7 +169,7 @@
 				reg = <0xf40000 0x1000>;
 
 				cpu = <&cpu3>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 				port {
 					etm3_out: endpoint {
@@ -181,7 +181,7 @@
 			etf0@809000 {
 				compatible = "arm,coresight-tmc", "arm,primecell";
 				reg = <0x809000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 
 				ports {
@@ -208,7 +208,7 @@
 			etf1@80a000 {
 				compatible = "arm,coresight-tmc", "arm,primecell";
 				reg = <0x80a000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 
 				ports {
@@ -235,7 +235,7 @@
 			etf2@80b000 {
 				compatible = "arm,coresight-tmc", "arm,primecell";
 				reg = <0x80b000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 
 				ports {
@@ -262,7 +262,7 @@
 			etf3@80c000 {
 				compatible = "arm,coresight-tmc", "arm,primecell";
 				reg = <0x80c000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 
 				ports {
@@ -289,7 +289,7 @@
 			funnel@810000 {
 				compatible = "arm,coresight-funnel", "arm,primecell";
 				reg = <0x810000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 
 				ports {
@@ -342,7 +342,7 @@
 			etf5@811000 {
 				compatible = "arm,coresight-tmc", "arm,primecell";
 				reg = <0x811000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 
 				ports {
@@ -370,7 +370,7 @@
 			etr@812000 {
 				compatible = "arm,coresight-tmc", "arm,primecell";
 				reg = <0x812000 0x1000>;
-				clocks = <&syscon 3>;
+				clocks = <&ap_syscon 3>;
 				clock-names = "apb_pclk";
 
 				port {

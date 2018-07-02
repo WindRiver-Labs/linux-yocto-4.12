@@ -64,8 +64,8 @@
 	ap806 {
 		config-space@f0000000 {
 			smmu: iommu@5000000 {
-				mmu-masters = <&usb3h0 0x483>,
-					      <&usb3h1 0x484>,
+				mmu-masters = <&cpm_usb3_0 0x483>,
+					      <&cpm_usb3_1 0x484>,
 					      <&sata 0x485>,
 					      <&cp_xor0 0x489>,
 					      <&cp_xor1 0x48a>;
