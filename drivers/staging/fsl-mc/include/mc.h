@@ -202,6 +202,9 @@ int __must_check fsl_mc_allocate_irqs(struct fsl_mc_device *mc_dev);
 
 void fsl_mc_free_irqs(struct fsl_mc_device *mc_dev);
 
+void fsl_mc_get_root_dprc(struct device *dev,
+			  struct device **root_dprc_dev);
+
 const struct iommu_ops *fsl_mc_iommu_configure(struct fsl_mc_device *mc_dev,
 	struct device_node *fsl_mc_platform_node);
 
