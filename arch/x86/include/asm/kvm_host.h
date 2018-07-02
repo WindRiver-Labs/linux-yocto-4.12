@@ -679,6 +679,9 @@ struct kvm_vcpu_arch {
 
 	/* GPA available (AMD only) */
 	bool gpa_available;
+
+	/* Flush the L1 Data cache for L1TF mitigation on VMENTER */
+	bool l1tf_flush_l1d;
 };
 
 struct kvm_lpage_info {
@@ -847,6 +850,7 @@ struct kvm_vcpu_stat {
 	u64 signal_exits;
 	u64 irq_window_exits;
 	u64 nmi_window_exits;
+	u64 l1d_flush;
 	u64 halt_exits;
 	u64 halt_successful_poll;
 	u64 halt_attempted_poll;

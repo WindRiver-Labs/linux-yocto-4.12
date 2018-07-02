@@ -2068,6 +2068,7 @@ static int pf_interception(struct vcpu_svm *svm)
 	u64 error_code;
 	int r = 1;
 
+	svm->vcpu.arch.l1tf_flush_l1d = true;
 	switch (svm->apf_reason) {
 	default:
 		error_code = svm->vmcb->control.exit_info_1;

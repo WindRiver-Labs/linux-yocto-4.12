@@ -5725,6 +5725,7 @@ static int handle_exception(struct kvm_vcpu *vcpu)
 		BUG_ON(enable_ept);
 		cr2 = vmcs_readl(EXIT_QUALIFICATION);
 		trace_kvm_page_fault(cr2, error_code);
+		vcpu->arch.l1tf_flush_l1d = true;
 
 		if (kvm_event_needs_reinjection(vcpu))
 			kvm_mmu_unprotect_page_virt(vcpu, cr2);
@@ -8505,9 +8506,20 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu)
 #define L1D_CACHE_ORDER 4
 static void *vmx_l1d_flush_pages;
 
-static void __maybe_unused vmx_l1d_flush(void)
+static void vmx_l1d_flush(struct kvm_vcpu *vcpu)
 {
 	int size = PAGE_SIZE << L1D_CACHE_ORDER;
+	bool always;
+
+	/*
+	 * If the mitigation mode is 'flush always', keep the flush bit
+	 * set, otherwise clear it. It gets set again either from
+	 * vcpu_run() or from one of the unsafe VMEXIT handlers.
+	 */
+	always = vmentry_l1d_flush == VMENTER_L1D_FLUSH_ALWAYS;
+	vcpu->arch.l1tf_flush_l1d = always;
+
+	vcpu->stat.l1d_flush++;
 
 	if (static_cpu_has(X86_FEATURE_FLUSH_L1D)) {
 		wrmsrl(MSR_IA32_FLUSH_CMD, L1D_FLUSH);
@@ -8771,6 +8783,7 @@ static void vmx_handle_external_intr(struct kvm_vcpu *vcpu)
 			[ss]"i"(__KERNEL_DS),
 			[cs]"i"(__KERNEL_CS)
 			);
+		vcpu->arch.l1tf_flush_l1d = true;
 	}
 }
 
@@ -8994,6 +9007,12 @@ static void __noclone vmx_vcpu_run(struct kvm_vcpu *vcpu)
 	vmx_arm_hv_timer(vcpu);
 
 	vmx->__launched = vmx->loaded_vmcs->launched;
+
+	if (static_branch_unlikely(&vmx_l1d_should_flush)) {
+		if (vcpu->arch.l1tf_flush_l1d)
+		vmx_l1d_flush(vcpu);
+	}
+
 	asm(
 		/* Store host registers */
 		"push %%" _ASM_DX "; push %%" _ASM_BP ";"
@@ -10850,6 +10869,9 @@ static void sync_vmcs12(struct kvm_vcpu *vcpu, struct vmcs12 *vmcs12)
 				vmx_get_preemption_timer_value(vcpu);
 		hrtimer_cancel(&to_vmx(vcpu)->nested.preemption_timer);
 	}
+
+	/* Hide L1D cache contents from the nested guest.  */
+	vmx->vcpu.arch.l1tf_flush_l1d = true;
 
 	/*
 	 * In some cases (usually, nested EPT), L2 is allowed to change its
