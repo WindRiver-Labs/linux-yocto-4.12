@@ -521,7 +521,7 @@ static void nxp_fspi_init_lut(struct nxp_fspi *fspi)
 		op = FSPINOR_OP_READ_1_1_8_4B;
 		writel(LUT0(CMD, PAD1, op) | LUT1(ADDR, PAD1, addrlen),
 				base + FSPI_LUT(lut_base));
-		writel(LUT0(DUMMY, PAD8, dm) | LUT1(FSL_READ, PAD8, 0),
+		writel(LUT0(DUMMY, PAD8, dm) | LUT1(NXP_READ, PAD8, 0),
 				base + FSPI_LUT(lut_base + 1));
 	} else {
 		if ((op == SPINOR_OP_READ4_FAST) ||
@@ -531,7 +531,7 @@ static void nxp_fspi_init_lut(struct nxp_fspi *fspi)
 			dm = 8;
 			writel(LUT0(CMD, PAD1, op) | LUT1(ADDR, PAD1, addrlen),
 					base + FSPI_LUT(lut_base));
-			writel(LUT0(DUMMY, PAD1, dm) | LUT1(FSL_READ, PAD1, 0),
+			writel(LUT0(DUMMY, PAD1, dm) | LUT1(NXP_READ, PAD1, 0),
 					base + FSPI_LUT(lut_base + 1));
 		} else if (nor->flash_read == SPI_NOR_QUAD) {
 			dev_info(nor->dev, "Unsupported opcode : 0x%.2x\n", op);
@@ -1166,6 +1166,7 @@ static int nxp_fspi_probe(struct platform_device *pdev)
 	struct spi_nor *nor;
 	struct mtd_info *mtd;
 	int ret, i = 0;
+	int find_node = 0;
 
 	const struct of_device_id *of_id =
 			of_match_device(nxp_fspi_dt_ids, &pdev->dev);
@@ -1247,6 +1248,7 @@ static int nxp_fspi_probe(struct platform_device *pdev)
 
 	mutex_init(&fspi->lock);
 
+	find_node = 0;
 	/* iterate the subnodes. */
 	for_each_available_child_of_node(dev->of_node, np) {
 		enum read_mode mode = SPI_NOR_FAST;
@@ -1275,7 +1277,7 @@ static int nxp_fspi_probe(struct platform_device *pdev)
 		ret = of_property_read_u32(np, "spi-max-frequency",
 				&fspi->clk_rate);
 		if (ret < 0)
-			goto mutex_failed;
+			goto next_node;
 
 		ret = of_property_read_u32(np, "spi-rx-bus-width",
 				&fspi->spi_rx_bus_width);
@@ -1292,11 +1294,11 @@ static int nxp_fspi_probe(struct platform_device *pdev)
 
 		ret = spi_nor_scan(nor, NULL, mode);
 		if (ret)
-			goto mutex_failed;
+			goto next_node;
 
 		ret = mtd_device_register(mtd, NULL, 0);
 		if (ret)
-			goto mutex_failed;
+			goto next_node;
 
 		/* Set the correct NOR size now. */
 		if (fspi->nor_size == 0) {
@@ -1316,8 +1318,13 @@ static int nxp_fspi_probe(struct platform_device *pdev)
 		if (nor->page_size > fspi->devtype_data->txfifo)
 			nor->page_size = fspi->devtype_data->txfifo;
 
+		find_node++;
+next_node:
 		i++;
 	}
+
+	if (find_node == 0)
+		goto mutex_failed;
 
 	/* finish the rest init. */
 	ret = nxp_fspi_nor_setup_last(fspi);
