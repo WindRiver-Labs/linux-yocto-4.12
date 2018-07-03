@@ -83,7 +83,8 @@
 	cp110-master {
 		config-space@f2000000 {
 			pinctrl@440000 {
-			compatible = "marvell,a70x0-pinctrl";
+				compatible = "marvell,a70x0-pinctrl";
+				reg = <0x440000 0x20>;
 				cpm_tdm_pins: tdm-pins {
 					marvell,pins = "mpp0", "mpp1", "mpp2",
 					"mpp3", "mpp4", "mpp5";
