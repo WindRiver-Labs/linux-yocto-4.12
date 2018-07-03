@@ -156,6 +156,7 @@
 				dma-coherent;
 				interrupts = <ICU_GRP_NSR 106 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&cpm_syscon0 1 22>;
+				needs-reset-on-resume;
 				status = "disabled";
 			};
 
@@ -166,6 +167,7 @@
 				dma-coherent;
 				interrupts = <ICU_GRP_NSR 105 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&cpm_syscon0 1 23>;
+				needs-reset-on-resume;
 				status = "disabled";
 			};
 
