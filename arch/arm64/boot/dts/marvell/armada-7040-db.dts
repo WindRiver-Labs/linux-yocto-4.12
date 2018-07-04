@@ -353,6 +353,8 @@
 	bus-width = <4>;
 	no-1-8-v;
 	non-removable;
+	pinctrl-names = "default";
+	pinctrl-0 = <&ap_emmc_pins>;
 };
 
 &cpm_sdhci0 {
@@ -361,6 +363,7 @@
 	no-1-8-v;
 	non-removable;
 	pinctrl-names = "default";
+	pinctrl-0 = <&cpm_sdhci_pins>;
 };
 
 &cpm_mdio {
