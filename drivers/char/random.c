@@ -430,7 +430,7 @@ struct crng_state primary_crng = {
  * its value (from 0->1->2).
  */
 static int crng_init = 0;
-#define crng_ready() (likely(crng_init > 0))
+#define crng_ready() (likely(crng_init > 1))
 static int crng_init_cnt = 0;
 #define CRNG_INIT_CNT_THRESH (2*CHACHA20_KEY_SIZE)
 static void _extract_crng(struct crng_state *crng,
@@ -788,6 +788,32 @@ static void crng_initialize(struct crng_state *crng)
 	crng->init_time = jiffies - CRNG_RESEED_INTERVAL - 1;
 }
 
+#ifdef CONFIG_NUMA
+static void numa_crng_init(void)
+{
+	int i;
+	struct crng_state *crng;
+	struct crng_state **pool;
+
+	pool = kcalloc(nr_node_ids, sizeof(*pool), GFP_KERNEL|__GFP_NOFAIL);
+	for_each_online_node(i) {
+		crng = kmalloc_node(sizeof(struct crng_state),
+				    GFP_KERNEL | __GFP_NOFAIL, i);
+		spin_lock_init(&crng->lock);
+		crng_initialize(crng);
+		pool[i] = crng;
+	}
+	mb();
+	if (cmpxchg(&crng_node_pool, NULL, pool)) {
+		for_each_node(i)
+			kfree(pool[i]);
+		kfree(pool);
+	}
+}
+#else
+static void numa_crng_init(void) {}
+#endif
+
 static int crng_fast_load(const char *cp, size_t len)
 {
 	unsigned long flags;
@@ -795,7 +821,7 @@ static int crng_fast_load(const char *cp, size_t len)
 
 	if (!spin_trylock_irqsave(&primary_crng.lock, flags))
 		return 0;
-	if (crng_ready()) {
+	if (crng_init != 0) {
 		spin_unlock_irqrestore(&primary_crng.lock, flags);
 		return 0;
 	}
@@ -845,6 +871,7 @@ static void crng_reseed(struct crng_state *crng, struct entropy_store *r)
 	spin_unlock_irqrestore(&primary_crng.lock, flags);
 	if (crng == &primary_crng && crng_init < 2) {
 		invalidate_batched_entropy();
+		numa_crng_init();
 		crng_init = 2;
 		process_random_ready_list();
 		wake_up_interruptible(&crng_init_wait);
@@ -857,7 +884,7 @@ static void _extract_crng(struct crng_state *crng,
 {
 	unsigned long v, flags;
 
-	if (crng_init > 1 &&
+	if (crng_ready() &&
 	    time_after(jiffies, crng->init_time + CRNG_RESEED_INTERVAL))
 		crng_reseed(crng, crng == &primary_crng ? &input_pool : NULL);
 	spin_lock_irqsave(&crng->lock, flags);
@@ -1134,7 +1161,7 @@ void add_interrupt_randomness(int irq, int irq_flags, __u64 ip)
 	fast_mix(fast_pool);
 	add_interrupt_bench(cycles);
 
-	if (!crng_ready()) {
+	if (unlikely(crng_init == 0)) {
 		if ((fast_pool->count >= 64) &&
 		    crng_fast_load((char *) fast_pool->pool,
 				   sizeof(fast_pool->pool))) {
@@ -1648,28 +1675,9 @@ static void init_std_data(struct entropy_store *r)
  */
 static int rand_initialize(void)
 {
-#ifdef CONFIG_NUMA
-	int i;
-	struct crng_state *crng;
-	struct crng_state **pool;
-#endif
-
 	init_std_data(&input_pool);
 	init_std_data(&blocking_pool);
 	crng_initialize(&primary_crng);
-
-#ifdef CONFIG_NUMA
-	pool = kcalloc(nr_node_ids, sizeof(*pool), GFP_KERNEL|__GFP_NOFAIL);
-	for_each_online_node(i) {
-		crng = kmalloc_node(sizeof(struct crng_state),
-				    GFP_KERNEL | __GFP_NOFAIL, i);
-		spin_lock_init(&crng->lock);
-		crng_initialize(crng);
-		pool[i] = crng;
-	}
-	mb();
-	crng_node_pool = pool;
-#endif
 	return 0;
 }
 early_initcall(rand_initialize);
@@ -2174,7 +2182,7 @@ void add_hwgenerator_randomness(const char *buffer, size_t count,
 {
 	struct entropy_store *poolp = &input_pool;
 
-	if (!crng_ready()) {
+	if (unlikely(crng_init == 0)) {
 		crng_fast_load(buffer, count);
 		return;
 	}
