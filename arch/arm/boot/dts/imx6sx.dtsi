@@ -900,6 +900,10 @@
 						reg = <2>;
 						#power-domain-cells = <0>;
 						power-supply = <&reg_soc>;
+						clocks = <&clks IMX6SX_CLK_IPG>,
+							<&clks IMX6SX_CLK_PXP_AXI>, <&clks IMX6SX_CLK_DISPLAY_AXI>,
+							<&clks IMX6SX_CLK_LCDIF1_PIX>, <&clks IMX6SX_CLK_LCDIF_APB>,
+							<&clks IMX6SX_CLK_LCDIF2_PIX>, <&clks IMX6SX_CLK_CSI>;
 					};
 
 					pd_pci: power-domain@3 {
