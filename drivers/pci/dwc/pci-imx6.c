@@ -1234,6 +1234,7 @@ static int pci_imx_resume_noirq(struct device *dev)
 				IMX6Q_GPR1_PCIE_TEST_PD, 0);
 	}
 
+	mdelay(50);
 	return 0;
 }
 
