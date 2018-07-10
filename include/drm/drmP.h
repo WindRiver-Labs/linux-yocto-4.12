@@ -515,6 +515,9 @@ static inline int drm_device_is_unplugged(struct drm_device *dev)
 
 /*@}*/
 
+/* platform section */
+extern int drm_platform_init(struct drm_driver *driver, struct platform_device *platform_device);
+
 /* returns true if currently okay to sleep */
 static __inline__ bool drm_can_sleep(void)
 {
