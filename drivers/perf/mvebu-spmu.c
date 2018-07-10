@@ -76,6 +76,7 @@ struct mvebu_spmu {
 	cpumask_t cpu;
 	struct notifier_block cpu_nb;
 	struct pmu pmu;
+	struct hlist_node node_cpu_down;
 };
 
 /*
@@ -504,30 +505,25 @@ irqreturn_t mvebu_spmu_irq_handler(int irq, void *dev_id)
 	return rc;
 }
 
-static int mvebu_spmu_cpu_notifier(struct notifier_block *nb,
-		unsigned long action, void *hcpu)
+static int mvebu_spmu_cpu_down_pre(unsigned int cpu, struct hlist_node *node)
 {
-	struct mvebu_spmu *spmu = container_of(nb, struct mvebu_spmu, cpu_nb);
-	unsigned int cpu = (long)hcpu;
+	struct mvebu_spmu *spmu;
 	unsigned int target;
 
-	switch (action & ~CPU_TASKS_FROZEN) {
-	case CPU_DOWN_PREPARE:
-		if (!cpumask_test_and_clear_cpu(cpu, &spmu->cpu))
-			break;
-		target = cpumask_any_but(cpu_online_mask, cpu);
-		if (target >= nr_cpu_ids)
-			break;
-		perf_pmu_migrate_context(&spmu->pmu, cpu, target);
-		cpumask_set_cpu(target, &spmu->cpu);
-		if (spmu->irq)
-			WARN_ON(irq_set_affinity(spmu->irq, &spmu->cpu) != 0);
-		break;
-	default:
-		break;
-	}
+	spmu = hlist_entry_safe(node, struct mvebu_spmu, node_cpu_down);
+	if (!cpumask_test_and_clear_cpu(cpu, &spmu->cpu))
+		return 0;
 
-	return NOTIFY_OK;
+	target = cpumask_any_but(cpu_online_mask, cpu);
+	if (target >= nr_cpu_ids)
+		return 0;
+
+	perf_pmu_migrate_context(&spmu->pmu, cpu, target);
+	cpumask_set_cpu(target, &spmu->cpu);
+	if (spmu->irq)
+		WARN_ON(irq_set_affinity(spmu->irq, &spmu->cpu) != 0);
+
+	return 0;
 }
 
 static int mvebu_spmu_pmu_init(struct mvebu_spmu *spmu)
@@ -540,15 +536,11 @@ static int mvebu_spmu_pmu_init(struct mvebu_spmu *spmu)
 	/* Pick one CPU which we will use to collect data from SPMU... */
 	cpumask_set_cpu(smp_processor_id(), &spmu->cpu);
 
-	/*
-	 * Change the cpu mask when the selected one goes offline. Priority is
-	 * picked to have a chance to migrate events before perf is notified.
-	 */
-	spmu->cpu_nb.notifier_call = mvebu_spmu_cpu_notifier;
-	spmu->cpu_nb.priority = CPU_PRI_PERF + 1,
-	err = register_cpu_notifier(&spmu->cpu_nb);
+	/* Change the cpu mask when the selected one goes offline.*/
+	err = cpuhp_state_add_instance_nocalls(CPUHP_MVEBU_SPMU_PREPARE,
+						   &spmu->node_cpu_down);
 	if (err)
-		goto error_cpu_notifier;
+		goto err_free_cpu_down_hp;
 
 	/* Also make sure that the overflow interrupt is handled by this CPU */
 	if (spmu->irq) {
@@ -576,9 +568,9 @@ static int mvebu_spmu_pmu_init(struct mvebu_spmu *spmu)
 	return err;
 
 error_set_affinity:
-	unregister_cpu_notifier(&spmu->cpu_nb);
-
-error_cpu_notifier:
+	cpuhp_state_remove_instance_nocalls(CPUHP_MVEBU_SPMU_PREPARE,
+						&spmu->node_cpu_down);
+err_free_cpu_down_hp:
 
 	return err;
 }
@@ -636,7 +628,8 @@ static int mvebu_spmu_probe(struct platform_device *pdev)
 static void mvebu_spmu_cleanup(struct mvebu_spmu *spmu)
 {
 	irq_set_affinity(spmu->irq, cpu_possible_mask);
-	unregister_cpu_notifier(&spmu->cpu_nb);
+	cpuhp_state_remove_instance_nocalls(CPUHP_MVEBU_SPMU_PREPARE,
+					&spmu->node_cpu_down);
 	perf_pmu_unregister(&spmu->pmu);
 }
 
@@ -665,6 +658,13 @@ static struct platform_driver mvebu_spmu_driver = {
 
 static int __init mvebu_spmu_init(void)
 {
+	int err;
+
+	err = cpuhp_setup_state_multi(CPUHP_MVEBU_SPMU_PREPARE, "mvebu/spmu:predown",
+						NULL, mvebu_spmu_cpu_down_pre);
+	if (err)
+		return err;
+
 	return platform_driver_register(&mvebu_spmu_driver);
 }
 
@@ -673,9 +673,8 @@ static void __exit mvebu_spmu_exit(void)
 	platform_driver_unregister(&mvebu_spmu_driver);
 }
 
-module_init(mvebu_spmu_init);
+late_initcall(mvebu_spmu_init);
 module_exit(mvebu_spmu_exit);
 
 MODULE_AUTHOR("Shadi Ammouri <shadi@marvell.com>");
 MODULE_LICENSE("GPL");
-
