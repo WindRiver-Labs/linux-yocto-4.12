@@ -21,7 +21,7 @@ config FSL_DPAA_MACSEC
 
 config FSL_DPAA_CEETM
 	bool "DPAA CEETM QoS"
-	select NET_SCHED
+	depends on NET_SCHED
 	default n
 	---help---
 	Enable QoS offloading support through the CEETM hardware block.
