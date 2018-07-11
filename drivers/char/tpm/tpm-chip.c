@@ -175,7 +175,7 @@ static int tpm_class_shutdown(struct device *dev)
 	return 0;
 }
 
-static const struct dmi_system_id __initdata up2_board_dmi_table[] = {
+static const struct dmi_system_id up2_board_dmi_table[] = {
 	{
 		.matches = {
 			DMI_MATCH(DMI_BIOS_VENDOR, "American Megatrends Inc."),
