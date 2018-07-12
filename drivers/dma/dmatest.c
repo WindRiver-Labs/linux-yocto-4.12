@@ -57,10 +57,10 @@ module_param(sg_buffers, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(sg_buffers,
 		"Number of scatter gather buffers (default: 1)");
 
-static unsigned int dmatest;
+static unsigned int dmatest = 1;
 module_param(dmatest, uint, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(dmatest,
-		"dmatest 0-memcpy 1-slave_sg (default: 0)");
+		"dmatest 0-memcpy 1-slave_sg (default: 1)");
 
 static unsigned int xor_sources = 3;
 module_param(xor_sources, uint, S_IRUGO | S_IWUSR);
