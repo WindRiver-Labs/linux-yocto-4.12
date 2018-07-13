@@ -191,6 +191,7 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 				interrupts = <ICU_GRP_NSR 120 IRQ_TYPE_LEVEL_HIGH>;
+				timeout-ms = <1000>;
 				clocks = <&cps_syscon0 1 21>;
 				status = "disabled";
 			};
@@ -201,6 +202,7 @@
 				#address-cells = <1>;
 				#size-cells = <0>;
 				interrupts = <ICU_GRP_NSR 120 IRQ_TYPE_LEVEL_HIGH>;
+				timeout-ms = <1000>;
 				clocks = <&cps_syscon0 1 21>;
 				status = "disabled";
 			};
