@@ -1588,7 +1588,7 @@ static void qeth_l3_free_vlan_addresses4(struct qeth_card *card,
 
 	addr = qeth_l3_get_addr_buffer(QETH_PROT_IPV4);
 	if (!addr)
-		return;
+		goto out;
 
 	spin_lock_bh(&card->ip_lock);
 
@@ -1602,6 +1602,7 @@ static void qeth_l3_free_vlan_addresses4(struct qeth_card *card,
 	spin_unlock_bh(&card->ip_lock);
 
 	kfree(addr);
+out:
 	in_dev_put(in_dev);
 }
 
@@ -1626,7 +1627,7 @@ static void qeth_l3_free_vlan_addresses6(struct qeth_card *card,
 
 	addr = qeth_l3_get_addr_buffer(QETH_PROT_IPV6);
 	if (!addr)
-		return;
+		goto out;
 
 	spin_lock_bh(&card->ip_lock);
 
@@ -1641,6 +1642,7 @@ static void qeth_l3_free_vlan_addresses6(struct qeth_card *card,
 	spin_unlock_bh(&card->ip_lock);
 
 	kfree(addr);
+out:
 	in6_dev_put(in6_dev);
 #endif /* CONFIG_QETH_IPV6 */
 }
@@ -2944,6 +2946,7 @@ static const struct net_device_ops qeth_l3_netdev_ops = {
 	.ndo_stop		= qeth_l3_stop,
 	.ndo_get_stats		= qeth_get_stats,
 	.ndo_start_xmit		= qeth_l3_hard_start_xmit,
+	.ndo_features_check	= qeth_features_check,
 	.ndo_validate_addr	= eth_validate_addr,
 	.ndo_set_rx_mode	= qeth_l3_set_multicast_list,
 	.ndo_do_ioctl		= qeth_do_ioctl,
@@ -3000,6 +3003,7 @@ static int qeth_l3_setup_netdev(struct qeth_card *card)
 				card->dev->vlan_features = NETIF_F_SG |
 					NETIF_F_RXCSUM | NETIF_F_IP_CSUM |
 					NETIF_F_TSO;
+				card->dev->features |= NETIF_F_SG;
 			}
 		}
 	} else if (card->info.type == QETH_CARD_TYPE_IQD) {
@@ -3027,8 +3031,8 @@ static int qeth_l3_setup_netdev(struct qeth_card *card)
 				NETIF_F_HW_VLAN_CTAG_RX |
 				NETIF_F_HW_VLAN_CTAG_FILTER;
 	netif_keep_dst(card->dev);
-	card->dev->gso_max_size = (QETH_MAX_BUFFER_ELEMENTS(card) - 1) *
-				  PAGE_SIZE;
+	netif_set_gso_max_size(card->dev, (QETH_MAX_BUFFER_ELEMENTS(card) - 1) *
+					  PAGE_SIZE);
 
 	SET_NETDEV_DEV(card->dev, &card->gdev->dev);
 	netif_napi_add(card->dev, &card->napi, qeth_poll, QETH_NAPI_WEIGHT);
