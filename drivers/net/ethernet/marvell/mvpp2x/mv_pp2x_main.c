@@ -6310,6 +6310,20 @@ static int mvpp2x_resume(struct device *dev)
 	return 0;
 }
 
+static void mvpp2x_shutdown(struct platform_device *pdev)
+{
+	struct mv_pp2x *priv = platform_get_drvdata(pdev);
+	int i = 0;
+
+	for (i = 0; i < MVPP2_BM_SWF_NUM_POOLS; i++) {
+		struct mv_pp2x_bm_pool *bm_pool = &priv->bm_pools[i];
+
+		mv_pp2x_bm_pool_destroy(&pdev->dev, priv, bm_pool);
+	}
+
+	return;
+}
+
 static const struct dev_pm_ops mv_pp2x_pm_ops = {
 	.suspend = mvpp2x_suspend,
 	.resume = mvpp2x_resume,
@@ -6321,6 +6335,7 @@ MODULE_DEVICE_TABLE(of, mv_pp2x_match_tbl);
 static struct platform_driver mv_pp2x_driver = {
 	.probe = mv_pp2x_probe,
 	.remove = mv_pp2x_remove,
+	.shutdown = mvpp2x_shutdown,
 	.driver = {
 		.name = MVPP2_DRIVER_NAME,
 		.of_match_table = mv_pp2x_match_tbl,
