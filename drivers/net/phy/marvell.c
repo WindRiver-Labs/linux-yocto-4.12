@@ -1639,7 +1639,7 @@ static int marvell_suspend(struct phy_device *phydev)
 	int err;
 
 	/* Suspend the fiber mode first */
-	if (!(phydev->supported & SUPPORTED_FIBRE)) {
+	if ((phydev->supported & SUPPORTED_FIBRE)) {
 		err = phy_write(phydev, MII_MARVELL_PHY_PAGE, MII_M1111_FIBER);
 		if (err < 0)
 			goto error;
@@ -1673,7 +1673,7 @@ static int marvell_resume(struct phy_device *phydev)
 	int err;
 
 	/* Resume the fiber mode first */
-	if (!(phydev->supported & SUPPORTED_FIBRE)) {
+	if ((phydev->supported & SUPPORTED_FIBRE)) {
 		err = phy_write(phydev, MII_MARVELL_PHY_PAGE, MII_M1111_FIBER);
 		if (err < 0)
 			goto error;
