@@ -514,6 +514,15 @@ struct i915_hotplug {
 	     (__i)++) \
 		for_each_if (plane_state)
 
+#define for_each_new_intel_crtc_in_state(__state, crtc, new_crtc_state, __i) \
+	for ((__i) = 0; \
+	     (__i) < (__state)->base.dev->mode_config.num_crtc && \
+		     ((crtc) = to_intel_crtc((__state)->base.crtcs[__i].ptr), \
+		      (new_crtc_state) = to_intel_crtc_state((__state)->base.crtcs[__i].new_state), 1); \
+	     (__i)++) \
+		for_each_if (crtc)
+
+
 struct drm_i915_private;
 struct i915_mm_struct;
 struct i915_mmu_object;
@@ -902,6 +911,7 @@ struct intel_device_info {
 	u8 gen;
 	u16 gen_mask;
 	enum intel_platform platform;
+	u8 gt; /* GT number, 0 if undefined */
 	u8 ring_mask; /* Rings supported by the HW */
 	u8 num_rings;
 #define DEFINE_FLAG(name) u8 name:1
@@ -2311,7 +2321,8 @@ struct drm_i915_private {
 	struct mutex dpll_lock;
 
 	unsigned int active_crtcs;
-	unsigned int min_pixclk[I915_MAX_PIPES];
+	/* minimum acceptable cdclk for each pipe */
+	int min_cdclk[I915_MAX_PIPES];
 
 	int dpio_phy_iosf_port[I915_NUM_PHYS_VLV];
 
@@ -2795,6 +2806,8 @@ intel_info(const struct drm_i915_private *dev_priv)
 				 (INTEL_DEVID(dev_priv) & 0x00F0) == 0x0020)
 #define IS_SKL_GT4(dev_priv)	(IS_SKYLAKE(dev_priv) && \
 				 (INTEL_DEVID(dev_priv) & 0x00F0) == 0x0030)
+#define IS_CFL_ULT(dev_priv)	(IS_COFFEELAKE(dev_priv) && \
+				 (INTEL_DEVID(dev_priv) & 0x00F0) == 0x00A0)
 
 #define IS_ALPHA_SUPPORT(intel_info) ((intel_info)->is_alpha_support)
 
@@ -3740,8 +3753,8 @@ int  intel_lpe_audio_init(struct drm_i915_private *dev_priv);
 void intel_lpe_audio_teardown(struct drm_i915_private *dev_priv);
 void intel_lpe_audio_irq_handler(struct drm_i915_private *dev_priv);
 void intel_lpe_audio_notify(struct drm_i915_private *dev_priv,
-			    void *eld, int port, int pipe, int tmds_clk_speed,
-			    bool dp_output, int link_rate);
+			    enum pipe pipe, enum port port,
+			    const void *eld, int ls_clock, bool dp_output);
 
 /* intel_i2c.c */
 extern int intel_setup_gmbus(struct drm_i915_private *dev_priv);
