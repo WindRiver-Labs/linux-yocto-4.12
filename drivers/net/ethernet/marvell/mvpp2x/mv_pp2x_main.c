@@ -50,6 +50,9 @@
 #include <asm/cacheflush.h>
 #include <linux/dma-mapping.h>
 #include <dt-bindings/phy/phy-comphy-mvebu.h>
+#ifdef CONFIG_KEXEC
+#include <linux/kexec.h>
+#endif
 
 #include "mv_pp2x.h"
 #include "mv_pp2x_hw.h"
@@ -540,6 +543,38 @@ err_unroll_pools:
 	return err;
 }
 
+void mv_pp2x_bm_crash_shutdown(void *data)
+{
+	struct platform_device *pdev = data;
+	struct mv_pp2x *priv = platform_get_drvdata(pdev);
+	u32 val;
+	int buf_num, i;
+
+	for (i = 0; i < MVPP2_BM_SWF_NUM_POOLS; i++) {
+		struct mv_pp2x_bm_pool *bm_pool = &priv->bm_pools[i];
+
+		buf_num = mv_pp2x_check_hw_buf_num(priv, bm_pool);
+		mv_pp2x_bm_bufs_free(&pdev->dev, priv, bm_pool, buf_num);
+
+		/* Check buffer counters after free */
+		buf_num = mv_pp2x_check_hw_buf_num(priv, bm_pool);
+		if (buf_num) {
+			WARN(1, "cannot free all buffers in pool %d, buf_num left %d\n",
+				 bm_pool->id,
+				 bm_pool->buf_num);
+			return;
+		}
+
+		val = mv_pp2x_read(&priv->hw, MVPP2_BM_POOL_CTRL_REG(bm_pool->id));
+		val |= MVPP2_BM_STOP_MASK;
+		mv_pp2x_write(&priv->hw, MVPP2_BM_POOL_CTRL_REG(bm_pool->id), val);
+
+		mv_pp2x_bm_pool_bufsize_set(&priv->hw, bm_pool, 0);
+	}
+
+	return;
+}
+
 static int mv_pp2x_bm_init(struct platform_device *pdev, struct mv_pp2x *priv)
 {
 	int i, err, cpu;
@@ -574,6 +609,11 @@ static int mv_pp2x_bm_init(struct platform_device *pdev, struct mv_pp2x *priv)
 	err = mv_pp2x_bm_pools_init(pdev, priv, first_pool, num_pools);
 	if (err < 0)
 		return err;
+
+#ifdef CONFIG_KEXEC
+	crash_shutdown_register(&mv_pp2x_bm_crash_shutdown, pdev);
+#endif
+
 	return 0;
 }
 

@@ -30,6 +30,28 @@
 
 #ifndef __ASSEMBLY__
 
+typedef void (*crash_shutdown_t)(void *data);
+
+struct crash_shutdown {
+	void (*crash_shutdown_fcun)(void *data);
+	void *data;
+};
+
+#ifdef CONFIG_KEXEC
+extern int crash_shutdown_register(crash_shutdown_t handler, void *data);
+extern int crash_shutdown_unregister(crash_shutdown_t handler, void *data);
+#else /* !CONFIG_KEXEC */
+static inline int crash_shutdown_register(crash_shutdown_t handler, void *data)
+{
+	return 0;
+}
+
+static inline int crash_shutdown_unregister(crash_shutdown_t handler, void *data)
+{
+	return 0;
+}
+#endif
+
 /**
  * crash_setup_regs() - save registers for the panic kernel
  *
