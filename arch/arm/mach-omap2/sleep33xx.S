@@ -250,6 +250,7 @@ module_disabled_val:
 	.word	0x30000
 
 /* DDR related defines */
+	.align 3
 am33xx_emif_sram_table:
 	.space EMIF_PM_FUNCTIONS_SIZE
 
