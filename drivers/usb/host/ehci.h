@@ -719,13 +719,6 @@ ehci_port_speed(struct ehci_hcd *ehci, unsigned int portsc)
 #endif
 
 /*
- * Some Freescale/NXP processors have an erratum (USB A-005697)
- * in which we need to wait for 10ms for bus to enter suspend mode
- * after setting SUSP bit.
- */
-#define ehci_has_fsl_susp_errata(e)	((e)->has_fsl_susp_errata)
-
-/*
  * While most USB host controllers implement their registers in
  * little-endian format, a minority (celleb companion chip) implement
  * them in big endian format.
