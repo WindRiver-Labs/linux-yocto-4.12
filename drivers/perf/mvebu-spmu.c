@@ -560,6 +560,7 @@ static int mvebu_spmu_pmu_init(struct mvebu_spmu *spmu)
 	spmu->pmu.start = mvebu_spmu_start;
 	spmu->pmu.stop = mvebu_spmu_stop;
 	spmu->pmu.read = mvebu_spmu_read;
+	spmu->pmu.task_ctx_nr = perf_invalid_context;
 
 	err = perf_pmu_register(&spmu->pmu, name, -1);
 	if (err)
