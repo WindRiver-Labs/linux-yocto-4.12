@@ -419,7 +419,7 @@ xfs_dinode_verify_fork(
 	default:
 		return false;
 	}
-	return NULL;
+	return true;
 }
 
 static bool
