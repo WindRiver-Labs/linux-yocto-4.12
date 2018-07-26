@@ -222,7 +222,6 @@
 				compatible = "arm,cortex-a72-pmu";
 				interrupt-parent = <&pic>;
 				interrupts = <17>;
-				status = "disabled";
 			};
 
 			ccu-spmu {
