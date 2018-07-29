@@ -56,6 +56,7 @@
 #include <linux/stackprotector.h>
 #include <linux/gfp.h>
 #include <linux/cpuidle.h>
+#include <asm/hw_irq.h>
 
 #include <asm/acpi.h>
 #include <asm/desc.h>
