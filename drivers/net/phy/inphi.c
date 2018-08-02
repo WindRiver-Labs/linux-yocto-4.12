@@ -468,12 +468,12 @@ int inphi_lane_recovery(int lane)
 	case 3:
 		/* reset lanes individually */
 		rx_reset_assert(lane);
-		WAIT(2000);
+		mdelay(20);
 		break;
 	case ALL_LANES:
 		/* start with RX, TX, TXPLL & Core in reset */
 		mdio_wr(MANUAL_RESET_CONTROL, 0x9C00);
-		WAIT(2000);
+		mdelay(20);
 		/* Check manual reset control register for regulator calibration
 		   done, and eventually loop back until the voltage regulators
 		   are up and calibration is done */
@@ -526,7 +526,7 @@ int inphi_lane_recovery(int lane)
 
 	/* loop to check timeout on auto-zero test completion */
 	for (i = 0; i < 64; i++) {
-		WAIT(10000);
+		mdelay(100);
 		az_pass = az_complete_test(lane);
 		if (az_pass) {
 			save_az_offsets(lane);
@@ -546,7 +546,7 @@ int inphi_lane_recovery(int lane)
 		mdio_wr(P_RX_MAIN_CONTROL, 0x0010);
 		WAIT(100);
 		mdio_wr(P_RX_MAIN_CONTROL, 0x0110);
-		WAIT(3000);
+		mdelay(30);
 		mdio_wr(P_RX_OSC_MAN_CTRL_1, 0x3020);
 	} else {
 		mdio_wr(L0_RX_FREQ_ACQ_CTRL_1 + lane * 0x100, 0x0002);
@@ -554,7 +554,7 @@ int inphi_lane_recovery(int lane)
 		mdio_wr(L0_RX_MAIN_CTRL + lane * 0x100, 0x0010);
 		WAIT(100);
 		mdio_wr(L0_RX_MAIN_CTRL + lane * 0x100, 0x0110);
-		WAIT(3000);
+		mdelay(30);
 		mdio_wr(L0_RX_OSC_MAN_CTRL_1 + lane * 0x100, 0x3020);
 	}
 
@@ -566,7 +566,7 @@ int inphi_lane_recovery(int lane)
 	}
 	else {
 		tx_restart(lane);
-		WAIT(1100);
+		mdelay(11);
 	}
 
 	/* check the aggregated PLL lock bit in the manual reset control reg
