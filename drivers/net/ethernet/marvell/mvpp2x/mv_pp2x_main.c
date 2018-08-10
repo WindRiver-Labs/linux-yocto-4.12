@@ -5330,6 +5330,8 @@ skip_tso_buffers:
 
 	mv_pp2x_port_irq_names_update(port);
 
+	spin_lock_init(&port->mac_data.stats_spinlock);
+
 	netdev_info(dev, "Using %s mac address %pM\n", mac_from, dev->dev_addr);
 
 	priv->port_list[priv->num_ports] = port;
