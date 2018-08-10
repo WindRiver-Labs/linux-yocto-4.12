@@ -92,6 +92,7 @@ enum {
 	Opt_disable_ext_identify,
 	Opt_inline_xattr,
 	Opt_noinline_xattr,
+	Opt_inline_xattr_size,
 	Opt_inline_data,
 	Opt_inline_dentry,
 	Opt_noinline_dentry,
@@ -127,6 +128,7 @@ static match_table_t f2fs_tokens = {
 	{Opt_disable_ext_identify, "disable_ext_identify"},
 	{Opt_inline_xattr, "inline_xattr"},
 	{Opt_noinline_xattr, "noinline_xattr"},
+	{Opt_inline_xattr_size, "inline_xattr_size=%u"},
 	{Opt_inline_data, "inline_data"},
 	{Opt_inline_dentry, "inline_dentry"},
 	{Opt_noinline_dentry, "noinline_dentry"},
@@ -211,6 +213,27 @@ static ssize_t f2fs_sbi_show(struct f2fs_attr *a,
 	if (!ptr)
 		return -EINVAL;
 
+	if (!strcmp(a->attr.name, "extension_list")) {
+		__u8 (*extlist)[F2FS_EXTENSION_LEN] =
+					sbi->raw_super->extension_list;
+		int cold_count = le32_to_cpu(sbi->raw_super->extension_count);
+		int hot_count = sbi->raw_super->hot_ext_count;
+		int len = 0, i;
+
+		len += snprintf(buf + len, PAGE_SIZE - len,
+						"cold file extenstion:\n");
+		for (i = 0; i < cold_count; i++)
+			len += snprintf(buf + len, PAGE_SIZE - len, "%s\n",
+								extlist[i]);
+
+		len += snprintf(buf + len, PAGE_SIZE - len,
+						"hot file extenstion:\n");
+		for (i = cold_count; i < cold_count + hot_count; i++)
+			len += snprintf(buf + len, PAGE_SIZE - len, "%s\n",
+								extlist[i]);
+		return len;
+	}
+
 	ui = (unsigned int *)(ptr + a->offset);
 
 	return snprintf(buf, PAGE_SIZE, "%u\n", *ui);
@@ -228,6 +251,41 @@ static ssize_t f2fs_sbi_store(struct f2fs_attr *a,
 	ptr = __struct_ptr(sbi, a->struct_type);
 	if (!ptr)
 		return -EINVAL;
+
+	if (!strcmp(a->attr.name, "extension_list")) {
+		const char *name = strim((char *)buf);
+		bool set = true, hot;
+
+		if (!strncmp(name, "[h]", 3))
+			hot = true;
+		else if (!strncmp(name, "[c]", 3))
+			hot = false;
+		else
+			return -EINVAL;
+
+		name += 3;
+
+		if (*name == '!') {
+			name++;
+			set = false;
+		}
+
+		if (strlen(name) >= F2FS_EXTENSION_LEN)
+			return -EINVAL;
+
+		down_write(&sbi->sb_lock);
+
+		ret = update_extension_list(sbi, name, hot, set);
+		if (ret)
+			goto out;
+
+		ret = f2fs_commit_super(sbi, false);
+		if (ret)
+			update_extension_list(sbi, name, hot, !set);
+out:
+		up_write(&sbi->sb_lock);
+		return ret ? ret : count;
+	}
 
 	ui = (unsigned int *)(ptr + a->offset);
 
@@ -304,6 +362,7 @@ F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, max_victim_search, max_victim_search);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, dir_level, dir_level);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, cp_interval, interval_time[CP_TIME]);
 F2FS_RW_ATTR(F2FS_SBI, f2fs_sb_info, idle_interval, interval_time[REQ_TIME]);
+F2FS_RW_ATTR(F2FS_SBI, f2fs_super_block, extension_list, extension_list);
 #ifdef CONFIG_F2FS_FAULT_INJECTION
 F2FS_RW_ATTR(FAULT_INFO_RATE, f2fs_fault_info, inject_rate, inject_rate);
 F2FS_RW_ATTR(FAULT_INFO_TYPE, f2fs_fault_info, inject_type, inject_type);
@@ -330,6 +389,7 @@ static struct attribute *f2fs_attrs[] = {
 	ATTR_LIST(dirty_nats_ratio),
 	ATTR_LIST(cp_interval),
 	ATTR_LIST(idle_interval),
+	ATTR_LIST(extension_list),
 #ifdef CONFIG_F2FS_FAULT_INJECTION
 	ATTR_LIST(inject_rate),
 	ATTR_LIST(inject_type),
@@ -456,6 +516,12 @@ static int parse_options(struct super_block *sb, char *options)
 			break;
 		case Opt_noinline_xattr:
 			clear_opt(sbi, INLINE_XATTR);
+			break;
+		case Opt_inline_xattr_size:
+			if (args->from && match_int(args, &arg))
+				return -EINVAL;
+			set_opt(sbi, INLINE_XATTR_SIZE);
+			sbi->inline_xattr_size = arg;
 			break;
 #else
 		case Opt_user_xattr:
@@ -599,6 +665,24 @@ static int parse_options(struct super_block *sb, char *options)
 				F2FS_IO_SIZE_KB(sbi));
 		return -EINVAL;
 	}
+
+	if (test_opt(sbi, INLINE_XATTR_SIZE)) {
+		if (!test_opt(sbi, INLINE_XATTR)) {
+			f2fs_msg(sb, KERN_ERR,
+					"inline_xattr_size option should be "
+					"set with inline_xattr option");
+			return -EINVAL;
+		}
+		if (!sbi->inline_xattr_size ||
+			sbi->inline_xattr_size >= DEF_ADDRS_PER_INODE -
+					F2FS_TOTAL_EXTRA_ATTR_SIZE -
+					DEF_INLINE_RESERVED_SIZE -
+					DEF_MIN_INLINE_SIZE) {
+			f2fs_msg(sb, KERN_ERR,
+					"inline xattr size is out of range");
+			return -EINVAL;
+		}
+	}
 	return 0;
 }
 
@@ -627,6 +711,7 @@ static struct inode *f2fs_alloc_inode(struct super_block *sb)
 
 	/* Will be used by directory only */
 	fi->i_dir_level = F2FS_SB(sb)->dir_level;
+
 	return &fi->vfs_inode;
 }
 
@@ -940,6 +1025,9 @@ static int f2fs_show_options(struct seq_file *seq, struct dentry *root)
 		seq_puts(seq, ",inline_xattr");
 	else
 		seq_puts(seq, ",noinline_xattr");
+	if (test_opt(sbi, INLINE_XATTR_SIZE))
+		seq_printf(seq, ",inline_xattr_size=%u",
+					sbi->inline_xattr_size);
 #endif
 #ifdef CONFIG_F2FS_FS_POSIX_ACL
 	if (test_opt(sbi, POSIX_ACL))
@@ -1057,6 +1145,7 @@ static void default_options(struct f2fs_sb_info *sbi)
 {
 	/* init some FS parameters */
 	sbi->active_logs = NR_CURSEG_TYPE;
+	sbi->inline_xattr_size = DEFAULT_INLINE_XATTR_ADDRS;
 
 	set_opt(sbi, BG_GC);
 	set_opt(sbi, INLINE_XATTR);
@@ -1297,8 +1386,15 @@ static const struct export_operations f2fs_export_ops = {
 
 static loff_t max_file_blocks(void)
 {
-	loff_t result = (DEF_ADDRS_PER_INODE - F2FS_INLINE_XATTR_ADDRS);
+	loff_t result = 0;
 	loff_t leaf_count = ADDRS_PER_BLOCK;
+
+	/*
+	 * note: previously, result is equal to (DEF_ADDRS_PER_INODE -
+	 * DEFAULT_INLINE_XATTR_ADDRS), but now f2fs try to reserve more
+	 * space in inode.i_addr, it will be more safe to reassign
+	 * result as zero.
+	 */
 
 	/* two direct node blocks */
 	result += (leaf_count * 2);
@@ -1433,6 +1529,8 @@ static inline bool sanity_check_area_boundary(struct f2fs_sb_info *sbi,
 static int sanity_check_raw_super(struct f2fs_sb_info *sbi,
 				struct buffer_head *bh)
 {
+	block_t segment_count, segs_per_sec, secs_per_zone;
+	block_t total_sections, blocks_per_seg;
 	struct f2fs_super_block *raw_super = (struct f2fs_super_block *)
 					(bh->b_data + F2FS_SUPER_OFFSET);
 	struct super_block *sb = sbi->sb;
@@ -1489,6 +1587,72 @@ static int sanity_check_raw_super(struct f2fs_sb_info *sbi,
 		return 1;
 	}
 
+	segment_count = le32_to_cpu(raw_super->segment_count);
+	segs_per_sec = le32_to_cpu(raw_super->segs_per_sec);
+	secs_per_zone = le32_to_cpu(raw_super->secs_per_zone);
+	total_sections = le32_to_cpu(raw_super->section_count);
+
+	/* blocks_per_seg should be 512, given the above check */
+	blocks_per_seg = 1 << le32_to_cpu(raw_super->log_blocks_per_seg);
+
+	if (segment_count > F2FS_MAX_SEGMENT ||
+				segment_count < F2FS_MIN_SEGMENTS) {
+		f2fs_msg(sb, KERN_INFO,
+			"Invalid segment count (%u)",
+			segment_count);
+		return 1;
+	}
+
+	if (total_sections > segment_count ||
+			total_sections < F2FS_MIN_SEGMENTS ||
+			segs_per_sec > segment_count || !segs_per_sec) {
+		f2fs_msg(sb, KERN_INFO,
+			"Invalid segment/section count (%u, %u x %u)",
+			segment_count, total_sections, segs_per_sec);
+		return 1;
+	}
+
+	if ((segment_count / segs_per_sec) < total_sections) {
+		f2fs_msg(sb, KERN_INFO,
+			"Small segment_count (%u < %u * %u)",
+			segment_count, segs_per_sec, total_sections);
+		return 1;
+	}
+
+	if (segment_count > (le32_to_cpu(raw_super->block_count) >> 9)) {
+		f2fs_msg(sb, KERN_INFO,
+			"Wrong segment_count / block_count (%u > %u)",
+			segment_count, le32_to_cpu(raw_super->block_count));
+		return 1;
+	}
+
+	if (secs_per_zone > total_sections || !secs_per_zone) {
+		f2fs_msg(sb, KERN_INFO,
+			"Wrong secs_per_zone / total_sections (%u, %u)",
+			secs_per_zone, total_sections);
+		return 1;
+	}
+	if (le32_to_cpu(raw_super->extension_count) > F2FS_MAX_EXTENSION ||
+			raw_super->hot_ext_count > F2FS_MAX_EXTENSION ||
+			(le32_to_cpu(raw_super->extension_count) +
+			raw_super->hot_ext_count) > F2FS_MAX_EXTENSION) {
+		f2fs_msg(sb, KERN_INFO,
+			"Corrupted extension count (%u + %u > %u)",
+			le32_to_cpu(raw_super->extension_count),
+			raw_super->hot_ext_count,
+			F2FS_MAX_EXTENSION);
+		return 1;
+	}
+
+	if (le32_to_cpu(raw_super->cp_payload) >
+				(blocks_per_seg - F2FS_CP_PACKS)) {
+		f2fs_msg(sb, KERN_INFO,
+			"Insane cp_payload (%u > %u)",
+			le32_to_cpu(raw_super->cp_payload),
+			blocks_per_seg - F2FS_CP_PACKS);
+		return 1;
+	}
+
 	/* check reserved ino info */
 	if (le32_to_cpu(raw_super->node_ino) != 1 ||
 		le32_to_cpu(raw_super->meta_ino) != 2 ||
@@ -1498,13 +1662,6 @@ static int sanity_check_raw_super(struct f2fs_sb_info *sbi,
 			le32_to_cpu(raw_super->node_ino),
 			le32_to_cpu(raw_super->meta_ino),
 			le32_to_cpu(raw_super->root_ino));
-		return 1;
-	}
-
-	if (le32_to_cpu(raw_super->segment_count) > F2FS_MAX_SEGMENT) {
-		f2fs_msg(sb, KERN_INFO,
-			"Invalid segment count (%u)",
-			le32_to_cpu(raw_super->segment_count));
 		return 1;
 	}
 
@@ -1522,12 +1679,20 @@ int sanity_check_ckpt(struct f2fs_sb_info *sbi)
 	struct f2fs_checkpoint *ckpt = F2FS_CKPT(sbi);
 	unsigned int ovp_segments, reserved_segments;
 	unsigned int main_segs, blocks_per_seg;
+	unsigned int sit_segs, nat_segs;
+	unsigned int sit_bitmap_size, nat_bitmap_size;
+	unsigned int log_blocks_per_seg;
+	unsigned int segment_count_main;
+	unsigned int cp_pack_start_sum, cp_payload;
+	block_t user_block_count;
 	int i;
 
 	total = le32_to_cpu(raw_super->segment_count);
 	fsmeta = le32_to_cpu(raw_super->segment_count_ckpt);
-	fsmeta += le32_to_cpu(raw_super->segment_count_sit);
-	fsmeta += le32_to_cpu(raw_super->segment_count_nat);
+	sit_segs = le32_to_cpu(raw_super->segment_count_sit);
+	fsmeta += sit_segs;
+	nat_segs = le32_to_cpu(raw_super->segment_count_nat);
+	fsmeta += nat_segs;
 	fsmeta += le32_to_cpu(ckpt->rsvd_segment_count);
 	fsmeta += le32_to_cpu(raw_super->segment_count_ssa);
 
@@ -1544,6 +1709,16 @@ int sanity_check_ckpt(struct f2fs_sb_info *sbi)
 		return 1;
 	}
 
+	user_block_count = le64_to_cpu(ckpt->user_block_count);
+	segment_count_main = le32_to_cpu(raw_super->segment_count_main);
+	log_blocks_per_seg = le32_to_cpu(raw_super->log_blocks_per_seg);
+	if (!user_block_count || user_block_count >=
+			segment_count_main << log_blocks_per_seg) {
+		f2fs_msg(sbi->sb, KERN_ERR,
+			"Wrong user_block_count: %u", user_block_count);
+		return 1;
+	}
+
 	main_segs = le32_to_cpu(raw_super->segment_count_main);
 	blocks_per_seg = sbi->blocks_per_seg;
 
@@ -1556,6 +1731,28 @@ int sanity_check_ckpt(struct f2fs_sb_info *sbi)
 		if (le32_to_cpu(ckpt->cur_data_segno[i]) >= main_segs ||
 			le16_to_cpu(ckpt->cur_data_blkoff[i]) >= blocks_per_seg)
 			return 1;
+	}
+
+	sit_bitmap_size = le32_to_cpu(ckpt->sit_ver_bitmap_bytesize);
+	nat_bitmap_size = le32_to_cpu(ckpt->nat_ver_bitmap_bytesize);
+
+	if (sit_bitmap_size != ((sit_segs / 2) << log_blocks_per_seg) / 8 ||
+		nat_bitmap_size != ((nat_segs / 2) << log_blocks_per_seg) / 8) {
+		f2fs_msg(sbi->sb, KERN_ERR,
+			"Wrong bitmap size: sit: %u, nat:%u",
+			sit_bitmap_size, nat_bitmap_size);
+		return 1;
+	}
+
+	cp_pack_start_sum = __start_sum_addr(sbi);
+	cp_payload = __cp_payload(sbi);
+	if (cp_pack_start_sum < cp_payload + 1 ||
+		cp_pack_start_sum > blocks_per_seg - 1 -
+			NR_CURSEG_TYPE) {
+		f2fs_msg(sbi->sb, KERN_ERR,
+			"Wrong cp_pack_start_sum: %u",
+			cp_pack_start_sum);
+		return 1;
 	}
 
 	if (unlikely(f2fs_cp_error(sbi))) {
@@ -1603,6 +1800,8 @@ static void init_sb_info(struct f2fs_sb_info *sbi)
 	mutex_init(&sbi->wio_mutex[NODE]);
 	mutex_init(&sbi->wio_mutex[DATA]);
 	spin_lock_init(&sbi->cp_lock);
+
+	init_rwsem(&sbi->sb_lock);
 }
 
 static int init_percpu_info(struct f2fs_sb_info *sbi)
