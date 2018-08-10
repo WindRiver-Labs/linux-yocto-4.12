@@ -2505,7 +2505,7 @@ mv_pp2x_prs_mac_da_range_find(struct mv_pp2x_hw *hw, int pmap, const u8 *da,
 	struct mv_pp2x_prs_entry *pe;
 	int tid;
 
-	pe = kzalloc(sizeof(*pe), GFP_KERNEL);
+	pe = kzalloc(sizeof(*pe), GFP_ATOMIC);
 	if (!pe)
 		return NULL;
 	mv_pp2x_prs_tcam_lu_set(pe, MVPP2_PRS_LU_MAC);
@@ -2556,7 +2556,7 @@ int mv_pp2x_prs_mac_da_accept(struct mv_pp2x_port *port, const u8 *da, bool add)
 		if (tid < 0)
 			return tid;
 
-		pe = kzalloc(sizeof(*pe), GFP_KERNEL);
+		pe = kzalloc(sizeof(*pe), GFP_ATOMIC);
 		if (!pe)
 			return -1;
 		mv_pp2x_prs_tcam_lu_set(pe, MVPP2_PRS_LU_MAC);
