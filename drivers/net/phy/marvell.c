@@ -811,14 +811,16 @@ static int m88e1510_config_aneg(struct phy_device *phydev)
 	if (err < 0)
 		goto error;
 
-	/* Then the fiber link */
-	err = phy_write(phydev, MII_MARVELL_PHY_PAGE, MII_M1111_FIBER);
-	if (err < 0)
-		goto error;
+	if ((phydev->supported & SUPPORTED_FIBRE)) {
+		/* Then the fiber link */
+		err = phy_write(phydev, MII_MARVELL_PHY_PAGE, MII_M1111_FIBER);
+		if (err < 0)
+			goto error;
 
-	err = marvell_config_aneg_fiber(phydev);
-	if (err < 0)
-		goto error;
+		err = marvell_config_aneg_fiber(phydev);
+		if (err < 0)
+			goto error;
+	}
 
 	return phy_write(phydev, MII_MARVELL_PHY_PAGE, MII_M1111_COPPER);
 
