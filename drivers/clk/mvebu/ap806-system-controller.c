@@ -32,25 +32,24 @@ static struct clk_onecell_data ap806_clk_data = {
 	.clk_num = AP806_CLK_NUM,
 };
 
-static int ap806_syscon_clk_probe(struct platform_device *pdev)
+static void __init ap806_syscon_clk_init(struct device_node *np)
 {
 	unsigned int freq_mode, cpuclk_freq, dclk_freq, ringclk_freq;
 	const char *name, *fixedclk_name, *ringclk_name;
-	struct device_node *np = pdev->dev.of_node;
 	struct regmap *regmap;
 	u32 reg;
 	int ret;
 
 	regmap = syscon_node_to_regmap(np);
 	if (IS_ERR(regmap)) {
-		dev_err(&pdev->dev, "cannot get regmap\n");
-		return PTR_ERR(regmap);
+		pr_err("cannot get regmap\n");
+		return;
 	}
 
 	ret = regmap_read(regmap, AP806_SAR_REG, &reg);
 	if (ret) {
-		dev_err(&pdev->dev, "cannot read from regmap\n");
-		return ret;
+		pr_err("cannot read from regmap\n");
+		return;
 	}
 
 	freq_mode = reg & AP806_SAR_CLKFREQ_MODE_MASK;
@@ -94,7 +93,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 		** baudrate of the UART
 		*/
 		cpuclk_freq = 0;
-		dev_err(&pdev->dev, "invalid Sample at Reset value\n");
+		pr_err("invalid Sample at Reset value\n");
 	}
 
 	/* Get DCLK frequency (DCLK = 0.5*DDR_CLK) */
@@ -136,7 +135,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 	/* CPU clocks depend on the Sample At Reset configuration */
 	of_property_read_string_index(np, "clock-output-names",
 				      0, &name);
-	ap806_clks[0] = clk_register_fixed_rate(&pdev->dev, name, NULL,
+	ap806_clks[0] = clk_register_fixed_rate(NULL, name, NULL,
 						0, cpuclk_freq);
 	if (IS_ERR(ap806_clks[0])) {
 		ret = PTR_ERR(ap806_clks[0]);
@@ -145,7 +144,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 
 	of_property_read_string_index(np, "clock-output-names",
 				      1, &name);
-	ap806_clks[1] = clk_register_fixed_rate(&pdev->dev, name, NULL, 0,
+	ap806_clks[1] = clk_register_fixed_rate(NULL, name, NULL, 0,
 						cpuclk_freq);
 	if (IS_ERR(ap806_clks[1])) {
 		ret = PTR_ERR(ap806_clks[1]);
@@ -155,7 +154,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 	/* Fixed clock is always 1200 Mhz */
 	of_property_read_string_index(np, "clock-output-names",
 				      2, &fixedclk_name);
-	ap806_clks[2] = clk_register_fixed_rate(&pdev->dev, fixedclk_name, NULL,
+	ap806_clks[2] = clk_register_fixed_rate(NULL, fixedclk_name, NULL,
 						0, 1200 * 1000 * 1000);
 	if (IS_ERR(ap806_clks[2])) {
 		ret = PTR_ERR(ap806_clks[2]);
@@ -176,8 +175,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 	if (of_property_read_string_index(np, "clock-output-names",
 					  4, &name)) {
 		ap806_clk_data.clk_num--;
-		dev_warn(&pdev->dev,
-			 "eMMC clock missing: update the device tree!\n");
+		pr_warn("eMMC clock missing: update the device tree!\n");
 	} else {
 		ap806_clks[4] = clk_register_fixed_factor(NULL, name,
 							  fixedclk_name,
@@ -208,7 +206,7 @@ static int ap806_syscon_clk_probe(struct platform_device *pdev)
 	if (ret)
 		goto fail_clk_add;
 
-	return 0;
+	return;
 
 fail_clk_add:
 	clk_unregister_fixed_factor(ap806_clks[4]);
@@ -221,20 +219,8 @@ fail2:
 fail1:
 	clk_unregister_fixed_rate(ap806_clks[0]);
 fail0:
-	return ret;
+	return;
 }
 
-static const struct of_device_id ap806_syscon_of_match[] = {
-	{ .compatible = "marvell,ap806-system-controller", },
-	{ }
-};
-
-static struct platform_driver ap806_syscon_driver = {
-	.probe = ap806_syscon_clk_probe,
-	.driver		= {
-		.name	= "marvell-ap806-system-controller",
-		.of_match_table = ap806_syscon_of_match,
-		.suppress_bind_attrs = true,
-	},
-};
-builtin_platform_driver(ap806_syscon_driver);
+CLK_OF_DECLARE(ap806_syscon_clk, "marvell,ap806-system-controller",
+	       ap806_syscon_clk_init);
