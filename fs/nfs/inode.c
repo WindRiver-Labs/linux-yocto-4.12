@@ -1985,7 +1985,7 @@ static void init_once(void *foo)
 	INIT_LIST_HEAD(&nfsi->access_cache_inode_lru);
 	INIT_LIST_HEAD(&nfsi->commit_info.list);
 	nfsi->nrequests = 0;
-	nfsi->commit_info.ncommit = 0;
+	atomic_long_set(&nfsi->commit_info.ncommit, 0);
 	atomic_set(&nfsi->commit_info.rpcs_out, 0);
 	init_rwsem(&nfsi->rmdir_sem);
 	nfs4_init_once(nfsi);
