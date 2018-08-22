@@ -693,6 +693,8 @@ void iscsit_release_cmd(struct iscsi_cmd *cmd)
 	struct iscsi_session *sess;
 	struct se_cmd *se_cmd = &cmd->se_cmd;
 
+	WARN_ON(!list_empty(&cmd->i_conn_node));
+
 	if (cmd->conn)
 		sess = cmd->conn->sess;
 	else
@@ -715,6 +717,8 @@ void __iscsit_free_cmd(struct iscsi_cmd *cmd, bool scsi_cmd,
 		       bool check_queues)
 {
 	struct iscsi_conn *conn = cmd->conn;
+
+	WARN_ON(!list_empty(&cmd->i_conn_node));
 
 	if (scsi_cmd) {
 		if (cmd->data_direction == DMA_TO_DEVICE) {
