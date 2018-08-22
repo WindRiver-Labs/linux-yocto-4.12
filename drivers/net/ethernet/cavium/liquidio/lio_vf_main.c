@@ -1800,6 +1800,9 @@ static int liquidio_stop(struct net_device *netdev)
 	struct lio *lio = GET_LIO(netdev);
 	struct octeon_device *oct = lio->oct_dev;
 
+	/* tell Octeon to stop forwarding packets to host */
+	send_rx_ctrl_cmd(lio, 0);
+
 	netif_info(lio, ifdown, lio->netdev, "Stopping interface!\n");
 	/* Inform that netif carrier is down */
 	lio->intf_open = 0;
@@ -1807,9 +1810,6 @@ static int liquidio_stop(struct net_device *netdev)
 
 	netif_carrier_off(netdev);
 	lio->link_changes++;
-
-	/* tell Octeon to stop forwarding packets to host */
-	send_rx_ctrl_cmd(lio, 0);
 
 	ifstate_reset(lio, LIO_IFSTATE_RUNNING);
 
