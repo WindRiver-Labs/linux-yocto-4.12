@@ -131,7 +131,6 @@ static int pblk_rwb_init(struct pblk *pblk)
 }
 
 /* Minimum pages needed within a lun */
-#define PAGE_POOL_SIZE 16
 #define ADDR_POOL_SIZE 64
 
 static int pblk_set_ppaf(struct pblk *pblk)
@@ -263,14 +262,16 @@ static int pblk_core_init(struct pblk *pblk)
 	if (pblk_init_global_caches(pblk))
 		return -ENOMEM;
 
-	pblk->page_pool = mempool_create_page_pool(PAGE_POOL_SIZE, 0);
-	if (!pblk->page_pool)
+	/* internal bios can be at most the sectors signaled by the device. */
+	pblk->page_bio_pool = mempool_create_page_pool(nvm_max_phys_sects(dev),
+									0);
+	if (!pblk->page_bio_pool)
 		return -ENOMEM;
 
 	pblk->line_ws_pool = mempool_create_slab_pool(geo->nr_luns,
 							pblk_blk_ws_cache);
 	if (!pblk->line_ws_pool)
-		goto free_page_pool;
+		goto free_page_bio_pool;
 
 	pblk->rec_pool = mempool_create_slab_pool(geo->nr_luns, pblk_rec_cache);
 	if (!pblk->rec_pool)
@@ -315,8 +316,8 @@ free_rec_pool:
 	mempool_destroy(pblk->rec_pool);
 free_blk_ws_pool:
 	mempool_destroy(pblk->line_ws_pool);
-free_page_pool:
-	mempool_destroy(pblk->page_pool);
+free_page_bio_pool:
+	mempool_destroy(pblk->page_bio_pool);
 	return -ENOMEM;
 }
 
@@ -325,7 +326,7 @@ static void pblk_core_free(struct pblk *pblk)
 	if (pblk->kw_wq)
 		destroy_workqueue(pblk->kw_wq);
 
-	mempool_destroy(pblk->page_pool);
+	mempool_destroy(pblk->page_bio_pool);
 	mempool_destroy(pblk->line_ws_pool);
 	mempool_destroy(pblk->rec_pool);
 	mempool_destroy(pblk->r_rq_pool);
@@ -552,8 +553,8 @@ static int pblk_lines_init(struct pblk *pblk)
 	lm->blk_bitmap_len = BITS_TO_LONGS(geo->nr_luns) * sizeof(long);
 	lm->sec_bitmap_len = BITS_TO_LONGS(lm->sec_per_line) * sizeof(long);
 	lm->lun_bitmap_len = BITS_TO_LONGS(geo->nr_luns) * sizeof(long);
-	lm->high_thrs = lm->sec_per_line / 2;
-	lm->mid_thrs = lm->sec_per_line / 4;
+	lm->mid_thrs = lm->sec_per_line / 2;
+	lm->high_thrs = lm->sec_per_line / 4;
 
 	/* Calculate necessary pages for smeta. See comment over struct
 	 * line_smeta definition
@@ -842,6 +843,7 @@ static void *pblk_init(struct nvm_tgt_dev *dev, struct gendisk *tdisk,
 	atomic_long_set(&pblk->recov_writes, 0);
 	atomic_long_set(&pblk->recov_writes, 0);
 	atomic_long_set(&pblk->recov_gc_writes, 0);
+	atomic_long_set(&pblk->recov_gc_reads, 0);
 #endif
 
 	atomic_long_set(&pblk->read_failed, 0);
