@@ -37,6 +37,7 @@
 #include "socket.h"
 #include <linux/sock_diag.h>
 #include <linux/tipc_sockets_diag.h>
+#include <linux/module.h>
 
 static u64 __tipc_diag_gen_cookie(struct sock *sk)
 {
