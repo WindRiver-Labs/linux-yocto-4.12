@@ -189,6 +189,8 @@ struct kvm_cpu_context {
 		u64 sys_regs[NR_SYS_REGS];
 		u32 copro[NR_COPRO_REGS];
 	};
+
+	struct kvm_vcpu *__hyp_running_vcpu;
 };
 
 typedef struct kvm_cpu_context kvm_cpu_context_t;
@@ -202,6 +204,9 @@ struct kvm_vcpu_arch {
 
 	/* Exception Information */
 	struct kvm_vcpu_fault_info fault;
+
+	/* State of various workarounds, see kvm_asm.h for bit assignment */
+	u64 workaround_flags;
 
 	/* Guest debug state */
 	u64 debug_flags;
@@ -351,10 +356,15 @@ int kvm_perf_teardown(void);
 
 struct kvm_vcpu *kvm_mpidr_to_vcpu(struct kvm *kvm, unsigned long mpidr);
 
+void __kvm_set_tpidr_el2(u64 tpidr_el2);
+DECLARE_PER_CPU(kvm_cpu_context_t, kvm_host_cpu_state);
+
 static inline void __cpu_init_hyp_mode(phys_addr_t pgd_ptr,
 				       unsigned long hyp_stack_ptr,
 				       unsigned long vector_ptr)
 {
+	u64 tpidr_el2;
+
 	/*
 	 * Call initialization code, and switch to the full blown HYP code.
 	 * If the cpucaps haven't been finalized yet, something has gone very
@@ -363,6 +373,16 @@ static inline void __cpu_init_hyp_mode(phys_addr_t pgd_ptr,
 	 */
 	BUG_ON(!static_branch_likely(&arm64_const_caps_ready));
 	__kvm_call_hyp((void *)pgd_ptr, hyp_stack_ptr, vector_ptr);
+
+	/*
+	 * Calculate the raw per-cpu offset without a translation from the
+	 * kernel's mapping to the linear mapping, and store it in tpidr_el2
+	 * so that we can use adr_l to access per-cpu variables in EL2.
+	 */
+	tpidr_el2 = (u64)this_cpu_ptr(&kvm_host_cpu_state)
+		- (u64)kvm_ksym_ref(kvm_host_cpu_state);
+
+	kvm_call_hyp(__kvm_set_tpidr_el2, tpidr_el2);
 }
 
 static inline void kvm_arch_hardware_unsetup(void) {}
@@ -370,6 +390,29 @@ static inline void kvm_arch_sync_events(struct kvm *kvm) {}
 static inline void kvm_arch_vcpu_uninit(struct kvm_vcpu *vcpu) {}
 static inline void kvm_arch_sched_in(struct kvm_vcpu *vcpu, int cpu) {}
 static inline void kvm_arch_vcpu_block_finish(struct kvm_vcpu *vcpu) {}
+
+#define KVM_SSBD_UNKNOWN		-1
+#define KVM_SSBD_FORCE_DISABLE		0
+#define KVM_SSBD_KERNEL		1
+#define KVM_SSBD_FORCE_ENABLE		2
+#define KVM_SSBD_MITIGATED		3
+
+static inline int kvm_arm_have_ssbd(void)
+{
+	switch (arm64_get_ssbd_state()) {
+	case ARM64_SSBD_FORCE_DISABLE:
+		return KVM_SSBD_FORCE_DISABLE;
+	case ARM64_SSBD_KERNEL:
+		return KVM_SSBD_KERNEL;
+	case ARM64_SSBD_FORCE_ENABLE:
+		return KVM_SSBD_FORCE_ENABLE;
+	case ARM64_SSBD_MITIGATED:
+		return KVM_SSBD_MITIGATED;
+	case ARM64_SSBD_UNKNOWN:
+	default:
+		return KVM_SSBD_UNKNOWN;
+	}
+}
 
 void kvm_arm_init_debug(void);
 void kvm_arm_setup_debug(struct kvm_vcpu *vcpu);
