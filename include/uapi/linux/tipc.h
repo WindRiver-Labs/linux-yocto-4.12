@@ -231,26 +231,48 @@ struct sockaddr_tipc {
 #define TIPC_SOCK_RECVQ_DEPTH	132	/* Default: none (read only) */
 #define TIPC_MCAST_BROADCAST    133     /* Default: TIPC selects. No arg */
 #define TIPC_MCAST_REPLICAST    134     /* Default: TIPC selects. No arg */
+#define TIPC_GROUP_JOIN         135     /* Takes struct tipc_group_req* */
+#define TIPC_GROUP_LEAVE        136     /* No argument */
+
+/*
+ * Flag values
+ */
+#define TIPC_GROUP_LOOPBACK     0x1  /* Receive copy of sent msg when match */
+#define TIPC_GROUP_MEMBER_EVTS  0x2  /* Receive membership events in socket */
+
+struct tipc_group_req {
+	__u32 type;      /* group id */
+	__u32 instance;  /* member id */
+	__u32 scope;     /* zone/cluster/node */
+	__u32 flags;
+};
 
 /*
  * Maximum sizes of TIPC bearer-related names (including terminating NULL)
  * The string formatting for each name element is:
  * media: media
  * interface: media:interface name
- * link: Z.C.N:interface-Z.C.N:interface
- *
+ * link: node:interface-node:interface
  */
 
+#define TIPC_NODEID_LEN         16
 #define TIPC_MAX_MEDIA_NAME	16
 #define TIPC_MAX_IF_NAME	16
 #define TIPC_MAX_BEARER_NAME	32
 #define TIPC_MAX_LINK_NAME	60
 
-#define SIOCGETLINKNAME		SIOCPROTOPRIVATE
+#define SIOCGETLINKNAME        SIOCPROTOPRIVATE
+#define SIOCGETNODEID          (SIOCPROTOPRIVATE + 1)
 
 struct tipc_sioc_ln_req {
 	__u32 peer;
 	__u32 bearer_id;
 	char linkname[TIPC_MAX_LINK_NAME];
 };
+
+struct tipc_sioc_nodeid_req {
+	__u32 peer;
+	char node_id[TIPC_NODEID_LEN];
+};
+
 #endif
