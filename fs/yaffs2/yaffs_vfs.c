@@ -920,6 +920,7 @@ static int yaffs_setattr(struct dentry *dentry, struct iattr *attr)
 	return error;
 }
 
+#ifdef CONFIG_YAFFS_XATTR
 static int yaffs_setxattr(struct dentry *dentry, struct inode *inode,
 			  const char *name, const void *value, size_t size,
 			  int flags)
@@ -1003,6 +1004,7 @@ static int yaffs_removexattr(struct dentry *dentry, const char *name)
 
 	return error;
 }
+#endif
 
 static ssize_t yaffs_listxattr(struct dentry * dentry, char *buff, size_t size)
 {
@@ -2767,6 +2769,7 @@ static struct dentry *yaffs_make_root(struct inode *inode)
 }
 
 
+#ifdef CONFIG_YAFFS_XATTR
 static int yaffs_xattr_get(const struct xattr_handler *handler,
 			    struct dentry *dentry, struct inode *inode,
 			    const char *name, void *buff, size_t size)
@@ -2795,6 +2798,7 @@ static const struct xattr_handler *yaffs_xattr_handlers[] = {
 	&yaffs_xattr_handler,
 	NULL
 };
+#endif
 
 static struct super_block *yaffs_internal_read_super(int yaffs_version,
 						     struct super_block *sb,
@@ -2828,7 +2832,9 @@ static struct super_block *yaffs_internal_read_super(int yaffs_version,
 
 	sb->s_magic = YAFFS_MAGIC;
 	sb->s_op = &yaffs_super_ops;
+#ifdef CONFIG_YAFFS_XATTR
 	sb->s_xattr = yaffs_xattr_handlers;
+#endif
 	sb->s_flags |= MS_NOATIME;
 
 	read_only = ((sb->s_flags & MS_RDONLY) != 0);
