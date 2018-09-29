@@ -493,3 +493,7 @@
 &cps_pcie1 {
 	status = "okay";
 };
+
+&sd_mmc_reg0 {
+	status = "disabled";
+};
