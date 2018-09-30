@@ -395,7 +395,6 @@ static int suspend_enter(suspend_state_t state, bool *wakeup)
 			error = suspend_ops->enter(state);
 			trace_suspend_resume(TPS("machine_suspend"),
 				state, false);
-			events_check_enabled = false;
 		} else if (*wakeup) {
 			error = -EBUSY;
 		}
@@ -539,6 +538,7 @@ static int enter_state(suspend_state_t state)
 	pm_restore_gfp_mask();
 
  Finish:
+	events_check_enabled = false;
 	pr_debug("PM: Finishing wakeup.\n");
 	suspend_finish();
  Unlock:

@@ -211,7 +211,7 @@
 #define MSM8916_WCD_ANALOG_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000)
 #define MSM8916_WCD_ANALOG_FORMATS (SNDRV_PCM_FMTBIT_S16_LE |\
-				    SNDRV_PCM_FMTBIT_S24_LE)
+				    SNDRV_PCM_FMTBIT_S32_LE)
 
 static const char * const supply_names[] = {
 	"vdd-cdc-io",
@@ -873,6 +873,8 @@ static const struct of_device_id pm8916_wcd_analog_spmi_match_table[] = {
 	{ .compatible = "qcom,pm8916-wcd-analog-codec", },
 	{ }
 };
+
+MODULE_DEVICE_TABLE(of, pm8916_wcd_analog_spmi_match_table);
 
 static struct platform_driver pm8916_wcd_analog_spmi_driver = {
 	.driver = {

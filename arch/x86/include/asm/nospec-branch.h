@@ -6,6 +6,7 @@
 #include <asm/alternative.h>
 #include <asm/alternative-asm.h>
 #include <asm/cpufeatures.h>
+#include <asm/msr-index.h>
 
 #ifdef __ASSEMBLY__
 
@@ -143,6 +144,14 @@ enum spectre_v2_mitigation {
 	SPECTRE_V2_IBRS,
 };
 
+/* The Speculative Store Bypass disable variants */
+enum ssb_mitigation {
+	SPEC_STORE_BYPASS_NONE,
+	SPEC_STORE_BYPASS_DISABLE,
+	SPEC_STORE_BYPASS_PRCTL,
+	SPEC_STORE_BYPASS_SECCOMP,
+};
+
 extern char __indirect_thunk_start[];
 extern char __indirect_thunk_end[];
 
@@ -162,13 +171,50 @@ static inline void vmexit_fill_RSB(void)
 #endif
 }
 
+static __always_inline
+void alternative_msr_write(unsigned int msr, u64 val, unsigned int feature)
+{
+	asm volatile(ALTERNATIVE("", "wrmsr", %c[feature])
+		: : "c" (msr),
+		    "a" ((u32)val),
+		    "d" ((u32)(val >> 32)),
+		    [feature] "i" (feature)
+		: "memory");
+}
+
 static inline void indirect_branch_prediction_barrier(void)
 {
-	alternative_input("",
-			  "call __ibp_barrier",
-			  X86_FEATURE_USE_IBPB,
-			  ASM_NO_INPUT_CLOBBER("eax", "ecx", "edx", "memory"));
+	u64 val = PRED_CMD_IBPB;
+
+	alternative_msr_write(MSR_IA32_PRED_CMD, val, X86_FEATURE_USE_IBPB);
 }
+
+/* The Intel SPEC CTRL MSR base value cache */
+extern u64 x86_spec_ctrl_base;
+
+/*
+ * With retpoline, we must use IBRS to restrict branch prediction
+ * before calling into firmware.
+ *
+ * (Implemented as CPP macros due to header hell.)
+ */
+#define firmware_restrict_branch_speculation_start()			\
+do {									\
+	u64 val = x86_spec_ctrl_base | SPEC_CTRL_IBRS;			\
+									\
+	preempt_disable();						\
+	alternative_msr_write(MSR_IA32_SPEC_CTRL, val,			\
+			      X86_FEATURE_USE_IBRS_FW);			\
+} while (0)
+
+#define firmware_restrict_branch_speculation_end()			\
+do {									\
+	u64 val = x86_spec_ctrl_base;					\
+									\
+	alternative_msr_write(MSR_IA32_SPEC_CTRL, val,			\
+			      X86_FEATURE_USE_IBRS_FW);			\
+	preempt_enable();						\
+} while (0)
 
 #endif /* __ASSEMBLY__ */
 #endif /* _ASM_X86_NOSPEC_BRANCH_H_ */
