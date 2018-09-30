@@ -21,6 +21,8 @@
 #include <linux/of_platform.h>
 #include <linux/of.h>
 #include <linux/of_address.h>
+#include <linux/of_irq.h>
+#include <linux/irq.h>
 #include <linux/platform_device.h>
 #include <linux/reboot.h>
 #include <linux/mfd/syscon.h>
@@ -76,6 +78,8 @@
 #define CCN_NODE_ERR_SYND_REG0		0x400
 #define CCN_NODE_ERR_SYND_REG1		0x408
 #define CCN_NODE_ERR_SYND_CLR		0x480
+
+static cpumask_t only_cpu_0 = { CPU_BITS_CPU0};
 
 union dickens_hnf_err_syndrome_reg0 {
 	struct __packed {
@@ -250,17 +254,16 @@ static irqreturn_t ccn_irq_thread(int irq, void *device)
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t ccn_irq_handler(int irq, void *device)
+static irqreturn_t collect_and_clean(struct intel_edac_dev_info *dev_info,
+					int report_error)
 {
-	struct intel_edac_dev_info *dev_info = device;
 	void __iomem *ccn_base = dev_info->dickens_L3;
-
-	irqreturn_t res = IRQ_NONE;
 	u64 err_sig_val[3];
 	u64 err_type_value[4];
 	u64 err_or;
 	u64 err_synd_reg0 = 0, err_synd_reg1 = 0;
 	int i;
+	irqreturn_t res = IRQ_NONE;
 
 	/* PMU overflow is a special case - for the future */
 	err_or = err_sig_val[0] = readq(ccn_base + CCN_MN_ERR_SIG_VAL_63_0);
@@ -351,10 +354,20 @@ static irqreturn_t ccn_irq_handler(int irq, void *device)
 		}
 	}
 
-	if (err_or)
+	if (err_or && report_error)
 		dev_err(&dev_info->pdev->dev,
 			"Error reported in %016llx %016llx %016llx.\n",
 			err_sig_val[2], err_sig_val[1], err_sig_val[0]);
+
+	return res;
+}
+
+static irqreturn_t ccn_irq_handler(int irq, void *device)
+{
+	struct intel_edac_dev_info *dev_info = device;
+	irqreturn_t res = IRQ_NONE;
+
+	res = collect_and_clean(dev_info, 1);
 
 	/* HERE all error data collected, but interrupt not deasserted */
 	return IRQ_WAKE_THREAD;
@@ -414,8 +427,8 @@ static int intel_edac_l3_probe(struct platform_device *pdev)
 	struct intel_edac_dev_info *dev_info = NULL;
 	struct device_node *np = pdev->dev.of_node;
 	struct resource *r;
-
 	struct arm_smccc_res ret;
+	struct irq_desc *desc;
 
 	dev_info = devm_kzalloc(&pdev->dev, sizeof(*dev_info), GFP_KERNEL);
 	if (!dev_info)
@@ -470,9 +483,19 @@ static int intel_edac_l3_probe(struct platform_device *pdev)
 	 */
 	arm_smccc_smc(0xc4000027, CCN_MN_ERRINT_STATUS__PMU_EVENTS__DISABLE,
 			0, 0, 0, 0, 0, 0, &ret);
+	trace_edacl3_smc_results(&ret);
 
-	if (ret.a0 != ARM_SMCCC_UNKNOWN)
+	if (ret.a0 != ARM_SMCCC_UNKNOWN) {
+		irqreturn_t res;
+
 		dev_info->irq_used = 1;
+		/* clear all error from earlier boot stage */
+		res = collect_and_clean(dev_info, 0);
+		arm_smccc_smc(0xc4000027,
+			CCN_MN_ERRINT_STATUS__INTREQ__DESSERT,
+			0, 0, 0, 0, 0, 0, &ret);
+		trace_edacl3_smc_results(&ret);
+	}
 
 	dev_info->edac_dev->pvt_info = dev_info;
 	dev_info->edac_dev->dev = &dev_info->pdev->dev;
@@ -499,6 +522,9 @@ static int intel_edac_l3_probe(struct platform_device *pdev)
 			ccn_irq_handler, ccn_irq_thread, IRQF_ONESHOT,
 			dev_name(&dev_info->pdev->dev), dev_info))
 			goto err2;
+
+		desc = irq_to_desc(r->start);
+		sched_setaffinity(desc->action->thread->pid, &only_cpu_0);
 	}
 
 	return 0;
@@ -516,7 +542,7 @@ static int intel_edac_l3_remove(struct platform_device *pdev)
 }
 
 static const struct of_device_id intel_edac_l3_match[] = {
-#if defined(CONFIG_EDAC_AXXIA_L2_CPU_5600)
+#if defined(CONFIG_EDAC_AXXIA_L3_5600)
 
 	{
 	.compatible = "intel,ccn504-l3-cache",
@@ -524,7 +550,7 @@ static const struct of_device_id intel_edac_l3_match[] = {
 
 #endif
 
-#if defined(CONFIG_EDAC_AXXIA_L2_CPU_6700)
+#if defined(CONFIG_EDAC_AXXIA_L3_6700)
 
 	{
 	.compatible = "intel,ccn512-l3-cache",

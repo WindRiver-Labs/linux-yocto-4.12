@@ -17,6 +17,7 @@ place where this information is gathered.
    :maxdepth: 2
 
    unshare
+   spec_ctrl
 
 .. only::  subproject and html
 
