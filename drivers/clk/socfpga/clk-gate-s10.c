@@ -185,7 +185,6 @@ static void __init __socfpga_gate_init(struct device_node *node,
 		if (IS_ERR(socfpga_clk->sys_mgr_base_addr)) {
 			pr_err("%s: failed to find altr,sys-mgr regmap!\n",
 				__func__);
-			kfree(socfpga_clk);
 			return;
 		}
 	}
@@ -209,10 +208,8 @@ static void __init __socfpga_gate_init(struct device_node *node,
 		return;
 	}
 	rc = of_clk_add_provider(node, of_clk_src_simple_get, clk);
-	if (WARN_ON(rc)) {
-		kfree(socfpga_clk);
+	if (WARN_ON(rc))
 		return;
-	}
 }
 
 void __init socfpga_s10_gate_init(struct device_node *node)
