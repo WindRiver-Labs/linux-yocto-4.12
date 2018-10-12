@@ -34,7 +34,6 @@
 
 extern void __iomem *clk_mgr_base_addr;
 extern void __iomem *clk_mgr_a10_base_addr;
-extern void __iomem *clk_mgr_s10_base_addr;
 
 void __init socfpga_pll_init(struct device_node *node);
 void __init socfpga_periph_init(struct device_node *node);
@@ -42,9 +41,6 @@ void __init socfpga_gate_init(struct device_node *node);
 void socfpga_a10_pll_init(struct device_node *node);
 void socfpga_a10_periph_init(struct device_node *node);
 void socfpga_a10_gate_init(struct device_node *node);
-void socfpga_s10_pll_init(struct device_node *node);
-void socfpga_s10_periph_init(struct device_node *node);
-void socfpga_s10_gate_init(struct device_node *node);
 
 struct socfpga_pll {
 	struct clk_gate	hw;
@@ -55,11 +51,9 @@ struct socfpga_gate_clk {
 	char *parent_name;
 	u32 fixed_div;
 	void __iomem *div_reg;
-	void __iomem *bypass_reg;
 	struct regmap *sys_mgr_base_addr;
 	u32 width;	/* only valid if div_reg != 0 */
 	u32 shift;	/* only valid if div_reg != 0 */
-	u32 bypass_shift;      /* only valid if bypass_reg != 0 */
 	u32 clk_phase[2];
 };
 
@@ -68,10 +62,8 @@ struct socfpga_periph_clk {
 	char *parent_name;
 	u32 fixed_div;
 	void __iomem *div_reg;
-	void __iomem *bypass_reg;
 	u32 width;      /* only valid if div_reg != 0 */
 	u32 shift;      /* only valid if div_reg != 0 */
-	u32 bypass_shift;      /* only valid if bypass_reg != 0 */
 };
 
 #endif /* SOCFPGA_CLK_H */
