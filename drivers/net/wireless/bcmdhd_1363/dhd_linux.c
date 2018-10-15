@@ -179,6 +179,8 @@ typedef struct histo_ {
 static histo_t vi_d1, vi_d2, vi_d3, vi_d4;
 #endif /* WLMEDIA_HTSF */
 
+static enum cpuhp_state online_hpstate;
+
 #ifdef STBLINUX
 #ifdef quote_str
 #undef quote_str
@@ -684,6 +686,9 @@ typedef struct dhd_info {
 	uint32 shub_enable;
 
 	struct delayed_work dhd_memdump_work;
+
+	/* add this to use cpuhp_setup_state_multi instead of register_cpu_notifier */
+	struct hlist_node node;
 } dhd_info_t;
 
 #define DHDIF_FWDER(dhdif)      FALSE
@@ -999,32 +1004,28 @@ void dhd_select_cpu_candidacy(dhd_info_t *dhd)
  * One of the task it does is to trigger the CPU Candidacy algorithm
  * for load balancing.
  */
-int
-dhd_cpu_callback(struct notifier_block *nfb, unsigned long action, void *hcpu)
+static int dhd_cpu_online(unsigned int cpu, struct hlist_node *node)
 {
-	unsigned int cpu = (unsigned int)(long)hcpu;
+	dhd_info_t *dhd = hlist_entry_safe(node, dhd_info_t,
+							node);
 
-	dhd_info_t *dhd = container_of(nfb, dhd_info_t, cpu_notifier);
+	DHD_LB_STATS_INCR(dhd->cpu_online_cnt[cpu]);
+	cpumask_set_cpu(cpu, dhd->cpumask_curr_avail);
+	dhd_select_cpu_candidacy(dhd);
 
-	switch (action)
-	{
-		case CPU_ONLINE:
-			DHD_LB_STATS_INCR(dhd->cpu_online_cnt[cpu]);
-			cpumask_set_cpu(cpu, dhd->cpumask_curr_avail);
-			dhd_select_cpu_candidacy(dhd);
-			break;
+	return 0;
+}
 
-		case CPU_DOWN_PREPARE:
-		case CPU_DOWN_PREPARE_FROZEN:
-			DHD_LB_STATS_INCR(dhd->cpu_offline_cnt[cpu]);
-			cpumask_clear_cpu(cpu, dhd->cpumask_curr_avail);
-			dhd_select_cpu_candidacy(dhd);
-			break;
-		default:
-			break;
-	}
+static int dhd_cpu_down_prepare(unsigned int cpu, struct hlist_node *node)
+{
+	dhd_info_t *dhd = hlist_entry_safe(node, dhd_info_t,
+							node);
 
-	return NOTIFY_OK;
+	DHD_LB_STATS_INCR(dhd->cpu_offline_cnt[cpu]);
+	cpumask_clear_cpu(cpu, dhd->cpumask_curr_avail);
+	dhd_select_cpu_candidacy(dhd);
+
+	return 0;
 }
 
 #if defined(DHD_LB_STATS)
@@ -7015,6 +7016,7 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 	uint32 bus_type = -1;
 	uint32 bus_num = -1;
 	uint32 slot_num = -1;
+	uint32 ret = -1;
 	wifi_adapter_info_t *adapter = NULL;
 
 	dhd_attach_states_t dhd_state = DHD_ATTACH_STATE_INIT;
@@ -7348,8 +7350,21 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 		 * CPU Hotplug framework to change the CPU for each job dynamically
 		 * using candidacy algorithm.
 		 */
-		dhd->cpu_notifier.notifier_call = dhd_cpu_callback;
-		register_cpu_notifier(&dhd->cpu_notifier); /* Register a callback */
+		online_hpstate = cpuhp_setup_state_multi(CPUHP_AP_ONLINE_DYN, "dhd_linux:online",
+							dhd_cpu_online, dhd_cpu_down_prepare);
+		if (online_hpstate < 0) {
+			DHD_ERROR(("%s(): cpuhp_setup_state_multi failed!\n",
+				__FUNCTION__));
+			goto fail;
+		}
+
+		ret = cpuhp_state_add_instance_nocalls(online_hpstate, &dhd->node);
+		if (ret) {
+			DHD_ERROR(("%s(): cpuhp_state_add_instance_nocalls failed!\n",
+				__FUNCTION__));
+			goto fail;
+		}
+
 	} else {
 		/*
 		 * We are unable to initialize CPU masks, so candidacy algorithm
@@ -9732,8 +9747,8 @@ void dhd_detach(dhd_pub_t *dhdp)
 	tasklet_disable(&dhd->rx_compl_tasklet);
 	tasklet_kill(&dhd->rx_compl_tasklet);
 #endif /* DHD_LB_RXC */
-	if (dhd->cpu_notifier.notifier_call != NULL)
-		unregister_cpu_notifier(&dhd->cpu_notifier);
+	cpuhp_state_remove_instance_nocalls(online_hpstate, &dhd->node);
+	cpuhp_remove_multi_state(online_hpstate);
 	dhd_cpumasks_deinit(dhd);
 #endif /* DHD_LB */
 
