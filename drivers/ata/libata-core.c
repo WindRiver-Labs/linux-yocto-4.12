@@ -4021,8 +4021,8 @@ int sata_link_hardreset(struct ata_link *link, const unsigned long *timing,
 	struct ahci_qoriq_priv *qoriq_priv = hpriv->plat_data;
 	bool lx2160a_workaround = (qoriq_priv->type == AHCI_LX2160);
 
-	void __iomem *serdes_base;
-	void __iomem *rcw_base;
+	void __iomem *serdes_base = NULL;
+	void __iomem *rcw_base = NULL;
 	u32 scontrol;
 	int rc;
 	int val;
