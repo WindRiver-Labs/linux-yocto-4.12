@@ -512,7 +512,10 @@ static int caam_jr_probe(struct platform_device *pdev)
 
 	jrpriv->rregs = (struct caam_job_ring __iomem __force *)ctrl;
 
-	if (sizeof(dma_addr_t) == sizeof(u64)) {
+	/* Set DMA masks according to platform ranging, because imx8m doesn't have
+	 * the 64bit dma capapbility but only 32bit, so we need to exclude it
+	 */
+	if (sizeof(dma_addr_t) == sizeof(u64) && !of_machine_is_compatible("fsl,imx8mq")) {
 		if (of_device_is_compatible(nprop, "fsl,sec-v5.0-job-ring"))
 			error = dma_set_mask_and_coherent(jrdev,
 							  DMA_BIT_MASK(40));
