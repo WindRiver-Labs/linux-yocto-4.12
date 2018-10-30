@@ -109,7 +109,7 @@
 	txc-skew-ps = <900>; /* 0ps */
 	rxdv-skew-ps = <420>; /* 0ps */
 	rxc-skew-ps = <1680>; /* 780ps */
-	max-frame-size = <3800>;
+	max-frame-size = <9000>;
 	snps,multicast-filter-bins = <256>;
 	status = "okay";
 };
