@@ -144,6 +144,7 @@ long compat_ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 							(unsigned long)data);
 	}
 	case ION_IOC_SHARE:
+	case ION_IOC_MAP:
 		return filp->f_op->unlocked_ioctl(filp, cmd,
 						(unsigned long)compat_ptr(arg));
 	default:
