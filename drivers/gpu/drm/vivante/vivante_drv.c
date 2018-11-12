@@ -63,13 +63,14 @@ static struct platform_device *pplatformdev;
 int viv_set_busid(struct drm_device *dev, struct drm_master *master)
 {
 	int id;
+	struct platform_device *platformdev = to_platform_device(dev->dev);
 
-        id = dev->platformdev->id;
+        id = platformdev->id;
         if (id < 0)
                 id = 0;
 
         master->unique = kasprintf(GFP_KERNEL, "platform:%s:%02d",
-                                                dev->platformdev->name, id);
+                                                platformdev->name, id);
         if (!master->unique)
                 return -ENOMEM;
 
@@ -101,16 +102,27 @@ static struct drm_driver driver = {
 
 static int __init vivante_init(void)
 {
-	int retcode;
+	struct drm_device *dev;
+	int ret;
 
 	pplatformdev = platform_device_register_simple(platformdevicename,
 			-1, NULL, 0);
 	if (pplatformdev == NULL)
 		printk(KERN_ERR"Platform device is null\n");
 
-	retcode = drm_platform_init(&driver, pplatformdev);
+	dev = drm_dev_alloc(&driver, &pplatformdev->dev);
+	if (IS_ERR(dev))
+		return PTR_ERR(dev);
 
-	return retcode;
+	ret = drm_dev_register(dev, 0);
+	if (ret)
+		goto err_free;
+	return 0;
+
+err_free:
+	drm_dev_unref(dev);
+
+	return ret;
 }
 
 static void __exit vivante_exit(void)
