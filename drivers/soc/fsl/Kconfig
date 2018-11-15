@@ -26,3 +26,7 @@ config FSL_QIXIS
 	help
 	  Say y here to enable QIXIS system controller api.  The qixis driver
 	  provides FPGA functions to control system.
+
+if ARM || ARM64
+source "drivers/soc/fsl/Kconfig.arm"
+endif
