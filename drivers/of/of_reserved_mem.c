@@ -77,8 +77,10 @@ int __init __weak early_init_dt_alloc_reserved_memory_arch(unsigned long node,
 	}
 
 	*res_base = base;
-	if (nomap)
+	if (nomap) {
+		kmemleak_ignore_phys(base);
 		return memblock_remove(base, size);
+	}
 	return 0;
 }
 #else
