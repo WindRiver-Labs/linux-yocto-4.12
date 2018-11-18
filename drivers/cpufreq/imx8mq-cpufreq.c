@@ -48,15 +48,13 @@ static int imx8mq_set_target(struct cpufreq_policy *policy, unsigned int index)
 	freq_hz = new_freq * 1000;
 	old_freq = policy->cur;
 
-	rcu_read_lock();
 	opp = dev_pm_opp_find_freq_ceil(cpu_dev, &freq_hz);
 	if (IS_ERR(opp)) {
-		rcu_read_unlock();
 		dev_err(cpu_dev, "failed to find OPP for %ld\n", freq_hz);
 		mutex_unlock(&set_cpufreq_lock);
 		return PTR_ERR(opp);
 	}
-	rcu_read_unlock();
+	dev_pm_opp_put(opp);
 
 	dev_dbg(cpu_dev, "%u MHz --> %u MHz\n",
 		old_freq / 1000, new_freq / 1000);
