@@ -442,7 +442,7 @@ static void set_caam_dma_desc(u32 *desc)
 #endif
 }
 
-static int __init caam_dma_probe(struct platform_device *pdev)
+static int caam_dma_probe(struct platform_device *pdev)
 {
 	struct device *dev = &pdev->dev;
 	struct device *ctrldev = dev->parent;
