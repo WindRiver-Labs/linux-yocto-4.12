@@ -8,6 +8,10 @@
 #include <linux/err.h>
 #include <linux/io.h>
 #include <linux/mx8_mu.h>
+#include <linux/delay.h>
+
+/* set send message fail maxium delay */
+#define MU_SEND_DELAY_MAX 10
 
 static int version;
 
@@ -87,17 +91,30 @@ void MU_EnableGeneralInt(void __iomem *base, uint32_t index)
 void MU_SendMessage(void __iomem *base, uint32_t regIndex, uint32_t msg)
 {
 	uint32_t mask = MU_SR_TE0_MASK1 >> regIndex;
+	uint32_t delay = 0;
 
 	if (unlikely(version == MU_VER_ID_V10)) {
 		/* Wait TX register to be empty. */
-		while (!(readl_relaxed(base + MU_V10_ASR_OFFSET1) & mask))
-			;
+		while (!(readl_relaxed(base + MU_V10_ASR_OFFSET1) & mask)) {
+			delay++;
+			udelay(100);
+			if (delay == MU_SEND_DELAY_MAX) {
+				printk("Last MU SendMessage failed!\r\n");
+				return ;
+			}
+		}
 		writel_relaxed(msg, base + MU_V10_ATR0_OFFSET1
 			       + (regIndex * 4));
 	} else {
 		/* Wait TX register to be empty. */
-		while (!(readl_relaxed(base + MU_ASR_OFFSET1) & mask))
-			;
+		while (!(readl_relaxed(base + MU_ASR_OFFSET1) & mask)) {
+			delay++;
+			udelay(100);
+			if (delay == MU_SEND_DELAY_MAX) {
+				printk("Last MU SendMessage timeout!\r\n");
+				return ;
+			}
+		}
 		writel_relaxed(msg, base + MU_ATR0_OFFSET1  + (regIndex * 4));
 	}
 }
