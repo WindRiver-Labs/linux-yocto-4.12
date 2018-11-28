@@ -362,13 +362,19 @@ static ssize_t firmware_store(struct device *dev,
 	char image_name[NAME_MAX];
 	int ret;
 
+	/* struct with information about the FPGA image to program. */
+	struct fpga_image_info info;
+
+	/* flags indicates whether to do full or partial reconfiguration */
+	info.flags = 0;
+
 	/* lose terminating \n */
 	strcpy(image_name, buf);
 	len = strlen(image_name);
 	if (image_name[len - 1] == '\n')
 		image_name[len - 1] = 0;
 
-	ret = fpga_mgr_firmware_load(mgr, 0, image_name);
+	ret = fpga_mgr_firmware_load(mgr, &info, image_name);
 	if (ret)
 		return ret;
 
