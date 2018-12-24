@@ -1513,14 +1513,14 @@ bool queue_work_on(int cpu, struct workqueue_struct *wq,
 	bool ret = false;
 	unsigned long flags;
 
-	local_irq_save(flags);
+	local_lock_irqsave(pendingb_lock,flags);
 
 	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
 		__queue_work(cpu, wq, work);
 		ret = true;
 	}
 
-	local_irq_restore(flags);
+	local_unlock_irqrestore(pendingb_lock, flags);
 	return ret;
 }
 EXPORT_SYMBOL(queue_work_on);
@@ -1589,14 +1589,14 @@ bool queue_delayed_work_on(int cpu, struct workqueue_struct *wq,
 	unsigned long flags;
 
 	/* read the comment in __queue_work() */
-	local_irq_save(flags);
+	local_lock_irqsave(pendingb_lock, flags);
 
 	if (!test_and_set_bit(WORK_STRUCT_PENDING_BIT, work_data_bits(work))) {
 		__queue_delayed_work(cpu, wq, dwork, delay);
 		ret = true;
 	}
 
-	local_irq_restore(flags);
+	local_unlock_irqrestore(pendingb_lock, flags);
 	return ret;
 }
 EXPORT_SYMBOL(queue_delayed_work_on);
@@ -3015,10 +3015,10 @@ EXPORT_SYMBOL_GPL(cancel_work_sync);
  */
 bool flush_delayed_work(struct delayed_work *dwork)
 {
-	local_irq_disable();
+	local_lock_irq(pendingb_lock);
 	if (del_timer_sync(&dwork->timer))
 		__queue_work(dwork->cpu, dwork->wq, &dwork->work);
-	local_irq_enable();
+	local_unlock_irq(pendingb_lock);
 	return flush_work(&dwork->work);
 }
 EXPORT_SYMBOL(flush_delayed_work);
