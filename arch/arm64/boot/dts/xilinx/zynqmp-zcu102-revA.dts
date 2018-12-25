@@ -775,6 +775,7 @@ drivers/hwmon/pmbus/Makefile:11:obj-$(CONFIG_SENSORS_MAX20751)  += max20751.o
 			slew-rate = <SLEW_RATE_SLOW>;
 			io-standard = <IO_STANDARD_LVCMOS18>;
 			bias-disable;
+			drive-strength = <2>;
 		};
 
 		mux-cd {
