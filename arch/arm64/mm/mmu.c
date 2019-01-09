@@ -44,6 +44,7 @@
 #include <asm/memblock.h>
 #include <asm/mmu_context.h>
 #include <asm/ptdump.h>
+#include <asm/tlbflush.h>
 
 #define NO_BLOCK_MAPPINGS	BIT(0)
 #define NO_CONT_MAPPINGS	BIT(1)
@@ -941,5 +942,56 @@ int pmd_clear_huge(pmd_t *pmd)
 	if (!pmd_sect(*pmd))
 		return 0;
 	pmd_clear(pmd);
+	return 1;
+}
+
+int pmd_free_pte_page(pmd_t *pmdp, unsigned long addr)
+{
+	pte_t *table;
+	pmd_t pmd;
+
+	pmd = READ_ONCE(*pmdp);
+
+	if (!pmd_present(pmd))
+		return 1;
+	if (!pmd_table(pmd)) {
+		VM_WARN_ON(!pmd_table(pmd));
+		return 1;
+	}
+
+	table = pte_offset_kernel(pmdp, addr);
+	pmd_clear(pmdp);
+	__flush_tlb_kernel_pgtable(addr);
+	pte_free_kernel(NULL, table);
+	return 1;
+}
+
+int pud_free_pmd_page(pud_t *pudp, unsigned long addr)
+{
+	pmd_t *table;
+	pmd_t *pmdp;
+	pud_t pud;
+	unsigned long next, end;
+
+	pud = READ_ONCE(*pudp);
+
+	if (!pud_present(pud))
+		return 1;
+	if (!pud_table(pud)) {
+		VM_WARN_ON(!pud_table(pud));
+		return 1;
+	}
+
+	table = pmd_offset(pudp, addr);
+	pmdp = table;
+	next = addr;
+	end = addr + PUD_SIZE;
+	do {
+		pmd_free_pte_page(pmdp, next);
+	} while (pmdp++, next += PMD_SIZE, next != end);
+
+	pud_clear(pudp);
+	__flush_tlb_kernel_pgtable(addr);
+	pmd_free(NULL, table);
 	return 1;
 }
