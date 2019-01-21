@@ -203,6 +203,7 @@
 #define X86_FEATURE_AVX512_4FMAPS (7*32+17) /* AVX-512 Multiply Accumulation Single precision */
 
 #define X86_FEATURE_MBA         ( 7*32+18) /* Memory Bandwidth Allocation */
+#define X86_FEATURE_L1TF_PTEINV	( 7*32+29) /* "" L1TF workaround PTE inversion */
 
 /* Virtualization flags: Linux defined, word 8 */
 #define X86_FEATURE_TPR_SHADOW  ( 8*32+ 0) /* Intel TPR Shadow */
@@ -214,6 +215,7 @@
 #define X86_FEATURE_VMMCALL     ( 8*32+15) /* Prefer vmmcall to vmcall */
 #define X86_FEATURE_XENPV       ( 8*32+16) /* "" Xen paravirtual guest */
 
+#define X86_FEATURE_FLUSH_L1D	(18*32+28) /* Flush L1D cache */
 
 /* Intel-defined CPU features, CPUID level 0x00000007:0 (ebx), word 9 */
 #define X86_FEATURE_FSGSBASE	( 9*32+ 0) /* {RD/WR}{FS/GS}BASE instructions*/
@@ -325,4 +327,6 @@
 #define X86_BUG_SWAPGS_FENCE	X86_BUG(11) /* SWAPGS without input dep on GS */
 #define X86_BUG_MONITOR		X86_BUG(12) /* IPI required to wake up remote CPU */
 #define X86_BUG_AMD_E400	X86_BUG(13) /* CPU is among the affected by Erratum 400 */
+
+#define X86_BUG_L1TF		X86_BUG(18) /* CPU is affected by L1 Terminal Fault */
 #endif /* _ASM_X86_CPUFEATURES_H */
