@@ -176,6 +176,8 @@
 			interrupts = <0 91 4>;
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
+			clocks = <&clkmgr STRATIX10_EMAC1_CLK>;
+			clock-names = "stmmaceth";
 			resets = <&rst EMAC1_RESET>, <&rst EMAC1_OCP_RESET>;
 			reset-names = "stmmaceth", "stmmaceth-ocp";
 			tx-fifo-depth = <16384>;
@@ -191,6 +193,8 @@
 			interrupts = <0 92 4>;
 			interrupt-names = "macirq";
 			mac-address = [00 00 00 00 00 00];
+			clocks = <&clkmgr STRATIX10_EMAC2_CLK>;
+			clock-names = "stmmaceth";
 			resets = <&rst EMAC2_RESET>, <&rst EMAC2_OCP_RESET>;
 			reset-names = "stmmaceth", "stmmaceth-ocp";
 			tx-fifo-depth = <16384>;
