@@ -36,6 +36,7 @@
 #include <linux/delay.h>
 #include <linux/module.h>
 #include <linux/srcu.h>
+#include <linux/locallock.h>
 
 #include "rcu.h"
 #include "rcu_segcblist.h"
@@ -772,6 +773,8 @@ static bool srcu_might_be_idle(struct srcu_struct *sp)
  * srcu_read_lock(), and srcu_read_unlock() that are all passed the same
  * srcu_struct structure.
  */
+static DEFINE_LOCAL_IRQ_LOCK(callsrcu_lock);
+
 void __call_srcu(struct srcu_struct *sp, struct rcu_head *rhp,
 		 rcu_callback_t func, bool do_norm)
 {
@@ -783,7 +786,7 @@ void __call_srcu(struct srcu_struct *sp, struct rcu_head *rhp,
 
 	check_init_srcu_struct(sp);
 	rhp->func = func;
-	local_irq_save(flags);
+	local_lock_irqsave(callsrcu_lock, flags);
 	sdp = this_cpu_ptr(sp->sda);
 	spin_lock(&sdp->lock);
 	rcu_segcblist_enqueue(&sdp->srcu_cblist, rhp, false);
@@ -799,7 +802,8 @@ void __call_srcu(struct srcu_struct *sp, struct rcu_head *rhp,
 		sdp->srcu_gp_seq_needed_exp = s;
 		needexp = true;
 	}
-	spin_unlock_irqrestore(&sdp->lock, flags);
+	spin_unlock(&sdp->lock);
+	local_unlock_irqrestore(callsrcu_lock, flags);
 	if (needgp)
 		srcu_funnel_gp_start(sp, sdp, s, do_norm);
 	else if (needexp)
