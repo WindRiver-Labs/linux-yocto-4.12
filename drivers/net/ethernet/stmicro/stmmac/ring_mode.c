@@ -81,7 +81,7 @@ static int stmmac_jumbo_frm(void *p, struct sk_buff *skb, int csum)
 		desc->des3 = cpu_to_le32(des2 + BUF_SIZE_4KiB);
 		priv->hw->desc->prepare_tx_desc(desc, 0, len, csum,
 						STMMAC_RING_MODE, 1,
-						true, skb->len);
+						!skb_is_nonlinear(skb), skb->len);
 	} else {
 		des2 = dma_map_single(priv->device, skb->data,
 				      nopaged_len, DMA_TO_DEVICE);
@@ -94,7 +94,7 @@ static int stmmac_jumbo_frm(void *p, struct sk_buff *skb, int csum)
 		desc->des3 = cpu_to_le32(des2 + BUF_SIZE_4KiB);
 		priv->hw->desc->prepare_tx_desc(desc, 1, nopaged_len, csum,
 						STMMAC_RING_MODE, 0,
-						true, skb->len);
+						!skb_is_nonlinear(skb), skb->len);
 	}
 
 	tx_q->cur_tx = entry;
